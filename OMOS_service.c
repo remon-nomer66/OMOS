@@ -80,3 +80,12 @@ void *OMOS_service(void *__arg){
   free(threadParam);
 }//END 
 
+/*
+ * 残高照会
+ *   [ARGUMENT]
+ *      __con    : データベース接続情報
+ *      __account: 口座番号
+ *      __sendBuf: 送信バッファ
+ *  [RETURN]
+ *     NONE
+ */
