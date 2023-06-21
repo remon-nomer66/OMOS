@@ -1,2 +1,0 @@
-//wowowowowowowowowowowowowowowoowowo
-//ぼく，アンパンマン！！！
