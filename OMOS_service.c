@@ -7,18 +7,17 @@
  * [RETURN]
  *      NONE
  */
-void *omos_server(void *__arg){
+void *omos_service(void *__arg){
     ThreadParameter *threadParam = (ThreadParameter *)__arg;
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];
     int recvLen, sendLen;
-    char comm_1[BUFSIZE], comm_2[BUFSIZE];
     int perm_1, perm_2, perm_3;
     pthread_t selfId;
-    int cnt, auth, count, flag, kitchen_y_n, i;
+    int cnt, auth, kitchen_y_n;
     int table_num;
-    int register[2];
+    int reg[2];
 
-    recvLen = count = flag = 0;
+    recvLen = flag = 0;
     i = 0;
 
     table_num = kitchen_y_n = 0;
@@ -27,22 +26,22 @@ void *omos_server(void *__arg){
     printf("[C_THREAD %ld] OMOS SERVICE START (%d)\n", selfId, threadParam->soc);
 
     while(1){
-        auth = user_check(threadParam->soc);
+        auth = service_user(threadParam->soc);              //ユーザー認証
         if(table_num != 0){
-            service_table(threadParam->soc, auth);
+            service_table(threadParam->soc, auth);          //卓の処理
         }else if(kitchen_y_n != 0){
-            service_kitchen(threadParam->soc, auth);
+            service_kitchen(threadParam->soc, auth);        //キッチンの処理
         }else if(auth == AGUEST){
-            service_guest(threadParam->soc);
+            service_guest(threadParam->soc);                //ゲストの処理
         }else{
-            service_employee(threadParam->soc, auth, register);
-            kitchen_y_n = register[0];
-            table_num = register[1];
+            service_employee(threadParam->soc, auth, reg);  //店員の処理
+            kitchen_y_n = reg[0];
+            table_num = reg[1];
         }
     }
 
     printf("[C_THREAD %ld] OMOS SERVICE END (%d)\n\n", selfId, threadParam->soc);
     PQfinish(threadParam->con);
     close(threadParam->soc);
-    free(threadPram);
+    free(threadParam);
 }

@@ -44,12 +44,12 @@ int main(int argc, char *argv[]){
 void service_start(int __lsoc){
     char *dbHost = "kite.cs.miyazaki-u.ac.jp";
     char *dbPort = "5432";
-    char *dbName = "db42";      //接続先を正しく入力
-    char *dbLogin = "dbuser42";
-    char *dbPwd = "dbpass42"
+    char *dbName = "db13";      //接続先を正しく入力
+    char *dbLogin = "dbuser13";
+    char *dbPwd = "dbpass13";
     char connInfo[BUFSIZE];
     char sendBuf[BUFSIZE];
-    pthread_t woeker;
+    pthread_t worker;
     ThreadParameter *threadParam;
     struct sockaddr_in client;
     unsigned int client_len;
@@ -74,8 +74,8 @@ void service_start(int __lsoc){
         if( PQstatus(threadParam->con) == CONNECTION_BAD ){
             printf("Connection to database '%s:%s %s' failed.\n", dbHost, dbPort, dbName);
             printf("%s", PQerrorMessage(threadParam->con));
-            threadParam->con = NULL; //GPconnをNULL
-            sendLen = sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_7, ENTER);
+            threadParam->con = NULL;
+            sendLen = sprintf(sendBuf, "error occured%s", ENTER);
             send(s_new, sendBuf, sendLen, 0);
         }else{
             printf("Connected to database %s:%s %s\n", dbHost, dbPort, dbName);

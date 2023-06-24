@@ -30,10 +30,10 @@
 #define RESERVE "RESERVE" //予約            OK
 #define REREG   "REREG"   //予約登録        OK
 #define REDEL   "REDEL"   //予約削除        OK
-#define ORDER   "ORDER"   //注文
-#define LV      "LV"      //注文レベル選択
+#define ORDER   "ORDER"   //注文            OK
+#define LV      "LV"      //注文レベル選択  関数内部
 #define KITCHEN "KITCHEN" //キッチン        OK
-#define KFLAG   "KFLAG"   //キッチン登録
+#define KFLAG   "KFLAG"   //キッチン登録    OK
 #define TREG    "TREG"    //卓登録          OK
 #define TDEL    "TDEL"    //卓削除          不要
 #define MENU    "MENU"    //メニュー        OK
@@ -72,15 +72,6 @@
 #define AMGR    4         //店長
 #define ACLERK  5         //店員
 
-//*** 預金口座構造体 ***//
-typedef struct _AccountBank {
-  int     id;            //口座ID
-  char    *name;         //口座名
-  int     balance;       //預金残高
-  int     maxBalance;    //貯金限度額
-  int     minBalance;    //借り入れ限度額
-}AccountBank;
-
 //*** スレッド関数に渡す引数情報構造体 ***//
 typedef struct _ThreadParamter {
   struct in_addr c_ipaddr;  //IPアドレス
@@ -92,8 +83,33 @@ typedef struct _ThreadParamter {
 //作成した関数を「extern int receive_message(int __s, char *__buf, int __maxlen);」の形で記述
 extern int receive_message(int __s, char *__buf, int __maxlen);
 extern int setup_listen(unsigned short __port);
-extern void *omos_service(void *arg);
+extern void *omos_service(void *__arg);
+extern int service_user(int __soc);
+extern void service_table(int __soc, int __auth);
+extern void service_kitchen(int __soc, int __auth);
+extern void service_guest(int __soc);
+extern void service_employee(int __soc, int __auth, int __register[2]);
 
-extern void userReg();
+extern int userCheck(void);
+extern int userReg(void);
+extern int userChg(void);
+extern int reserveReg(void);
+extern int reserveDel(void);
+extern int order(void);
+extern int kitchen(void);
+extern int kitchenFlag(void);
+extern int tableReg(void);
+extern int tableDel(void);
+extern int menuReg(void);
+extern int menuDel(void); //危険
+extern int menuChg(void);
+extern int demandReg(void);
+extern int reserveCheck(void);
+extern int storageCheck(void);
+extern int correctCheck(void);
+extern int saleCheck(void);
+extern int history(void);
+extern int pay(void);
+extern int kitchenDel(void);
 
 #endif
