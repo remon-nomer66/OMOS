@@ -2,9 +2,11 @@
 
 #define REWIND 1
 
-void service_employee(PGconn *__soc, int __auth, int __register[]){
+void service_employee(int __soc, int __auth, int __register[2]){
     int tel;    //電話番号
     int person; //人数
+    int cnt;
+    int perm_1, perm_2;
     char comm[BUFSIZE];  //コマンド
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];
     int recvLen, sendLen;
@@ -17,14 +19,15 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
         }else if(__auth == ACOR){    //COR
             sprintf(sendBuf, "行いたい操作に合わせてコマンドを実行してください．%s利用可能なコマンドは\"CORRECT\"です．%s操作を終了したい場合は\"END\"と入力してください．%s", ENTER, ENTER, ENTER);
         }else if(__auth == AMGR){    //店長
-            sprintf(sendBuf, "行いたい操作に合わせてコマンドを実行してください．%S利用可能なコマンドは\"REREG\"，\"REDEL\"，\"KITCHEN\"，\"TREG\"，\"MENU\"，\"DEMAND\"，\"CORRECT\"，\"STCHECK\"です．%s操作を終了したい場合は\"END\"と入力してください．%s", ENTER, ENTER, ENTER);
+            sprintf(sendBuf, "行いたい操作に合わせてコマンドを実行してください．%s利用可能なコマンドは\"REREG\"，\"REDEL\"，\"KITCHEN\"，\"TREG\"，\"MENU\"，\"DEMAND\"，\"CORRECT\"，\"STCHECK\"です．%s操作を終了したい場合は\"END\"と入力してください．%s", ENTER, ENTER, ENTER);
         }else if(__auth == ACLERK){    //店員
             sprintf(sendBuf, "行いたい操作に合わせてコマンドを実行してください．%s利用可能なコマンドは\"REREG\"，\"REDEL\"，\"KITCHEN\"，\"TREG\"，\"CORRECT\"，\"STCHECK\"です．%s操作を終了したい場合は\"END\"と入力してください．%s", ENTER, ENTER, ENTER);
         }
         sendLen = strlen(sendBuf);
         send(__soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-        recvLen = receive_message(threadParam->soc, recvBuf, BUFSIZE);
+        
+        recvLen = receive_message(__soc, recvBuf, BUFSIZE);
         if(recvLen > 0){
             recvBuf[recvLen - 1] = '\0';
             printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
@@ -35,11 +38,11 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    recvLen = receive_message(threadParam->soc, recvBuf, BUFSIZE);
+                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
                     if(recvLen > 0){
                         recvBuf[recvLen - 1] = '\0';
                         printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                        cnt = sscanf(recvBuf, "%d %s %d", tel, comm, person);
+                        cnt = sscanf(recvBuf, "%d %s %d", &tel, comm, &person);
                         if(cnt == 3){
                             if(reserveReg() == 0){ //予約登録正常完了: 0
                                 sprintf(sendBuf, "予約の登録は正常に完了しました%s", ENTER);
@@ -61,13 +64,13 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    recvLen = receive_message(threadParam->soc, recvBuf, BUFSIZE);
+                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
                     if(recvLen > 0){
                         recvBuf[recvLen - 1] = '\0';
                         printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                        cnt = sscanf(recvBuf, "%d %s", tel, comm);
+                        cnt = sscanf(recvBuf, "%d %s", &tel, comm);
                         if(cnt == 2){
-                            if(reserveReg() == 0){ //予約削除正常完了: 0
+                            if(reserveDel() == 0){ //予約削除正常完了: 0
                                 sprintf(sendBuf, "予約の削除は正常に完了しました%s", ENTER);
                             }else{
                                 sprintf(sendBuf, "予約は存在ませんでした%s", ENTER);
@@ -82,7 +85,7 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
                 }
             }else if(strcmp(comm, KITCHEN) == 0 && (__auth == AMGR || __auth == ACLERK)){
                 if(kitchen() == 0){ //キッチンの端末として登録完了: 0
-                    register[0] = 1;    //register[0] = kitchen_y_n
+                    __reg[0] = 1;    //register[0] = kitchen_y_n
                     break;
                 }else{
                     sprintf(sendBuf, "既に他の端末がキッチンの端末として利用されています%s", ENTER);
@@ -96,13 +99,13 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    recvLen = receive_message(threadParam->soc, recvBuf, BUFSIZE);
+                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
                     if(recvLen > 0){
                         recvBuf[recvLen - 1] = '\0';
                         printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                        cnt = sscanf(recvBuf, "%d", perm_1);
+                        cnt = sscanf(recvBuf, "%d", &perm_1);
                         if(cnt == 1){
-                            if((register[1] = tableReg()) != -1){ //卓登録: 戻り値: 卓番号，register[1] = table_num
+                            if((__reg[1] = tableReg()) != -1){ //卓登録: 戻り値: 卓番号，register[1] = table_num
                                 break;
                             }else{
                                 sprintf(sendBuf, "これ以上卓を登録できません%s", ENTER);
@@ -113,13 +116,13 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
                         }
                     }
                 }
-            }else if(strcmp(comm, CORRECT)){
+            }else if(strcmp(comm, CORRECT) == 0){
                 while(1){
                     sprintf(sendBuf, "CORRECTの中で扱いたいコマンドを入力してください．%s利用可能なコマンドは\"CCHECK\"，\"SACHECK\"です．%s", ENTER, ENTER);
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    recvLen = receive_message(threadParam->soc, recvBuf, BUFSIZE);
+                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
                     if(recvLen > 0){
                         recvBuf[recvLen - 1] = '\0';
                         printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
@@ -132,7 +135,7 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
                                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                                 break;
                             }
-                        }else if(strcmp(comm, MDEL) == 0){
+                        }else if(strcmp(comm, SACHECK) == 0){
                             if(saleCheck() == 0){     //売上確認正常完了: 0
                                 sprintf(sendBuf, "売上確認に失敗しました．%s", ENTER);
                                 sendLen = strlen(sendBuf);
@@ -143,13 +146,13 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
                         }
                     }
                 }
-            }else if((strcmp(comm, MENU) == 0) && (__auth == AMGR || __auth == ACLERK)){
+            }else if((strcmp(comm, MENU) == 0) && (__auth == AHQ || __auth == AMGR || __auth == ACLERK)){
                 while(1){
                     sprintf(sendBuf, "MENUの中で扱いたいコマンドを入力してください．%s利用可能なコマンドは\"MREG\"，\"MDEL\"，\"MCHG\"です．%s", ENTER, ENTER);
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    recvLen = receive_message(threadParam->soc, recvBuf, BUFSIZE);
+                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
                     if(recvLen > 0){
                         recvBuf[recvLen - 1] = '\0';
                         printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
@@ -183,7 +186,7 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
                                 break;
                             }
                         }else if(strcmp(comm, MCHG) == 0){
-                            if(menuReg() == 0){     //メニュー変更正常完了: 0
+                            if(menuChg() == 0){     //メニュー変更正常完了: 0
                                 sprintf(sendBuf, "メニューの変更は正常に完了しました．%s", ENTER);
                                 sendLen = strlen(sendBuf);
                                 send(__soc, sendBuf, sendLen, 0);
@@ -205,13 +208,13 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    recvLen = receive_message(threadParam->soc, recvBuf, BUFSIZE);
+                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
                     if(recvLen > 0){
                         recvBuf[recvLen - 1] = '\0';
                         printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                        cnt = sscanf(recvBuf, "%d %d", perm_1, perm_2);
+                        cnt = sscanf(recvBuf, "%d %d", &perm_1, &perm_2);
                         if(cnt == 2){
-                            if(demand() == 0){      //発注正常完了: 0
+                            if(demandReg() == 0){      //発注正常完了: 0
                                 sprintf(sendBuf, "発注は正常に完了しました．%s", ENTER);
                                 sendLen = strlen(sendBuf);
                                 send(__soc, sendBuf, sendLen, 0);
@@ -221,7 +224,7 @@ void service_employee(PGconn *__soc, int __auth, int __register[]){
                                     sendLen = strlen(sendBuf);
                                     send(__soc, sendBuf, sendLen, 0);
                                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                                    recvLen = receive_message(threadParam->soc, recvBuf, BUFSIZE);
+                                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
                                     if(recvLen > 0){
                                         recvBuf[recvLen - 1] = '\0';
                                         printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
