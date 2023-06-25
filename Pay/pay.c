@@ -94,29 +94,9 @@ int pay(int __soc, int user_id){
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
         recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
 
-        // ポイントを使用する場合
+        // ポイントを使用する場合、pointUse関数を呼び出し、socket・合計金額・ユーザIDを渡す
         if(recvBuf[0] == 'y'){
-            // ポイントを使用するクエリの作成
-            char pointQuery[256];   // クエリ用バッファ
-            sprintf(pointQuery, "SELECT point FROM point WHERE user LIKE '%s%%'", comm);
-            
-            // クエリの実行
-            PGresult *pointRes = PQexec(conn, pointQuery);
-            if(PQresultStatus(pointRes) != PGRES_TUPLES_OK){
-                printf("SELECT failed: %s", PQerrorMessage(conn));
-                PQclear(pointRes);
-                PQfinish(conn);
-                sprintf(sendBuf, "error occured%s", ENTER);
-                send(__soc, sendBuf, sendLen, 0);
-            }
-            
-            // ポイントの取得
-            point = atof(PQgetvalue(pointRes, 0, 0));
-            
-            // 合計金額の計算
-            totalPrice -= point;
-            
-            PQclear(pointRes);  // クエリ結果の解放
+            totalPrice = pointUse(__soc, totalPrice, userID);
         }
 
         // お会計処理
@@ -168,13 +148,30 @@ int pay(int __soc, int user_id){
             send(__soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
             recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-
-
-
         }
 
+        // 会計完了したかどうかを聞く
+        sprintf(sendBuf, "会計完了しましたか？(y/n)%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+        recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
+        
 
+        // 会計完了していない場合
+        if(recvBuf[0] == 'n'){
+            // 会計処理を繰り返す
+            continue;
+        // 会計完了した場合
+        }else if(recvBuf[0] == 'y'){
+            // 会計完了のメッセージを送信
+            sprintf(sendBuf, "会計完了です。%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+            recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
+            break;
+        }
 
+        
     }
 
 
