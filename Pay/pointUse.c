@@ -1,6 +1,6 @@
 #include "omos.h"
 
-void pointUse(int __lsoc, int __totalPrice, int __userid){
+void pointUse(int __lsoc, int __totalPrice, int __userid, pthread_t __selfId){
 
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
@@ -66,7 +66,15 @@ void pointUse(int __lsoc, int __totalPrice, int __userid){
     //合計金額を計算
     __totalPrice -= usePoint;
 
-    return __totalPrice;
+    //DB切断
+    PQclear(res);
+    PQfinish(con);
+    con = NULL;
 
+    //合計金額を送信
+    sendLen = sprintf(sendBuf, "合計金額は%d円です。%s", __totalPrice, ENTER);
+    send(__lsoc, sendBuf, sendLen, 0);  //送信
+
+    return __totalPrice;
 }
 
