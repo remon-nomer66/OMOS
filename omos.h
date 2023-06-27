@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <postgresql/libpq-fe.h>
+#include <ctype.h>
 
 #define BUFSIZE 1024
 #define PORT 10000
