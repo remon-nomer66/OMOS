@@ -1,12 +1,13 @@
 #include "omos.h"
 
-void pointUse(int __lsoc, int __totalPrice, int __userid, pthread_t __selfId){
+int pointUse(int __soc, int __totalPrice, int __userid, pthread_t __selfId){
 
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
     pthread_t selfId = pthread_self();  //スレッドID
     int point;  //ポイント数
     int usePoint;   //使用するポイント数
+    char sql[BUFSIZE];
 
     char *dbHost = "kite.cs.miyazaki-u.ac.jp";
     char *dbPort = "5432";
@@ -29,24 +30,7 @@ void pointUse(int __lsoc, int __totalPrice, int __userid, pthread_t __selfId){
     }
 
     //useridを元に、pointをデータベースから取得
-    char sql[BUFSIZE];
-    sprintf(sql, "SELECT point FROM users WHERE id = %d;", __userid);
-    PGresult *res = PQexec(con, sql);
-    if(PQresultStatus(res) != PGRES_TUPLES_OK){
-        printf("SELECT point FROM users WHERE id = %d; failed.\n", __userid);
-        printf("%s", PQerrorMessage(con));
-        PQclear(res);
-        PQfinish(con);
-        con = NULL;
-        sendLen = sprintf(sendBuf, "error occured%s", ENTER);
-        send(__lsoc, sendBuf, sendLen, 0);
-    }else{
-        printf("SELECT point FROM users WHERE id = %d; success.\n", __userid);
-    }
-
-    //pointを取得
-    point = atoi(PQgetvalue(res, 0, 0));
-    printf("point = %d\n", point);
+    point = pointCheck(soc, userid, selfId);
 
     //pointを使用
     while(1){
