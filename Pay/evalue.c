@@ -1,17 +1,11 @@
 #include "omos.h"
 
-int evalue(int __soc, pthread_t __selfId, int __user_id){
+int evalue(PGconn *__con, int __soc, pthread_t __selfId, int __user_id){
     //お客様の評価を良いか悪いかで聞く
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
     pthread_t selfId = pthread_self();  //スレッドID
     int evalue; //評価
-
-    char *dbHost = "kite.cs.miyazaki-u.ac.jp";
-    char *dbPort = "5432";
-    char *dbName = "db42";      //接続先を正しく入力
-    char *dbLogin = "dbuser42";
-    char *dbPwd = "dbpass42";
     
     //お客様の評価を良いか悪いかで聞く
     while(1){
