@@ -1,7 +1,7 @@
 #include "omos.h"
 
 \* お会計処理 *\
-int pay(int __soc, int user_id){
+int pay(PGconn *__con, int __soc, int user_id){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
     pthread_t selfId = pthread_self();  //スレッドID
@@ -9,12 +9,6 @@ int pay(int __soc, int user_id){
     int remainder;  //割り勘の余り
     double price;   //合計金額
     int sharePrice;  //割り勘金額
-
-    char *dbHost = "kite.cs.miyazaki-u.ac.jp";
-    char *dbPort = "5432";
-    char *dbName = "db42";      //接続先を正しく入力
-    char *dbLogin = "dbuser42";
-    char *dbPwd = "dbpass42";
     
     sprintf(sendBuf, "お会計を行います．\n お会計卓番号を入力ください。%s", ENTER); //送信データ作成
     sendLen = strlen(sendBuf);  //送信データ長を取得
