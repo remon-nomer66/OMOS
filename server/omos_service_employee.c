@@ -1,8 +1,6 @@
 #include "omos.h"
 
-#define REWIND 1
-
-void service_employee(int __soc, int __auth, int __register[2]){
+void service_employee(PGconn *__con, int __soc, int *__auth, int __register[2]){
     int tel;    //電話番号
     int person; //人数
     int cnt;
@@ -33,56 +31,9 @@ void service_employee(int __soc, int __auth, int __register[2]){
             printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
             sscanf(recvBuf, "%s", comm);
             if(strcmp(comm, REREG) == 0 && (__auth == AMGR || __auth == ACLERK)){
-                while(1){
-                    sprintf(sendBuf, "予約を登録する会員の電話番号，日時，人数を\"03012345678 2023-06-18 5\"のように空白を挿入した形で入力してください%s", ENTER);
-                    sendLen = strlen(sendBuf);
-                    send(__soc, sendBuf, sendLen, 0);
-                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
-                    if(recvLen > 0){
-                        recvBuf[recvLen - 1] = '\0';
-                        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                        cnt = sscanf(recvBuf, "%d %s %d", &tel, comm, &person);
-                        if(cnt == 3){
-                            if(reserveReg() == 0){ //予約登録正常完了: 0
-                                sprintf(sendBuf, "予約の登録は正常に完了しました%s", ENTER);
-                                break;
-                            }else{
-                                sprintf(sendBuf, "予約が埋まっています%s", ENTER);
-                            }
-                        }else{
-                            sprintf(sendBuf, "引数に誤りがあります%s", ENTER);
-                        }
-                        sendLen = strlen(sendBuf);
-                        send(__soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    }
-                }
+                reserveReg(__con, __soc);
             }else if(strcmp(comm, REDEL) == 0 && (__auth == AMGR || __auth == ACLERK)){
-                while(1){
-                    sprintf(sendBuf, "予約を削除する会員の電話番号，日時を\"03012345678 2023-06-18\"のように空白を挿入した形で入力してください%s", ENTER);
-                    sendLen = strlen(sendBuf);
-                    send(__soc, sendBuf, sendLen, 0);
-                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
-                    if(recvLen > 0){
-                        recvBuf[recvLen - 1] = '\0';
-                        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                        cnt = sscanf(recvBuf, "%d %s", &tel, comm);
-                        if(cnt == 2){
-                            if(reserveDel() == 0){ //予約削除正常完了: 0
-                                sprintf(sendBuf, "予約の削除は正常に完了しました%s", ENTER);
-                            }else{
-                                sprintf(sendBuf, "予約は存在ませんでした%s", ENTER);
-                            }
-                        }else{
-                            sprintf(sendBuf, "引数に誤りがあります%s", ENTER);
-                        }
-                        sendLen = strlen(sendBuf);
-                        send(__soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    }
-                }
+                reserveDel(__con, __soc);
             }else if(strcmp(comm, KITCHEN) == 0 && (__auth == AMGR || __auth == ACLERK)){
                 if(kitchen() == 0){ //キッチンの端末として登録完了: 0
                     __reg[0] = 1;    //register[0] = kitchen_y_n
@@ -92,29 +43,6 @@ void service_employee(int __soc, int __auth, int __register[2]){
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                }
-            }else if(strcmp(comm, TREG) == 0 && (__auth == AMGR || __auth == ACLERK)){
-                while(1){
-                    sprintf(sendBuf, "この端末の卓に座れる人数を入力してください%s", ENTER);
-                    sendLen = strlen(sendBuf);
-                    send(__soc, sendBuf, sendLen, 0);
-                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
-                    if(recvLen > 0){
-                        recvBuf[recvLen - 1] = '\0';
-                        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                        cnt = sscanf(recvBuf, "%d", &perm_1);
-                        if(cnt == 1){
-                            if((__reg[1] = tableReg()) != -1){ //卓登録: 戻り値: 卓番号，register[1] = table_num
-                                break;
-                            }else{
-                                sprintf(sendBuf, "これ以上卓を登録できません%s", ENTER);
-                                sendLen = strlen(sendBuf);
-                                send(__soc, sendBuf, sendLen, 0);
-                                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                            }
-                        }
-                    }
                 }
             }else if(strcmp(comm, CORRECT) == 0){
                 while(1){
@@ -203,52 +131,7 @@ void service_employee(int __soc, int __auth, int __register[2]){
                     }
                 }
             }else if((strcmp(comm, DEMAND) == 0) && (__auth == AHQ || __auth == AMGR)){
-                while(1){
-                    sprintf(sendBuf, "発注する商品の番号と個数を\"1001 200\"のように空白を挿入した形で入力してください%s", ENTER);
-                    sendLen = strlen(sendBuf);
-                    send(__soc, sendBuf, sendLen, 0);
-                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
-                    if(recvLen > 0){
-                        recvBuf[recvLen - 1] = '\0';
-                        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                        cnt = sscanf(recvBuf, "%d %d", &perm_1, &perm_2);
-                        if(cnt == 2){
-                            if(demandReg() == 0){      //発注正常完了: 0
-                                sprintf(sendBuf, "発注は正常に完了しました．%s", ENTER);
-                                sendLen = strlen(sendBuf);
-                                send(__soc, sendBuf, sendLen, 0);
-                                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                                while(1){
-                                    sprintf(sendBuf, "続けて発注する場合は\"YES\"，発注を終了する場合は\"NO\"を入力してください%s", ENTER);
-                                    sendLen = strlen(sendBuf);
-                                    send(__soc, sendBuf, sendLen, 0);
-                                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                                    recvLen = receive_message(__soc, recvBuf, BUFSIZE);
-                                    if(recvLen > 0){
-                                        recvBuf[recvLen - 1] = '\0';
-                                        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                                        sscanf(recvBuf, "%s", comm);
-                                        if(strcmp(comm, YES) == 0){
-                                            break;
-                                        }else if(strcmp(comm, NO) == 0){
-                                            flag = REWIND;
-                                            break;
-                                        }
-                                    }
-                                }
-                                if(flag == REWIND){
-                                    break;  //発注から抜ける
-                                }
-                            }
-                        }else{
-                            sprintf(sendBuf, "引数に誤りがあります%s", ENTER);
-                            sendLen = strlen(sendBuf);
-                            send(__soc, sendBuf, sendLen, 0);
-                            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                        }
-                    }
-                }
+                demand(__con, __soc);
             }else if(strcmp(comm, END) == 0){
                 sprintf(sendBuf, "操作を終了し，ログイン画面に戻ります%s", ENTER);
                 sendLen = strlen(sendBuf);

@@ -3,19 +3,20 @@
 #define REWIND 1
 
 //ユーザー認証
-int service_user(int __soc){
+void service_user(PGconn *__con, int __soc, int *__auth){
     int gest_y_n = 0;   //ゲストかゲストでないか
     int tel;    //電話番号
     char comm[BUFSIZE];  //コマンド
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];
     int recvLen, sendLen;
-    int auth, cnt, p_count, flag;
+    int cnt, p_count, flag, a_flag;
    /*  int auth[2]; */
     pthread_t selfId = pthread_self();
 
     while(1){
         //電話番号チェック
         while(1){
+            a_flag = 0;
             sprintf(sendBuf, "会員の方は電話番号を入力してください．%s会員ではなく会員登録をされる方は\"UREG\"，ゲストでご利用される方は\"GUEST\"と入力してください%s", ENTER, ENTER);
             sendLen = strlen(sendBuf);
             send(__soc, sendBuf, sendLen, 0);
@@ -45,7 +46,7 @@ int service_user(int __soc){
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                 }else{
-                    sprintf(sendBuf, "携帯電話番号: 0%d%s", tel, ENTER);
+                    sprintf(sendBuf, "携帯電話番号%s0%d", ENTER, tel);
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -58,6 +59,7 @@ int service_user(int __soc){
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             }
         }
+
         //パスワードチェック(ゲストなら以下は行わない)
         if(gest_y_n != 1){
             while(1){
@@ -70,9 +72,9 @@ int service_user(int __soc){
                     recvBuf[recvLen - 1] = '\0';
                     printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
                     sscanf(recvBuf, "%s", comm);
-                    if((auth = userCheck()) != -1){   //戻り値-1でなければ会員として正しい
+                    if(userCheck(__con, __soc, tel, comm) != -1){   //戻り値-1でなければ会員として正しい
 		                printf("userCheck\n;");
-		                auth = 1;
+                        a_flag = 1;
 		                break;
                     }else{
                         if(p_count == CEKMAX){
@@ -122,10 +124,8 @@ int service_user(int __soc){
                 }
             }
         }
-        if(auth != -1){
+        if(a_flag != 0){
             break;
         }
     }
-
-    return auth;
 }
