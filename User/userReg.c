@@ -118,5 +118,15 @@ int userReg(PGconn *__con){
             break;
         }
     }
+
+    //登録完了を通知し、ユーザ情報を一度に表示する
+    sprintf(sendBuf, "登録完了しました。%s", ENTER); //送信データ作成
+    sendLen = strlen(sendBuf);  //送信データ長
+    send(__lsoc, sendBuf, sendLen, 0); //送信
+    sprintf(sendBuf, "userid:%c, phoneNum:%d, userPass:%s, userName:%s, point:%d, point_rate:%f, auth:%d%s", userid, phoneNum, userPass, userName, point, point_rate, auth, ENTER); //送信データ作成
+    sendLen = strlen(sendBuf);  //送信データ長
+    send(__lsoc, sendBuf, sendLen, 0); //送信
+
+    return 0;
 }
 
