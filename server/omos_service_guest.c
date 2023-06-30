@@ -1,6 +1,6 @@
 #include "omos.h"
 
-void service_guest(int __soc){
+void service_guest(PGconn *__con, int __soc){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];
     char comm[BUFSIZE];
     int recvLen, sendLen;
