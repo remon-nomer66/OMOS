@@ -114,6 +114,7 @@ CREATE TABLE push_t(
 --
 CREATE TABLE menu_storage_t(
        menu_id		integer       NOT NULL,    -- 商品ID
+       store_id    	       integer       NOT NULL,    -- 店舗ID
        storage   	       integer       NOT NULL,    -- 在庫個数
        min_storage   	integer       NOT NULL,    -- 在庫下限
        PRIMARY KEY (menu_id)
