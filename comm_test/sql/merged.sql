@@ -42,7 +42,7 @@ CREATE TABLE store_t(
 --
 -- store_tabel_t
 --
-CREATE TABLE store_region_t(
+CREATE TABLE store_region_t(		--store_region_tではなく，store_table_t
        store_id	       integer              NOT NULL,
        desk_num		integer              NOT NULL,     -- 卓番号
        desk_max		integer              NOT NULL,     -- 卓上限人数
