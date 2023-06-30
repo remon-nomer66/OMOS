@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 #include "omos.h"
 
 int correct(PGconn *__con, int __soc, int __auth){
@@ -285,47 +284,52 @@ int correct(PGconn *__con, int __soc, int __auth){
     sendLen = strlen(sendBuf);  //送信データ長
     send(__soc, sendBuf, sendLen, 0);   //送信
 
-    //DB接続
-    sprintf(connInfo, "host=%s port=%s dbname=%s user=%s password=%s", dbHost, dbPort, dbName, dbLogin, dbPwd);
-    PGconn *con = PQconnectdb(connInfo);
-    if( PQstatus(con) == CONNECTION_BAD ){
-        printf("Connection to database '%s:%s %s' failed.\n", dbHost, dbPort, dbName);
-        printf("%s", PQerrorMessage(con));
-        con = NULL;
-        sendLen = sprintf(sendBuf, "error occured%s", ENTER);
-        send(__lsoc, sendBuf, sendLen, 0);
-    }else{
-        printf("Connected to database %s:%s %s\n", dbHost, dbPort, dbName);
+    "SELECT summary.*, price_change_t.price, user_authority_t.auth FROM summary "
+    "INNER JOIN price_change_t ON summary.menu_id = price_change_t.menu_id "
+    "INNER JOIN user_authority_t ON summary.user_id = user_authority_t.user_id "
+    //CORの地域情報を取得と絞り込み
+    "WHERE summary.order_date >= %s AND summary.order_date <= %s AND user_authority_t.auth = %d", start, end, auth
+
+    //時間指定がある場合、テーブルを条件によって絞り込む
+    if(start_target != NULL){
+        sprintf(sql, "WHERE summary.order_time >= %s AND summary.order_time <= %s", start_target, end_target);
     }
 
-    //DBから入力された期間の店舗番号、地域番号、商品番号情報を絞り込む
-    sprintf(sql, "SELECT * FROM summary WHERE sales_date >= %s AND sales_date <= %s AND store_id = %s AND area_id = %s AND product_id = %s", start, end, store_id, area_id, product_id);
-    PGresult *res = PQexec(con, sql);
+    //店舗指定がある場合、テーブルを条件によって絞り込む
+    if(store_id != NULL){
+        sprintf(sql, "WHERE summary.store_id = %s", store_id);
+    }
+    
+    //地域指定がある場合、テーブルを条件によって絞り込む
+    if(area_id != NULL){
+        sprintf(sql, "WHERE summary.area_id = %s", area_id);
+    }
 
-    //絞り込んだ内容から期間指定の範囲内でOrder_Cntの値を取得し、全て足し算
+    //商品指定がある場合、テーブルを条件によって絞り込む
+    if(product_id != NULL){
+        sprintf(sql, "WHERE summary.product_id = %s", product_id);
+    }
+
+    //絞り込んだ内容で、商品の個数（order_cnt）と金額（price）を取得してこれらの値を掛け算し、全て足し算
+    int sum = 0;
+    for(int i = 0; i < PQntuples(res); i++){
+        sum += atoi(PQgetvalue(res, i, 3)) * atoi(PQgetvalue(res, i, 4));
+    }
+
+     //絞り込んだ内容から期間指定の範囲内でOrder_Cntの値を取得し、全て足し算
     int items_sum = 0;
     for(int i = 0; i < PQntuples(res); i++){
-        sum += atoi(PQgetvalue(res, i, 3));
+        items_sum += atoi(PQgetvalue(res, i, 3));
     }
 
-    //絞り込んだ内容から商品IDを主キーとし、menu_tから金額を取得
-    sprintf(sql, "SELECT * FROM menu_t WHERE menu_id = %s", menu_id);
-    PGresult *res = PQexec(con, sql);
+    //個数の表示
+    sprintf(sendBuf, "個数：%d個%s", items_sum, ENTER); //送信データ作成
+    sendLen = strlen(sendBuf);  //送信データ長
+    send(__soc, sendBuf, sendLen, 0);
 
-    SELCT menu_t.menu_id, menu_t.price, summary.sales_date, summary.order_cnt FROM menu_t INNER JOIN summary ON menu_t.menu_id = summary.menu_id WHERE summary.sales_date >= %s AND summary.sales_date <= %s AND summary.store_id = %s AND summary.area_id = %s AND summary.product_id = %s
-
-
-    //summaryに金額のみを挿入
-    sprintf(sql, "INSERT INTO summary (menu_id, price) VALUES (%s, %s)");
-
-
-   
-    //絞り込んだ内容から期間指定の範囲内でOrder_Cntの値
-
-
-
-
-
+    //金額の表示
+    sprintf(sendBuf, "金額：%d円%s", sum, ENTER); //送信データ作成
+    sendLen = strlen(sendBuf);  //送信データ長
+    send(__soc, sendBuf, sendLen, 0);
 
 }
-
