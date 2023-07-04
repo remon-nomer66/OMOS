@@ -53,4 +53,5 @@ int menu(PGconn *__con, int __soc, int *__auth){
             }
         }
     }
+    return 0;
 }
