@@ -1,6 +1,6 @@
 #include "omos.h"
 
-int menu(PGconn *__con, int __soc, int *__auth){
+int menu(PGconn *__con, int __soc, int *__u_info){
     while (1){
         char comm[BUFSIZE];  //コマンド
         char recvBuf[BUFSIZE], sendBuf[BUFSIZE];
@@ -15,7 +15,7 @@ int menu(PGconn *__con, int __soc, int *__auth){
             recvBuf[recvLen - 1] = '\0';
             sscanf(recvBuf, "%s", comm);
             if (strcmp(comm, MREG) == 0){
-                if (menuReg(__con, __soc, __auth) == 0){ // メニュー登録正常完了: 0
+                if (menuReg(__con, __soc, __u_info) == 0){ // メニュー登録正常完了: 0
                     sprintf(sendBuf, "メニューの登録は正常に完了しました．%s", ENTER);
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
@@ -27,7 +27,7 @@ int menu(PGconn *__con, int __soc, int *__auth){
                     break;
                 }
             }else if (strcmp(comm, MDEL) == 0){
-                if (menuDel(__con, __soc, __auth) == 0){ // メニュー削除正常完了: 0
+                if (menuDel(__con, __soc, __u_info) == 0){ // メニュー削除正常完了: 0
                     sprintf(sendBuf, "メニューの削除は正常に完了しました．%s", ENTER);
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
@@ -39,7 +39,7 @@ int menu(PGconn *__con, int __soc, int *__auth){
                     break;
                 }
             }else if (strcmp(comm, MCHG) == 0){
-                if (menuChg(__con, __soc, __auth) == 0){ // メニュー変更正常完了: 0
+                if (menuChg(__con, __soc, __u_info) == 0){ // メニュー変更正常完了: 0
                     sprintf(sendBuf, "メニューの変更は正常に完了しました．%s", ENTER);
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
