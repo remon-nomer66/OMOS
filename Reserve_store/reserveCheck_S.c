@@ -9,14 +9,14 @@ PGresult *res;　//PGresult型の変数resを宣言
 int store_id;
 
 
-store_id = *auth[2]; 
+store_id = *__auth[2]; 
 
 //入力された店舗番号の行を一斉に表示
 sprintf(sendBuf, "SELECT account_id, number_of_people, reserve_date reserve_time FROM reserve_t WHERE store_id= %d", store_id);　//送信データ作成
 res = PQexec(__con, sendBuf);　//送信データを実行
 //実行結果を表示
 for(i = 0; i < PQntuples(res); i++){
-    sprintf(sendBuf, "%s %s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2));　//送信データ作成
+    sprintf(sendBuf, "%s %s %s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2), PQgetvalue(res, i, 3));　//送信データ作成
     sendLen = strlen(sendBuf);　//送信データ長
     send(__soc, sendBuf , sendLen, 0);　//送信
     recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
@@ -40,7 +40,7 @@ recvBuf{recvLen} = '\0';　//受信データにNULLを追加
 
 
 if(strcmp(recvBuf,"y")==0){
-    if(reserveDel_S(__con, __soc *auth[2]) == 0){
+    if(reserveDel_S(__con, __soc ,*auth[2]) == 0){
         sprintf(sendBuf, "メニューの変更は正常に完了しました．%s", ENTER);
         sendLen = strlen(sendBuf);
         send(__soc, sendBuf, sendLen, 0);
