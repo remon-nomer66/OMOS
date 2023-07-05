@@ -1,12 +1,13 @@
 #include "omos.h"
 
-int tableReg(PGconn *__con, int __soc){
+int tableReg(PGconn *__con, int __soc, int *__u_info, int *__s_info){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
     pthread_t selfId = pthread_self();  //スレッドID
     int cnt;
     char sql[BUFSIZE];
     int num;
+    int store_id = __userinfo[2];
     int resultRows;
 
     while(1){
@@ -52,11 +53,9 @@ int tableReg(PGconn *__con, int __soc){
             send(__soc, sendBuf, sendLen, 0);   //送信
         }
     }
-    return num;
-    //return 0;
-    //return -1;
+    s_info[0] = u_info[2];
+    s_info[1] = num;
 
+    return 0;
 
-
-        //入力された値が２桁の数字以外もしくは数字以外だった場合
 }
