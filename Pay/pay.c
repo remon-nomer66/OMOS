@@ -9,48 +9,32 @@ int pay(PGconn *__con, int __soc, int user_id){
     int remainder;  //割り勘の余り
     double price;   //合計金額
     int sharePrice;  //割り勘金額
-    
-    sprintf(sendBuf, "お会計を行います．\n お会計卓番号を入力ください。%s", ENTER); //送信データ作成
-    sendLen = strlen(sendBuf);  //送信データ長を取得
-    send(__soc, sendBuf, sendLen, 0);   //送信
-    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-    recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
 
-    if(recvLen > 0){    //受信データがある場合
-        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);  //受信データを表示
-        sscanf(recvBuf, "%s", comm);    //受信データからコマンドを取得
-        //コマンドが数字かどうか判定
-        if(isdigit(comm[0[]){
-            //数字ならばkitchenDBに接続する
-            sprintf(connInfo, "host=%s port=%s dbname=%s user=%s password=%s", dbHost, dbPort, dbName, dbLogin, dbPwd);
-            conn = PQconnectdb(connInfo);   //DBに接続
-            if( PQstatus(conn) == CONNECTION_BAD ){  //接続確認
-                printf("Connection to database '%s:%s %s' failed.\n", dbHost, dbPort, dbName);
-                printf("%s", PQerrorMessage(conn));
-                conn = NULL;
-                sprintf(sendBuf, "error occured%s", ENTER);
-                send(__soc, sendBuf, sendLen, 0);
-            }
-        }else{
-            //数字でなければエラーを返す
-            sprintf(sendBuf, "error occured%s", ENTER);
-            send(__soc, sendBuf, sendLen, 0);
-        }
-        //kitchenDBに接続できているか確認
-        sprintf(query, "SELECT * FROM kitchen WHERE table_info LIKE '%s%%' AND kitchen_flag = 1", comm);    \\SQL文を作成
-        res = PQexec(conn, query);  //SQL文を実行
+    //トランザクション開始
+    PGresult *res = PQexec(__con, "BEGIN");
+    if(PQresultStatus(res) != PGRES_COMMAND_OK){
+        printf("BEGIN failed: %s", PQerrorMessage(__con));
+        PQclear(res);
+        PQfinish(__con);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+    }
+
+    //kitchenDBに接続できているか確認
+    sprintf(query, "SELECT * FROM kitchen WHERE table_info LIKE '%s%%' AND kitchen_flag = 1", comm);    \\SQL文を作成
+    res = PQexec(conn, query);  //SQL文を実行
         if(PQresultStatus(res) != PGRES_TUPLES_OK){ //実行結果の確認
-            printf("SELECT failed: %s", PQerrorMessage(conn));
-            PQclear(res);
-            PQfinish(conn);
-            sprintf(sendBuf, "error occured%s", ENTER);
-            send(__soc, sendBuf, sendLen, 0);
+        printf("SELECT failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        PQfinish(conn);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
         }
         //結果の確認
         int rows = PQntuples(res);
         if(rows == 0){  //レコードが存在しない場合
-            sprintf(sendBuf, "error occured%s", ENTER);
-            send(__soc, sendBuf, sendLen, 0);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0)
         }
         
         // レコードが存在する場合
@@ -268,7 +252,11 @@ int pay(PGconn *__con, int __soc, int user_id){
         evalue(__soc, selfId, user_id);
 
         // お客様の評価が終了したら、お会計のスレッドを終了する
-        pthread_exit(NULL);        
-    }
+        pthread_exit(NULL);
 
+        //トランザクションの終了
+        if(mysql_query(conn, "COMMIT;") != 0){
+            fprintf(stderr, "COMMIT error\n");
+            exit(1);
+        }
 }

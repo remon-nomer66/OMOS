@@ -1,21 +1,14 @@
 #include "OMOS.h"
 
-int history(PGconn *__con, int get_table_num){
+int history(PGconn *__con, int *__s_store){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
     pthread_t selfId = pthread_self();  //スレッドID
 
-    //DBに接続する
-    sprintf(connInfo, "host=%s port=%s dbname=%s user=%s password=%s", dbHost, dbPort, dbName, dbLogin, dbPwd);
-    __con = PQconnectdb(connInfo);
-    if(PQstatus(__con) == CONNECTION_BAD){
-        printf("DB connection error.\n");
-        exit(1);
-    }
-
-    //orderテーブルのtable_numがhistory関数の引数get_table_numと一致するレコードを取得する
-    sprintf(sql, "SELECT * FROM order WHERE table_num = %d", get_table_num);
-    res = PQexec(__con, sql);
+    //order_tのstore_id = s_store[0], desk_num=s_store[1]となる一致するレコードを取得する
+    char sql[BUFSIZE];
+    sprintf(sql, "SELECT * FROM order_t WHERE store_id = %d AND desk_num = %d", __s_store[0], __s_store[1]);
+    PGresult *res = PQexec(__con, sql);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){
         printf("No data retrieved\n");
         PQclear(res);
@@ -32,7 +25,7 @@ int history(PGconn *__con, int get_table_num){
         }
     }
 
-    //絞り込んだテーブルにmenu_idが存在する。そのmenu_idを用いて、menuテーブルからmenu_priceを取得する。そしてテーブルを統合する。
+    //絞り込んだテーブルにmenu_idが存在する。そのmenu_idを用いて、menu_tからmenu_priceを取得する。そしてテーブルを統合する。
     sprintf(sql, "SELECT order.*, menu.menu_price FROM order "
              "INNER JOIN menu ON order.menu_id = menu.menu_id "
              "WHERE table_num = %d", get_table_num);
@@ -69,9 +62,4 @@ int history(PGconn *__con, int get_table_num){
     }
 
     printf(" 合計金額: %d\n", totalAmount);
-
-    //DBとの接続を切断する
-    PQclear(res);
-    PQfinish(__con);
-
 }
