@@ -20,7 +20,7 @@
 #include <postgresql/libpq-fe.h>
 #include <ctype.h>
 
-#define BUFSIZE 1024
+#define BUFSIZE 1024*5
 #define PORT 10000
 #define ENTER "\n"
 
@@ -72,6 +72,10 @@
 #define ACOR    3         //COR
 #define AMGR    4         //店長
 #define ACLERK  5         //店員
+#define ANUREG  6         //未登録
+#define RSRVMAX 3         //予約可能最大数
+#define STREMAX 20        //店舗数
+#define INIT    100       //初期化
 
 //*** スレッド関数に渡す引数情報構造体 ***//
 typedef struct _ThreadParamter {

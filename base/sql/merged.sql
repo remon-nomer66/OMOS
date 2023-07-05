@@ -1,11 +1,11 @@
--- 03: どの店舗所属かという情報もあった方がいいかも
+BEGIN TRANSACTION;
 
 --
 -- 01 user_t
 --
 CREATE TABLE user_t(
        user_id         integer,                            -- ユーザID
-       user_phone      integer            NOT NULL,        -- 電話番号
+       user_phone      bigint             NOT NULL,        -- 電話番号
        user_name       varchar(100)       NOT NULL,        -- 氏名
        user_pass       varchar(16)        NOT NULL,        -- パスワード
        PRIMARY KEY (user_id)
@@ -15,7 +15,7 @@ CREATE TABLE user_t(
 -- 02 user_point_t
 --
 CREATE TABLE user_point_t(
-       user_id         integer            NOT NULL,        -- ユーザID
+       user_id         integer,                            -- ユーザID
        user_point      integer            DEFAULT 0,       -- ポイント
        user_mag        float(3)           NOT NULL,        -- 倍率
        PRIMARY KEY (user_id)
@@ -25,8 +25,9 @@ CREATE TABLE user_point_t(
 -- 03 user_authority_t
 --
 CREATE TABLE user_authority_t(
-       user_id         integer            NOT NULL,        -- ユーザID
+       user_id         integer,                            -- ユーザID
        user_authority  integer            DEFAULT 1,       -- 権限
+       store_id        integer            DEFAULT 0,       -- ユーザ所属
        PRIMARY KEY (user_id)
 );
 
@@ -36,17 +37,26 @@ CREATE TABLE user_authority_t(
 CREATE TABLE store_t(
        store_id		integer,                           -- 店舗ID
        store_name           varchar(30)          NOT NULL,     -- 店舗名
-       region			integer	       NOT NULL,     -- 地域
        PRIMARY KEY (store_id)
 );
 
 --
+-- 店舗地域対応関係
+--
+CREATE TABLE region_t(
+       store_id             integer,
+       region_id            integer              NOT NULL,
+       region_name          varchar(20)          NOT NULL,
+)
+
+--
 -- store_tabel_t
 --
-CREATE TABLE store_region_t(
+CREATE TABLE store_table_t(
        store_id	       integer              NOT NULL,
        desk_num		integer              NOT NULL,     -- 卓番号
        desk_max		integer              NOT NULL,     -- 卓上限人数
+       desk_use             integer              NOT NULL,     -- 卓使用フラグ
        PRIMARY KEY (store_id)
 );
 
@@ -58,13 +68,13 @@ CREATE TABLE order_t(
 	desk_num	       integer              NOT NULL,    -- 卓番号
        menu_id     	       integer              NOT NULL,    -- 商品ID 
        order_cnt   	       integer              NOT NULL,    -- 個数
-       order_flag  	       integer              DEFAULT 0,   -- 確認フラグ
+       kitchen_flag  	integer              DEFAULT 0,   -- 確認フラグ
 	order_date  	       date                 NOT NULL,    -- 注文日
 	order_time  	       time                 NOT NULL,    -- 注文時間
 	account_id	       integer              NOT NULL,    -- アカウントID
-       PRIMARY KEY (store_id, desk_num, order_time),
-       FOREIGN KEY (store_id)
-         REFERENCES store_t (store_id)
+       PRIMARY KEY (store_id, desk_num, order_time)--,
+       --FOREIGN KEY (store_id)
+       --  REFERENCES store_t (store_id)
 );
 
 --
@@ -93,9 +103,18 @@ CREATE TABLE recipe_t(
 --
 -- 08 menu_price_t
 --
-CREATE TABLE price_charge_t(
+CREATE TABLE menu_price_t(
        menu_id              integer       NOT NULL,         -- 商品ID
        price                integer       NOT NULL,         -- 価格
+       PRIMARY KEY (menu_id)
+);
+
+--
+-- 12 menu_charge_t
+--
+CREATE TABLE menu_charge_t(
+       menu_id              integer       NOT NULL,         -- 商品ID
+       user_id              integer       NOT NULL,         -- 責任者
        PRIMARY KEY (menu_id)
 );
 
@@ -104,7 +123,9 @@ CREATE TABLE price_charge_t(
 --
 CREATE TABLE push_t(
        menu_id              integer       NOT NULL,         -- 商品ID
-       push                 integer       NOT NULL,         -- 押し
+       push_hq              integer       NOT NULL,         -- 押しHQ
+       push_cor             integer       NOT NULL,         -- 押しCOR
+       push_mgr             integer       NOT NULL,         -- 押し店長
        layer                integer       NOT NULL,         -- メニューレベル
        PRIMARY KEY (menu_id)
 );
@@ -114,18 +135,9 @@ CREATE TABLE push_t(
 --
 CREATE TABLE menu_storage_t(
        menu_id		integer       NOT NULL,    -- 商品ID
-       store_id    	       integer       NOT NULL,    -- 店舗ID
+       store_id             integer       NOT NULL,    -- 店舗ID
        storage   	       integer       NOT NULL,    -- 在庫個数
        min_storage   	integer       NOT NULL,    -- 在庫下限
-       PRIMARY KEY (menu_id)
-);
-
---
--- 12 menu_charge_t
---
-CREATE TABLE menu_charge_t(
-       menu_id              integer       NOT NULL,         -- 商品ID
-       account_id           integer       NOT NULL,         -- 責任者
        PRIMARY KEY (menu_id)
 );
 
@@ -134,15 +146,14 @@ CREATE TABLE menu_charge_t(
 --
 CREATE TABLE reserve_t(
        account_id		integer	NOT NULL,
-       number_of_people	integer	NOT NULL,
+       people_num    	integer	NOT NULL,
        reserve_date		date	       NOT NULL,
        reserve_time		time	       NOT NULL,
        store_id		integer	NOT NULL,
        desk_num		integer	NOT NULL,
-       desk_max		integer	NOT NULL,
-       PRIMARY KEY (account_id, reserve_date),
-       FOREIGN KEY (store_id)
-         REFERENCES store_t (store_id)
+       PRIMARY KEY (account_id, reserve_date, reserve_time, store_id, desk_num)--,
+       --FOREIGN KEY (store_id)
+       --  REFERENCES store_t (store_id)
 );
 
 --
@@ -156,3 +167,5 @@ CREATE TABLE store_order_t(
        store_order_time   time            NOT NULL,
        PRIMARY KEY (store_id, store_order_time)
 );
+
+COMMIT;

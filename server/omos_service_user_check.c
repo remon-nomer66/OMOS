@@ -3,7 +3,7 @@
 #define REWIND 1
 
 //ユーザー認証
-void service_user(PGconn *__con, int __soc, int *__auth){
+void service_user(PGconn *__con, int __soc, int *__u_info, int *__s_info){
     int gest_y_n = 0;   //ゲストかゲストでないか
     int tel;    //電話番号
     char comm[BUFSIZE];  //コマンド
@@ -12,15 +12,13 @@ void service_user(PGconn *__con, int __soc, int *__auth){
     int cnt, p_count, flag, a_flag;
    /*  int auth[2]; */
     pthread_t selfId = pthread_self();
-
+    
+    a_flag = 0;
+    
     while(1){
         //電話番号チェック
         while(1){
-            a_flag = 0;
-            sprintf(sendBuf, "会員の方は電話番号を入力してください．%s会員ではなく会員登録をされる方は\"UREG\"，ゲストでご利用される方は\"GUEST\"と入力してください%s", ENTER, ENTER);
-            sendLen = strlen(sendBuf);
-            send(__soc, sendBuf, sendLen, 0);
-            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+            
             recvLen = receive_message(__soc, recvBuf, BUFSIZE);
             if(recvLen > 0){
                 recvBuf[recvLen - 1] = '\0';
@@ -38,6 +36,7 @@ void service_user(PGconn *__con, int __soc, int *__auth){
                         send(__soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                         gest_y_n = 1;
+                        __auth[0] = 1;  //権限: お客様
                         break;
                     }
                 }else if(recvLen != TELLEN){
@@ -46,7 +45,7 @@ void service_user(PGconn *__con, int __soc, int *__auth){
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                 }else{
-                    sprintf(sendBuf, "携帯電話番号%s0%d", ENTER, tel);
+                    sprintf(sendBuf, "入力された携帯電話番号: 0%d%s", tel, ENTER);
                     sendLen = strlen(sendBuf);
                     send(__soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -72,7 +71,7 @@ void service_user(PGconn *__con, int __soc, int *__auth){
                     recvBuf[recvLen - 1] = '\0';
                     printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
                     sscanf(recvBuf, "%s", comm);
-                    if(userCheck(__con, __soc, tel, comm) != -1){   //戻り値-1でなければ会員として正しい
+                    if(getUserInfo(__con, __soc, tel, comm, __u_info, __s_info) != -1){   //戻り値-1でなければ会員として正しい
 		                printf("userCheck\n;");
                         a_flag = 1;
 		                break;
@@ -82,7 +81,6 @@ void service_user(PGconn *__con, int __soc, int *__auth){
                             sendLen = strlen(sendBuf);
                             send(__soc, sendBuf, sendLen, 0);
                             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                            gest_y_n = 0;
                             p_count = 0;
                             break;
                         }else{
@@ -107,14 +105,12 @@ void service_user(PGconn *__con, int __soc, int *__auth){
                                     sendLen = strlen(sendBuf);
                                     send(__soc, sendBuf, sendLen, 0);
                                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                                    flag = REWIND;
                                 }
                             }else{
                                 sprintf(sendBuf, "不正なコマンドです%s", ENTER);
                                 sendLen = strlen(sendBuf);
                                 send(__soc, sendBuf, sendLen, 0);
                                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                                flag = REWIND;
                             }
                         }
                         if(flag == REWIND){
