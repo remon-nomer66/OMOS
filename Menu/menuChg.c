@@ -25,11 +25,18 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
             sendLen = strlen(sendBuf);　//送信データ長
             send(__soc, sendBuf, sendLen, 0);　//送信
         }
-        sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。%s", ENTER);　//送信データ作成
+        sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。（例：0001）%s", ENTER);　//送信データ作成
         sendLen = strlen(sendBuf);　//送信データ長
         send(__soc, sendBuf, sendLen, 0);　//送信
         recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
-        recvBuf{recvLen} = '\0';　//受信データにNULLを追加
+        recvBuf[recvLen] = '\0';
+        //4文字以外の場合はエラーを返す
+        if(recvLen != 4){
+            sprintf(sendBuf, "商品IDは4文字で入力してください．%s", ENTER);　//送信データ作成
+            sendLen = strlen(sendBuf);　//送信データ長
+            send(__soc, sendBuf, sendLen, 0);　//送信
+            return -1;
+        }
         //クライアントから受信した値をchangeidに代入
         sscanf(recvBuf, "%d", &changeid);
         //クライアントから受信したchangeidと、menu_idが一致するものかつテーブル名：menu_storage_tのstore_idとu_storeが一致するものを探す。
@@ -100,11 +107,18 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
                 recvBuf{recvLen} = '\0';　//受信データにNULLを追加
             }
-            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。%s", ENTER);　//送信データ作成
+            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。（例：0001）%s", ENTER);　//送信データ作成
             sendLen = strlen(sendBuf);　//送信データ長
             send(__soc, sendBuf, sendLen, 0);　//送信
             recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
-            recvBuf{recvLen} = '\0';　//受信データにNULLを追加
+            recvBuf[recvLen] = '\0';
+            //4文字以外の場合はエラーを返す
+            if(recvLen != 4){
+                sprintf(sendBuf, "商品IDは4桁で入力してください。%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+                continue;
+            }
             //クライアントから受信した値をchangeidに代入
             sscanf(recvBuf, "%d", &changeid);
             //クライアントから受信したchangeidと、menu_idが一致するものかつテーブル名：menu_storage_tのstore_idとu_storeが一致するものを探す。
@@ -166,11 +180,18 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
         sscanf(recvBuf, "%s", response);
         if(strcmp(response, "yes") == 0){
             //情報を変更したい店舗ID（2桁）を聞く。
-            sprintf(sendBuf, "情報を変更したい店舗ID（2桁）を入力してください。%s", ENTER);　//送信データ作成
+            sprintf(sendBuf, "情報を変更したい店舗ID（2桁）を入力してください。（例：01）%s", ENTER);　//送信データ作成
             sendLen = strlen(sendBuf);　//送信データ長
             send(__soc, sendBuf, sendLen, 0);　//送信
             recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
-            recvBuf{recvLen} = '\0';　//受信データにNULLを追加
+            recvBuf[recvLen] = '\0';
+            //2文字以外の場合はエラーを返す
+            if(recvLen != 2){
+                sprintf(sendBuf, "店舗IDは2文字で入力してください．%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+                return -1;
+            }
             //受信した値をchangestoreに代入
             sscanf(recvBuf, "%d", &changestore);
             //情報を変更したい店舗IDが存在するかどうかをテーブル名store_tから確認
@@ -194,11 +215,18 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 sendLen = strlen(sendBuf);　//送信データ長
                 send(__soc, sendBuf, sendLen, 0);　//送信
             }
-            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。%s", ENTER);　//送信データ作成
+            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。（例：0001）%s", ENTER);　//送信データ作成
             sendLen = strlen(sendBuf);　//送信データ長
             send(__soc, sendBuf, sendLen, 0);　//送信
             recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
-            recvBuf{recvLen} = '\0';　//受信データにNULLを追加
+            recvBuf[recvLen] = '\0';
+            //4文字以外の場合はエラーを返す
+            if(recvLen != 4){
+                sprintf(sendBuf, "商品IDは4文字で入力してください．%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+                return -1;
+            }
             //クライアントから受信した値をchangeidに代入
             sscanf(recvBuf, "%d", &changeid);
             //クライアントから受信したmenu_idがテーブル名：push_tに存在するか確認
@@ -305,11 +333,18 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 sendLen = strlen(sendBuf);　//送信データ長
                 send(__soc, sendBuf, sendLen, 0);　//送信
             }
-            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。%s", ENTER);　//送信データ作成
+            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。（例：0001）%s", ENTER);　//送信データ作成
             sendLen = strlen(sendBuf);　//送信データ長
             send(__soc, sendBuf, sendLen, 0);　//送信
             recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
-            recvBuf{recvLen} = '\0';　//受信データにNULLを追加
+            recvBuf[recvLen] = '\0';
+            //4文字以外の場合はエラーを返す
+            if(recvLen != 4){
+                sprintf(sendBuf, "商品IDは4桁で入力してください。%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+                return -1;
+            }
             //クライアントから受信した値をchangeidに代入
             sscanf(recvBuf, "%d", &changeid);
             //クライアントから受信したmenu_idがテーブル名：push_tに存在するか確認
@@ -421,11 +456,18 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
             send(__soc, sendBuf, sendLen, 0);　//送信
         }
         //どの店舗IDを選択するかを聞く
-        sprintf(sendBuf, "どの店舗IDを選択しますか？（2桁）%s", ENTER);　//送信データ作成
+        sprintf(sendBuf, "どの店舗IDを選択しますか？（2桁）（例：01）%s", ENTER);　//送信データ作成
         sendLen = strlen(sendBuf);　//送信データ長
         send(__soc, sendBuf, sendLen, 0);　//送信
         recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
-        recvBuf{recvLen} = '\0';　//受信データにNULLを追加
+        recvBuf[recvLen] = '\0';
+        //2文字以外の場合はエラーを返す
+        if(recvLen != 2){
+            sprintf(sendBuf, "店舗IDは2桁で入力してください．%s", ENTER);　//送信データ作成
+            sendLen = strlen(sendBuf);　//送信データ長
+            send(__soc, sendBuf, sendLen, 0);　//送信
+            return -1;
+        }
         //クライアントから受信した店舗IDをchangestoreに代入
         sscanf(recvBuf, "%d", &changestore);
         //情報を変更したい店舗IDが存在するかどうかをテーブル名store_tから確認
@@ -450,11 +492,18 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
             sendLen = strlen(sendBuf);　//送信データ長
             send(__soc, sendBuf, sendLen, 0);　//送信
         }
-        sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。%s", ENTER);　//送信データ作成
+        sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。（例：0001）%s", ENTER);　//送信データ作成
         sendLen = strlen(sendBuf);　//送信データ長
         send(__soc, sendBuf, sendLen, 0);　//送信
         recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
-        recvBuf{recvLen} = '\0';　//受信データにNULLを追加
+        recvBuf[recvLen] = '\0';
+        //入力が4文字以外の場合は商品IDを4桁で入力するようにエラーを返す
+        if(recvLen != 4){
+            sprintf(sendBuf, "商品IDは4桁で入力してください．%s", ENTER);　//送信データ作成
+            sendLen = strlen(sendBuf);　//送信データ長
+            send(__soc, sendBuf, sendLen, 0);　//送信
+            return -1;
+        }
         //クライアントから受信した値をchangeidに代入
         sscanf(recvBuf, "%d", &changeid);
         //changeidがchangestoreと同じ値のstore_idを持つmenu_storage_tに存在するか確認
