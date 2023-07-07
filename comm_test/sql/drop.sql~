@@ -1,7 +1,7 @@
 BEGIN TRANSACTION;
 
 DROP TABLE store_order_t;
-DROP SCHEMA reserve CASCADE;
+DROP TABLE reserve_t;
 DROP TABLE menu_storage_t;
 DROP TABLE push_t;
 DROP TABLE menu_charge_t;

@@ -47,8 +47,7 @@ CREATE TABLE region_t(
        store_id             integer,
        region_id            integer              NOT NULL,
        region_name          varchar(20)          NOT NULL,
-       PRIMARY KEY (store_id)
-);
+)
 
 --
 -- store_tabel_t
@@ -72,7 +71,7 @@ CREATE TABLE order_t(
        kitchen_flag  	integer              DEFAULT 0,   -- 確認フラグ
 	order_date  	       date                 NOT NULL,    -- 注文日
 	order_time  	       time                 NOT NULL,    -- 注文時間
-	user_id	       integer              NOT NULL,    -- アカウントID
+	account_id	       integer              NOT NULL,    -- アカウントID
        PRIMARY KEY (store_id, desk_num, order_time)--,
        --FOREIGN KEY (store_id)
        --  REFERENCES store_t (store_id)
@@ -87,7 +86,7 @@ CREATE TABLE summary_t(
        order_cnt   	       integer              NOT NULL,    -- 個数
        order_date	       date	              NOT NULL,    -- 注文日
        order_time	       time	              NOT NULL,    -- 注文時間
-       user_id	       integer	       NOT NULL,    -- アカウントID
+       account_id	       integer	       NOT NULL,    -- アカウントID
        PRIMARY KEY (menu_id, order_time)
 );
 
@@ -145,22 +144,17 @@ CREATE TABLE menu_storage_t(
 --
 -- 13 reserve_t
 --
-CREATE SCHEMA reserve;
-SET search_path to reserve;
 CREATE TABLE reserve_t(
-       reserve_no           integer       NOT NULL,
        user_id		integer	NOT NULL,
        people_num    	integer	NOT NULL,
        reserve_date		date	       NOT NULL,
        reserve_time		time	       NOT NULL,
        store_id		integer	NOT NULL,
        desk_num		integer	NOT NULL,
-       PRIMARY KEY (reserve_no)
+       PRIMARY KEY (user_id, reserve_date, reserve_time, store_id, desk_num)--,
        --FOREIGN KEY (store_id)
        --  REFERENCES store_t (store_id)
 );
-CREATE SEQUENCE reserve_seq MAXVALUE 99999 START 1;
-SET search_path to public;
 
 --
 -- 14 store_order_t(発注)
