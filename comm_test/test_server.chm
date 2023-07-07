@@ -1,58 +1,64 @@
-コードを変更する箇所は各方法によって異なります
-想定例を2つ示します
+--
+-- ver2.0
+--
 
-1．スレッドメイン関数を変更する場合     
-    (実際のコードと遠い，変更箇所が少ない)
-2．作成した個別のファイルを用いる場合
-    (実際のコードに近い，変更箇所が複数ファイルに跨る，
-    "TEST"と毎回入力する必要がある)
+以前のファイルからの変更点
 
-1．の場合で変更する箇所
+    - 自作関数に応じて変更しなければならない箇所が変わりました
+    - 端末の想定をtest_mclientからmcilentEXに変更しました
+    - 利用方法が変わりました
+    - SQLを変更しました
+        - region_t(店舗と地域の対応関係)
+        - account_idのままであったものをuser_idに変更しました
+        - reserve_tはスキーマreserveを作成し、publicスキーマからreserveスキーマに移動しました
 
-    test_service.c
-        20行目から48行目を自身のコードで置き換える
-    
-    Makefile
-        "test_func.c"を削除
+自作関数に合わせて変更する箇所
+    - test_func.c
+        - 自身で制作されたファイルに置き換えてください
+           ファイルの置き換え方は以下の2通りです
+            - ①test_func.cの中身を書き換える
+                - omos.h、test_controller.cを書き換えてください
+            - ②test_func.cを自作したファイルに置き換える
+                - omos.h、test_controller.c、Makefileを書き換えてください
+    - omos.h
+        - 109行目の「int」以降の関数名と引数を変更してください
+    - test_controller.c
+        - 23行目の関数名と引数を変更してください
+        - u_info(11行目)、s_info(12行目)は適宜変更してください
+    - Makefile(②の場合のみ)
+        - 8行目の「:=」以降のtest_func.cを削除し、自身で制作されたファイル名を記述してください
 
-2．の場合で変更する箇所
+利用方法
+    - クライアントとサーバが接続されても特段文字列は表示されませんので、適当な文字列を入力してください(単にENTERボタンを押して頂いても構いません)
+    - クライアント終了するときは「exit」と入力してください
 
-    test.h
-        90行目: 作成した関数に直す
+mclientEXについて
+    - DATA_END(.\n)までを繰り返し受信します
+    - DATA_ENDの前はENTER(\n)を記述してください
+        - e.g. sprintf(sendBuf, "結果: %d%s%s", param1, ENTER, DATA_END);
+    - すでに実行ファイル形式のものがありますが、実行できないときは以下のどちらかの方法を試してください
+        - chmod u+x mclientEX
+            - https://qiita.com/shisama/items/5f4c4fa768642aad9e06
+        - gcc mclient_ex.c -o mclientEX
 
-    test_service.c
-        27行目: 関数を変更
+ファイル構造
+    comm_test
+            mclient_ex
+                    mclientEX
+                    mclient_ex.c
+                    Makefile
+                    setup_connect.c
+            sql
+                    merged.sql
+                    insert.sql
+                    drop.sql
+            test_func.c
+            omos.h
+            test_controller.c
+            Makefile
+            test_server.chm
+            setup_listen.c
+            comm_func.c
+            test_server_main.c
 
-    test_func.c
-        このファイルは削除し，作成したファイルに置き換える
-
-    Makefile
-        6行目: "test_func.c"を作成したファイル名に置き換える
-
-
-使い方
-
-    "make"でコンパイルし，"./test_server"でサーバを起動
-
-    "gcc test_mclient.c -o tmclient"でコンパイルし，
-    "./tmclient 133.54.224.(任意のアドレス) 10000"でサーバに接続
-
-
-注意
-
-    いつも使っている"mclient"は利用しないで下さい
-
-
-注釈
-
-    コマンドはtest.hで宣言されていますが，追加・変更する場合はtest.hを変更して下さい
-
-その他
-
-    自身のDBで行いたい場合は，"test_server_main.c"の47行目から49行目を自身のものに
-    置き換えて下さい
-
-    SQLは"sqlフォルダ"の中にありますので，テーブルを作成する場合は，
-    ディレクトリを"sql"に移動し，DBを操作して下さい
-
-    "\i merged.sql"でテーブルを作成できます
+その他何か問題がありましたら連絡頂ければありがたいです
