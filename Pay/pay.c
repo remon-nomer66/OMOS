@@ -1,14 +1,10 @@
 #include "omos.h"
 
 \* お会計処理 *\
-int pay(PGconn *__con, int __soc, int user_id){
+int pay(PGconn *__con, int __soc, int *__u_info){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
     pthread_t selfId = pthread_self();  //スレッドID
-    int num;    //割り勘人数
-    int remainder;  //割り勘の余り
-    double price;   //合計金額
-    int sharePrice;  //割り勘金額
 
     //トランザクション開始
     PGresult *res = PQexec(__con, "BEGIN");
@@ -20,102 +16,93 @@ int pay(PGconn *__con, int __soc, int user_id){
         send(__soc, sendBuf, sendLen, 0);
     }
 
-    //kitchenDBに接続できているか確認
-    sprintf(query, "SELECT * FROM kitchen WHERE table_info LIKE '%s%%' AND kitchen_flag = 1", comm);    \\SQL文を作成
-    res = PQexec(conn, query);  //SQL文を実行
-        if(PQresultStatus(res) != PGRES_TUPLES_OK){ //実行結果の確認
-        printf("SELECT failed: %s", PQerrorMessage(conn));
+    //お会計にてテーブル番号を入力してもらう
+    sprintf(sendBuf, "テーブル番号を入力してください。%s", ENTER);
+    send(__soc, sendBuf, sendLen, 0);
+    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+    recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
+
+    // テーブル番号の取得
+    int tableNum = atoi(recvBuf);
+
+    // テーブル番号が存在するか確認
+    sprintf(sendBuf, "SELECT * FROM store_table_t WHERE desk_num = %d;", tableNum);
+    res = PQexec(__con, sendBuf);
+    if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
+        printf("SELECT failed: %s", PQerrorMessage(__con));
         PQclear(res);
-        PQfinish(conn);
+        PQfinish(__con);
         sprintf(sendBuf, "error occured%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
-        }
-        //結果の確認
-        int rows = PQntuples(res);
-        if(rows == 0){  //レコードが存在しない場合
+    }
+
+    // テーブル番号が存在しない場合
+    if(PQntuples(res) == 0){
+        sprintf(sendBuf, "テーブル番号が存在しません。%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+        PQclear(res);
+        PQfinish(__con);
+        return 0;
+    }
+
+    // テーブル番号が存在する場合
+    // order_tよりテーブル番号(tableNum = desk_num)の注文を取得する
+    sprintf(sendBuf, "SELECT * FROM order_t WHERE desk_num = %d;", tableNum);
+    res = PQexec(__con, sendBuf);
+    if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
+        printf("SELECT failed: %s", PQerrorMessage(__con));
+        PQclear(res);
+        PQfinish(__con);
         sprintf(sendBuf, "error occured%s", ENTER);
-        send(__soc, sendBuf, sendLen, 0)
-        }
-        
-        // レコードが存在する場合
-        double totalPrice = 0.0;    // 合計金額の初期化
-        for(int i = 0; i < rows; i++) {  // 絞り込まれたレコードをループで処理
-            char *productID = PQgetvalue(res, i, 0);  // 商品IDの取得
-            int quantity = atoi(PQgetvalue(res, i, 1));  // 注文個数の取得
-            
-            // menuテーブルから単価を取得するクエリの作成
-            char priceQuery[256];   // クエリ用バッファ
-            sprintf(priceQuery, "SELECT price FROM menu WHERE menu_id = %s", menuID);
-            
-            // クエリの実行
-            PGresult *priceRes = PQexec(conn, priceQuery);
-            if(PQresultStatus(priceRes) != PGRES_TUPLES_OK){
-                printf("SELECT failed: %s", PQerrorMessage(conn));
-                PQclear(priceRes);
-                PQfinish(conn);
-                sprintf(sendBuf, "error occured%s", ENTER);
-                send(__soc, sendBuf, sendLen, 0);
-            }
-            
-            // 単価の取得
-            price = atof(PQgetvalue(priceRes, 0, 0));
-            
-            // 合計金額の計算
-            totalPrice += price * quantity;
-            
-            PQclear(priceRes);  // クエリ結果の解放
-        }
+        send(__soc, sendBuf, sendLen, 0);
+    }
 
-        //ポイントを使用するかどうか問う
-        sprintf(sendBuf, "ポイントを使用しますか？(y/n)%s", ENTER);
+    // 注文が存在しない場合
+    if(PQntuples(res) == 0){
+        sprintf(sendBuf, "注文が存在しません。%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-        recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
+        PQclear(res);
+        PQfinish(__con);
+        return 0;
+    }
 
-        // ポイントを使用する場合、pointUse関数を呼び出し、socket・合計金額・ユーザIDを渡す
-        if(recvBuf[0] == 'y'){
-            totalPrice = pointUse(__soc, totalPrice, userID, selfId);
-        }
-
-        // お会計処理
-        sprintf(sendBuf, "お会計は%d円です。%s", totalPrice, ENTER);
+    // 注文が存在する場合
+    // order_tよりkitchen_flagが0の注文を取得する
+    sprintf(sendBuf, "SELECT * FROM order_t WHERE desk_num = %d AND kitchen_flag = 0;", tableNum);
+    res = PQexec(__con, sendBuf);
+    if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
+        printf("SELECT failed: %s", PQerrorMessage(__con));
+        PQclear(res);
+        PQfinish(__con);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+    }
+    
+    // kitchen_flagが0の注文が存在する場合
+    if(PQntuples(res) != 0){
+        sprintf(sendBuf, "まだ提供していない料理がございます。%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-        recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
+        PQclear(res);
+        PQfinish(__con);
+        return 0;
+    }
 
-        // totalPriceにuserDBのポイント倍率をかける
-        sprintf(query, "SELECT point_rate FROM user WHERE user_id = %s", userID);    \\SQL文を作成
-        res = PQexec(conn, query);  //SQL文を実行
-        if(PQresultStatus(res) != PGRES_TUPLES_OK){ //実行結果の確認
-            printf("SELECT failed: %s", PQerrorMessage(conn));
-            PQclear(res);
-            PQfinish(conn);
-            sprintf(sendBuf, "error occured%s", ENTER);
-            send(__soc, sendBuf, sendLen, 0);
-        }
-        //結果の確認
-        rows = PQntuples(res);
-        if(rows == 0){  //レコードが存在しない場合
-            sprintf(sendBuf, "error occured%s", ENTER);
-            send(__soc, sendBuf, sendLen, 0);
-        }
-        // レコードが存在する場合
-        double pointRate = atof(PQgetvalue(res, 0, 0));    // ポイント倍率の取得
-        new_point = totalPrice * (pointRate / 100);    // ポイントの計算
+    // order_tよりkitchen_flagが1の注文を取得する
+    sprintf(sendBuf, "SELECT * FROM order_t WHERE desk_num = %d AND kitchen_flag = 1;", tableNum);
+    res = PQexec(__con, sendBuf);
+    if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
+        printf("SELECT failed: %s", PQerrorMessage(__con));
+        PQclear(res);
+        PQfinish(__con);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+    }
 
-        // userDBのポイントを更新するクエリの作成
-        sprintf(query, "UPDATE user SET point = point + %d WHERE user_id = %s", new_point, userID);
-        res = PQexec(conn, query);  //SQL文を実行
-        if(PQresultStatus(res) != PGRES_COMMAND_OK){ //実行結果の確認
-            printf("UPDATE failed: %s", PQerrorMessage(conn));
-            PQclear(res);
-            PQfinish(conn);
-            sprintf(sendBuf, "error occured%s", ENTER);
-            send(__soc, sendBuf, sendLen, 0);
-        }
-        PQclear(res);  // クエリ結果の解放
-
-        // 割り勘の有無を問う
+    // kitchen_flagが1の注文が存在する場合、割り勘の有無を問う
+    if(PQntuples(res) != 0){
         sprintf(sendBuf, "割り勘しますか？(y/n)%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
@@ -123,140 +110,110 @@ int pay(PGconn *__con, int __soc, int user_id){
 
         // 割り勘する場合
         if(recvBuf[0] == 'y'){
-            // 割り勘人数の入力を求める
-            sprintf(sendBuf, "割り勘人数を入力してください。%s", ENTER);
+            // order_tよりkitchen_flagが1の注文を取得する
+            sprintf(sendBuf, "SELECT * FROM order_t WHERE desk_num = %d AND kitchen_flag = 1;", tableNum);
+            res = PQexec(__con, sendBuf);
+            if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
+                printf("SELECT failed: %s", PQerrorMessage(__con));
+                PQclear(res);
+                PQfinish(__con);
+                sprintf(sendBuf, "error occured%s", ENTER);
+                send(__soc, sendBuf, sendLen, 0);
+            }
+
+            // 割り勘する人数を入力してもらう
+            sprintf(sendBuf, "割り勘する人数を入力してください。%s", ENTER);
             send(__soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
             recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
 
-            // 割り勘人数の取得
-            num = atoi(recvBuf);
+            // 割り勘する人数の取得
+            int num = atoi(recvBuf);
 
-            // 割り勘金額の計算
-            sharePrice = totalPrice / num;
-            // totalPrice/numの余りを計算
-            remainder = (int)totalPrice % num;
+            // 割り勘する人数が0以下の場合、もう一度入力してもらう
+            while(num <= 0){
+                sprintf(sendBuf, "入力値が不正です。割り勘する人数を入力してください。%s", ENTER);
+                send(__soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+                recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
 
-            // 割り勘金額の送信
-            sprintf(sendBuf, "一人あたり%d円です。%s", sharePrice, ENTER);
+                // 割り勘する人数の取得
+                num = atoi(recvBuf);
+            }
+
+            // 割り勘する人数の取得
+            sprintf(sendBuf, "割り勘する人数は%d人です。%s", num, ENTER);
             send(__soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-            recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-
-            // 余りがある場合,○人○円/○人○円と表示する
-            if(remainder != 0){
-                sprintf(sendBuf, "%d人%d円/%d人%d円です。%s", num - remainder, sharePrice, remainder, sharePrice + 1, ENTER);
-                send(__soc, sendBuf, sendLen, 0);
-                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-            }
-
-            // num - remainderの数だけfor文を回し、お会計のおつり計算を行う。
-            for(int i = 0; i < num - remainder; i++){
-                // お預かりした金額の入力を求める
-                sprintf(sendBuf, "お預かりした金額を入力してください。%s", ENTER);
-                send(__soc, sendBuf, sendLen, 0);
-                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-                // お預かりした金額入力が数字入力でない場合、再度入力を求める
-                while(!isdigit(recvBuf[0])){
-                    sprintf(sendBuf, "金額を入力してください。%s", ENTER);
-                    send(__soc, sendBuf, sendLen, 0);
-                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                    recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-                }
-                // お預かりした金額が少ない場合、再度金額の入力を求める
-                while(atoi(recvBuf) < sharePrice){
-                    sprintf(sendBuf, "金額が足りません。再度入力してください。%s", ENTER);
-                    send(__soc, sendBuf, sendLen, 0);
-                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                    recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-                }
-                // おつりの計算
-                change = atoi(recvBuf) - sharePrice;
-                // おつりの送信
-                sprintf(sendBuf, "おつりは%d円です。%s", change, ENTER);
-                send(__soc, sendBuf, sendLen, 0);
-                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-            }
-
-            // remainderの数だけfor文を回し、お会計のおつり計算を行う。
-            for(i = 0; i < remainder; i++){
-                //お預かりした金額の入力を求める
-                sprintf(sendBuf, "お預かりした金額を入力してください。%s", ENTER);
-                send(__soc, sendBuf, sendLen, 0);
-                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-                // お預かりした金額入力が数字入力でない場合、再度入力を求める
-                while(!isdigit(recvBuf[0])){
-                    sprintf(sendBuf, "金額を入力してください。%s", ENTER);
-                    send(__soc, sendBuf, sendLen, 0);
-                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                    recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-                }
-                // お預かりした金額が少ない場合、再度金額の入力を求める
-                while(atoi(recvBuf) < sharePrice + 1){
-                    sprintf(sendBuf, "金額が足りません。再度入力してください。%s", ENTER);
-                    send(__soc, sendBuf, sendLen, 0);
-                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                    recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-                }
-                // おつりの計算
-                change = atoi(recvBuf) - (sharePrice + 1);
-                // おつりの送信
-                sprintf(sendBuf, "おつりは%d円です。%s", change, ENTER);
-                send(__soc, sendBuf, sendLen, 0);
-                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-
-            }
+        }
 
         // 割り勘しない場合
-        }else if(recvBuf[0] == 'n'){
-            // お預かりした金額の入力を求める
-            sprintf(sendBuf, "お預かりした金額を入力してください。%s", ENTER);
+        else{
+            num = 1;
+            sprintf(sendBuf, "割り勘しません。%s", ENTER);
             send(__soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-            recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-            // お預かりした金額入力が数字入力でない場合、再度入力を求める
-            while(!isdigit(recvBuf[0])){
-                sprintf(sendBuf, "金額を入力してください。%s", ENTER);
-                send(__soc, sendBuf, sendLen, 0);
-                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-            }
-            // お預かりした金額が少ない場合、再度金額の入力を求める
-            while(atoi(recvBuf) < sharePrice){
-                sprintf(sendBuf, "金額が足りません。再度入力してください。%s", ENTER);
-                send(__soc, sendBuf, sendLen, 0);
-                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-                recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
-            }
-            // おつりの計算
-            change = atoi(recvBuf) - totalPrices;
-            // おつりの送信
-            sprintf(sendBuf, "おつりは%d円です。%s", change, ENTER);
-            send(__soc, sendBuf, sendLen, 0);
-            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-            recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
         }
+    }
+    
+    // order_tよりkitchen_flagが1の注文を取得した後、order_tのmenu_idをもとにmenu_price_tからpriceを結合する
+    sprintf(sendBuf, "SELECT order_t.menu_id, menu_price_t.price FROM order_t INNER JOIN menu_price_t ON order_t.menu_id = menu_price_t.menu_id WHERE desk_num = %d AND kitchen_flag = 1;", tableNum);
+    res = PQexec(__con, sendBuf);
+    if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
+        printf("SELECT failed: %s", PQerrorMessage(__con));
+        PQclear(res);
+        PQfinish(__con);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+    }
 
-        // お会計の終了
-        sprintf(sendBuf, "お会計を終了します。%s", ENTER);
+    //金額を計算する
+    //order_tの個数(order_cnt)とmenu_price_tの値段(price)をかけて、合計金額を計算する
+    int sum = 0;
+    for(int i = 0; i < PQntuples(res); i++){
+        sum += atoi(PQgetvalue(res, i, 0)) * atoi(PQgetvalue(res, i, 1));
+    }
+
+    //ポイントの使用を問う
+    sprintf(sendBuf, "ポイントを使用しますか？(y/n)%s", ENTER);
+    send(__soc, sendBuf, sendLen, 0);
+    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+    recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
+
+    // ポイントを使用する場合、pointUse()にu_infoを引数として渡し、ポイントを使用する
+    if(recvBuf[0] == 'y'){
+        sum = pointUse(__soc, sum, u_info);
+    }
+
+
+    // 割り勘する人数で割る
+    sum /= num; //合計金額を人数で割る
+    over = sum % num;   //割り切れない場合の余りを求める
+
+    //もしoverが0の時、
+    if(over == 0){
+        // 合計金額を送信する
+        sprintf(sendBuf, "合計金額は%d円です。%s", sum, ENTER);
         send(__soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
-        recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
+    }
 
-        // お客様の評価を行うため、evalue()関数を呼び出す
-        evalue(__soc, selfId, user_id);
+    // もしover(あまり)が0でない場合、
+    if(over != 0){
+        //○人は△円、□人は▲円です。と送信する
+        sprintf(sendBuf, "%d人は%d円、%d人は%d円です。%s", num - over, sum, over, sum + 1, ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+    }
 
-        // お客様の評価が終了したら、お会計のスレッドを終了する
-        pthread_exit(NULL);
+    // 
 
-        //トランザクションの終了
-        if(mysql_query(conn, "COMMIT;") != 0){
-            fprintf(stderr, "COMMIT error\n");
-            exit(1);
-        }
+
+
+
+
+
+
+
+
 }

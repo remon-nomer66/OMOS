@@ -16,7 +16,7 @@ int history(PGconn *__con, int *__s_store){
         exit(1);
     }
 
-    //絞り込んだテーブルを表示する。orderテーブルのkitchenflagが「NULL」になっているものを上の方に表示する
+    //絞り込んだテーブルを表示する。order_tのkitchenflagが「NULL」になっているものを上の方に表示する
     for(int i = 0; i < PQntuples(res); i++){ //PQntuples()は取得したレコード数を返す
         if(PQgetisnull(res, i, 4) == 1){    // kitchenflagが「NULL」
             printf("%s %s %s %s %s\n", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2), PQgetvalue(res, i, 3), "未");   //PQgetvalue()は取得したレコードのi行目のj列目の値を返す
@@ -25,10 +25,8 @@ int history(PGconn *__con, int *__s_store){
         }
     }
 
-    //絞り込んだテーブルにmenu_idが存在する。そのmenu_idを用いて、menu_tからmenu_priceを取得する。そしてテーブルを統合する。
-    sprintf(sql, "SELECT order.*, menu.menu_price FROM order "
-             "INNER JOIN menu ON order.menu_id = menu.menu_id "
-             "WHERE table_num = %d", get_table_num);
+    //order_tにmenu_idが存在する。そのmenu_idを用いて、menu_price_tのmenu_idをキーにmenu_priceを取得する。そしてテーブルを統合する。
+    sprintf(sql, "SELECT * FROM order_t INNER JOIN menu_price_t ON order_t.menu_id = menu_price_t.menu_id WHERE order_t.store_id = %d AND order_t.desk_num = %d", __s_store[0], __s_store[1]);
     res = PQexec(__con, sql);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){
         printf("No data retrieved\n");
@@ -43,7 +41,7 @@ int history(PGconn *__con, int *__s_store){
     for(int i = 0; i < PQntuples(res); i++){
         if(PQgetisnull(res, i, 4) == 0){ // kitchenflagが"済み"
             // menu_priceの取得
-            sprintf(sql, "SELECT menu_price FROM menu WHERE menu_id = %s", PQgetvalue(res, i, 1));
+            sprintf(sql, "SELECT menu_price FROM menu_t WHERE menu_id = %s", PQgetvalue(res, i, 1));
             PGresult *resPrice = PQexec(__con, sql);
             if(PQresultStatus(resPrice) != PGRES_TUPLES_OK){
                 printf("No data retrieved\n");
