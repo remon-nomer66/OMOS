@@ -50,6 +50,12 @@ int menu(PGconn *__con, int __soc, int *__u_info){
                     send(__soc, sendBuf, sendLen, 0);
                     break;
                 }
+            }else{
+                //使用不可のコマンドです。
+                sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER);
+                sendLen = strlen(sendBuf);
+                send(__soc, sendBuf, sendLen, 0);
+                break;
             }
         }
     }

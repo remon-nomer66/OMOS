@@ -25,6 +25,14 @@ int menuReg(PGconn *__con, int __soc, int *__u_info){
             send(__soc, sendBuf, sendLen, 0);
             return -1;
         }
+        //入力された文字が数字以外ならエラーを返す。
+        for(i = 0; i < strlen(recvBuf); i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sendLen = sprintf(sendBuf, "商品IDは数字で入力してください。%s", ENTER);
+                send(__soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //入力をnewmidに格納
         sscanf(recvBuf, "%d", &newmid);
         //newmidと同じmenu_idがテーブル名：push_tにいないかを確認。
@@ -67,6 +75,14 @@ int menuReg(PGconn *__con, int __soc, int *__u_info){
             send(__soc, sendBuf, sendLen, 0);
             return -1;
         }
+        //入力された文字が数字以外ならエラーを返す。
+        for(i = 0; i < strlen(recvBuf); i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sendLen = sprintf(sendBuf, "価格は数字で入力してください。%s", ENTER);
+                send(__soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //押しにして登録するかどうかを確認。するなら１、しないなら０を入力してください。
         sendLen = sprintf(sendBuf, "押しメニューとして登録しますか？するなら１、しないなら０を入力してください。%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
@@ -75,12 +91,24 @@ int menuReg(PGconn *__con, int __soc, int *__u_info){
         recvBuf[recvLen] = '\0';
         //入力をnewmstarに格納
         sscanf(recvBuf, "%d", &newmstar);
+        //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
+        if(newmstar != 0 && newmstar != 1){
+            sendLen = sprintf(sendBuf, "押しメニューにするかどうかは１か０で入力してください。%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+            return -1;
+        }
         //初期在庫数を入力してください。
         sendLen = sprintf(sendBuf, "初期在庫数を入力してください。%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
         //初期在庫数を受信
         recvLen = recv(__soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen] = '\0';
+        //入力された文字が数字以外ならエラーを返す。
+        if(!isdigit(recvBuf[0])){
+            sendLen = sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+            return -1;
+        }
         //入力をnewmstockに格納
         sscanf(recvBuf, "%d", &newmstock);
         //在庫下限を入力してください。
@@ -89,6 +117,12 @@ int menuReg(PGconn *__con, int __soc, int *__u_info){
         //在庫下限を受信
         recvLen = recv(__soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen] = '\0';
+        //入力された文字が数字以外ならエラーを返す。
+        if(!isdigit(recvBuf[0])){
+            sendLen = sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+            return -1;
+        }
         //入力をnewmlimitに格納
         sscanf(recvBuf, "%d", &newmlimit);
         //テーブル名：recipe_tのmenuidにnewmidを、menu_nameにnewmnameを挿入
@@ -119,6 +153,14 @@ int menuReg(PGconn *__con, int __soc, int *__u_info){
             send(__soc, sendBuf, sendLen, 0);
             return -1;
         }
+        //入力された文字が数字以外ならエラーを返す。
+        for(i = 0; i < 4; i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sendLen = sprintf(sendBuf, "商品IDは数字で入力してください。%s", ENTER);
+                send(__soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //入力をnewmidに格納
         sscanf(recvBuf, "%d", &newmid);
         //newmidと同じmenu_idがテーブル名：push_tにいないかを確認。
@@ -153,6 +195,14 @@ int menuReg(PGconn *__con, int __soc, int *__u_info){
         //商品価格を受信
         recvLen = recv(__soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen] = '\0';
+        //入力された文字が数字以外ならエラーを返す。
+        for(i = 0; i < recvLen; i++){
+            if(!isdigit(recvBuf[i])){
+                sendLen = sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                send(__soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //入力をnewmpriceに格納
         sscanf(recvBuf, "%d", &newmprice);
         //新商品の価格が0以上であるかを確認。
@@ -169,6 +219,12 @@ int menuReg(PGconn *__con, int __soc, int *__u_info){
         recvBuf[recvLen] = '\0';
         //入力をnewmstarに格納
         sscanf(recvBuf, "%d", &newmstar);
+        //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
+        if(newmstar != 0 && newmstar != 1){
+            sendLen = sprintf(sendBuf, "押しメニューは１か０で入力してください。%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+            return -1;
+        }
         //どのメニューレベルで登録しますか？ 選択肢は0：コモンメニュー、1：ブランドメニュー洋食、2：ブランドメニュー和食、3：ブランドメニュー中華、4：ショップメニューです．
         sendLen = sprintf(sendBuf, "どのメニューレベルで登録しますか？%s 選択肢は0：コモンメニュー、1：ブランドメニュー洋食、2：ブランドメニュー和食、3：ブランドメニュー中華、4：ショップメニューです．%s", ENTER, ENTER);
         send(__soc, sendBuf, sendLen, 0);
@@ -197,6 +253,14 @@ int menuReg(PGconn *__con, int __soc, int *__u_info){
                 send(__soc, sendBuf, sendLen, 0);
                 return -1;
             }
+            //入力された文字が数字以外ならエラーを返す。
+            for(i = 0; i < 2; i++){
+                if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                    sendLen = sprintf(sendBuf, "店舗IDは数字で入力してください。%s", ENTER);
+                    send(__soc, sendBuf, sendLen, 0);
+                    return -1;
+                }
+            }
             //入力をnewmstoreに格納
             sscanf(recvBuf, "%d", &newmstore);
         }
@@ -206,6 +270,14 @@ int menuReg(PGconn *__con, int __soc, int *__u_info){
         //初期在庫数を受信
         recvLen = recv(__soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen] = '\0';
+        //入力された文字が数字以外ならエラーを返す。
+        for(i = 0; i < strlen(recvBuf); i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sendLen = sprintf(sendBuf, "初期在庫数は数字で入力してください。%s", ENTER);
+                send(__soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //入力をnewmstockに格納
         sscanf(recvBuf, "%d", &newmstock);
         //在庫下限を入力してください。
@@ -214,6 +286,14 @@ int menuReg(PGconn *__con, int __soc, int *__u_info){
         //在庫下限を受信
         recvLen = recv(__soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen] = '\0';
+        //入力された文字が数字以外ならエラーを返す。
+        for(i = 0; i < strlen(recvBuf); i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sendLen = sprintf(sendBuf, "在庫下限は数字で入力してください。%s", ENTER);
+                send(__soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //入力をnewmlimitに格納
         sscanf(recvBuf, "%d", &newmlimit);
         //テーブル名：recipe_tのmenuidにnewmidを、menu_nameにnewmnameを挿入

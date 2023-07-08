@@ -37,6 +37,15 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
             send(__soc, sendBuf, sendLen, 0);　//送信
             return -1;
         }
+        //入力された文字が数字以外ならエラーを返す。
+        for(int i = 0; i < 4; i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sprintf(sendBuf, "商品IDは数字で入力してください．%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+                return -1;
+            }
+        }
         //クライアントから受信した値をchangeidに代入
         sscanf(recvBuf, "%d", &changeid);
         //クライアントから受信したchangeidと、menu_idが一致するものかつテーブル名：menu_storage_tのstore_idとu_storeが一致するものを探す。
@@ -88,6 +97,15 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
             send(__soc, sendBuf, sendLen, 0);　//送信
             recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
             recvBuf{recvLen} = '\0';　//受信データにNULLを追加
+            //入力された文字列に数字以外が含まれるならエラーを返す。
+            for(i = 0; i < recvLen; i++){
+                if(isdigit(recvBuf[i]) == 0){
+                    sprintf(sendBuf, "値段は数字で入力してください．%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                    return -1;
+                }
+            }
             //クライアントから受信した変更内容をchangepriceに代入
             sscanf(recvBuf, "%s", changeprice);
             //テーブル名：menu_storage_tのstore_idとu_storeが一致し、changeidと同じmenu_idを持つ、テーブル名：recipe_tのpriceの内容をchangepriceに変更
@@ -119,6 +137,15 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 send(__soc, sendBuf, sendLen, 0);　//送信
                 continue;
             }
+            //入力された文字が数字以外ならエラーを返す。
+            for(int i = 0; i < 4; i++){
+                if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                    sprintf(sendBuf, "商品IDは数字で入力してください。%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                    continue;
+                }
+            }
             //クライアントから受信した値をchangeidに代入
             sscanf(recvBuf, "%d", &changeid);
             //クライアントから受信したchangeidと、menu_idが一致するものかつテーブル名：menu_storage_tのstore_idとu_storeが一致するものを探す。
@@ -146,6 +173,17 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 if(strcmp(changestar, "yes") == 0){
                     sprintf(sendBuf, "UPDATE push_t SET push_hq = 1 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store);　//SQL文作成
                     res = PQexec(__con, sendBuf);　//SQL文実行
+                }else if(strcmp(changestar, "no") == 0){
+                    //何も変更しませんでしたと返す。
+                    sprintf(sendBuf, "何も変更しませんでした。%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                }else{
+                    //使用不可のコマンドと返す。
+                    sprintf(sendBuf, "使用不可のコマンドです。%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                    return -1;
                 }
             }else if(strcmp(PQgetvalue(res, 0, 0), "1") == 0){
                 sprintf(sendBuf, "押しにするのを止めますか？%s yes または no%s", ENTER, ENTER);　//送信データ作成
@@ -159,9 +197,19 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 if(strcmp(changestar, "yes") == 0){
                     sprintf(sendBuf, "UPDATE push_t SET push_hq = 0 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store);　//SQL文作成
                     res = PQexec(__con, sendBuf);　//SQL文実行
+                }else if(strcmp(changestar, "no") == 0){
+                    //何も変更しませんでしたと返す。
+                    sprintf(sendBuf, "何も変更しませんでした。%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                }else{
+                    //使用不可のコマンドと返す。
+                    sprintf(sendBuf, "使用不可のコマンドです。%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                    return -1;
                 }
             }
-            
         }else{
             //打ち込まれたコマンドが使えないことを表示
             sprintf(sendBuf, "そのコマンドは使えません．%s", ENTER);　//送信データ作成
@@ -191,6 +239,15 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 sendLen = strlen(sendBuf);　//送信データ長
                 send(__soc, sendBuf, sendLen, 0);　//送信
                 return -1;
+            }
+            //入力された文字が数字以外ならエラーを返す。
+            for(i = 0; i < 2; i++){
+                if(isdigit(recvBuf[i]) == 0){
+                    sprintf(sendBuf, "店舗IDは数字で入力してください．%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                    return -1;
+                }
             }
             //受信した値をchangestoreに代入
             sscanf(recvBuf, "%d", &changestore);
@@ -227,6 +284,15 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 send(__soc, sendBuf, sendLen, 0);　//送信
                 return -1;
             }
+            //入力された文字が数字以外ならエラーを返す。
+            for(i = 0; i < 4; i++){
+                if(isdigit(recvBuf[i]) == 0){
+                    sprintf(sendBuf, "商品IDは数字で入力してください．%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                    return -1;
+                }
+            }
             //クライアントから受信した値をchangeidに代入
             sscanf(recvBuf, "%d", &changeid);
             //クライアントから受信したmenu_idがテーブル名：push_tに存在するか確認
@@ -262,6 +328,15 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 send(__soc, sendBuf, sendLen, 0);　//送信
                 recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
                 recvBuf{recvLen} = '\0';　//受信データにNULLを追加
+                //入力された文字が数字以外ならエラーを返す。
+                for(i = 0; i < recvLen; i++){
+                    if(isdigit(recvBuf[i]) == 0){
+                        sprintf(sendBuf, "値段は数字で入力してください．%s", ENTER);　//送信データ作成
+                        sendLen = strlen(sendBuf);　//送信データ長
+                        send(__soc, sendBuf, sendLen, 0);　//送信
+                        return -1;
+                    }
+                }
                 //クライアントから受信した値をchangepriceに代入
                 sscanf(recvBuf, "%d", &changeprice);
                 //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：recipe_tのpriceの内容をchangepriceに変更
@@ -303,6 +378,17 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                     if(strcmp(changestar, "yes") == 0){
                         sprintf(sendBuf, "UPDATE push_t SET push_mgr = 1 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore);　//SQL文作成
                         res = PQexec(__con, sendBuf);　//SQL文実行
+                    }else if(strcmp(changestar, "no") == 0){
+                        //何も変更しませんでしたと返す。
+                        sprintf(sendBuf, "何も変更しませんでした．%s", ENTER);　//送信データ作成
+                        sendLen = strlen(sendBuf);　//送信データ長
+                        send(__soc, sendBuf, sendLen, 0);　//送信
+                    }else{
+                        //使用不可のコマンドと返す。
+                        sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER);　//送信データ作成
+                        sendLen = strlen(sendBuf);　//送信データ長
+                        send(__soc, sendBuf, sendLen, 0);　//送信
+                        return -1;
                     }
                 //push_mgrの値が1の場合、押しメニューをやめますか？と聞く。
                 }else if(strcmp(PQgetvalue(res, 0, 0), "1") == 0){
@@ -317,6 +403,17 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                     if(strcmp(changestar, "yes") == 0){
                         sprintf(sendBuf, "UPDATE push_t SET push_mgr = 0 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore);　//SQL文作成
                         res = PQexec(__con, sendBuf);　//SQL文実行
+                    }else if(strcmp(changestar, "no") == 0){
+                        //何も変更しませんでしたと返す。
+                        sprintf(sendBuf, "何も変更しませんでした．%s", ENTER);　//送信データ作成
+                        sendLen = strlen(sendBuf);　//送信データ長
+                        send(__soc, sendBuf, sendLen, 0);　//送信
+                    }else{
+                        //使用不可のコマンドと返す。
+                        sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER);　//送信データ作成
+                        sendLen = strlen(sendBuf);　//送信データ長
+                        send(__soc, sendBuf, sendLen, 0);　//送信
+                        return -1;
                     }
                 }
             }
@@ -344,6 +441,15 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 sendLen = strlen(sendBuf);　//送信データ長
                 send(__soc, sendBuf, sendLen, 0);　//送信
                 return -1;
+            }
+            //入力された文字が数字以外ならエラーを返す。
+            for(int i = 0; i < 4; i++){
+                if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                    sprintf(sendBuf, "商品IDは数字で入力してください。%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                    return -1;
+                }
             }
             //クライアントから受信した値をchangeidに代入
             sscanf(recvBuf, "%d", &changeid);
@@ -379,6 +485,15 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                 send(__soc, sendBuf, sendLen, 0);　//送信
                 recvLen = recv(__soc, recvBuf, BUFSIZE, 0);　//受信
                 recvBuf{recvLen} = '\0';　//受信データにNULLを追加
+                //入力された文字が数字以外ならエラーを返す。
+                for(int i = 0; i < recvLen; i++){
+                    if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                        sprintf(sendBuf, "値段は数字で入力してください。%s", ENTER);　//送信データ作成
+                        sendLen = strlen(sendBuf);　//送信データ長
+                        send(__soc, sendBuf, sendLen, 0);　//送信
+                        return -1;
+                    }
+                }
                 //クライアントから受信した値をchangepriceに代入
                 sscanf(recvBuf, "%d", &changeprice);
                 //changeidと同じmenu_idを持つ、テーブル名：price_charge_tのpriceの内容をchangepriceに変更する。
@@ -420,6 +535,17 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                     if(strcmp(changestar, "yes") == 0){
                         sprintf(sendBuf, "UPDATE push_t SET push_mgr = 1 WHERE menu_id = %d;", changeid);　//SQL文作成
                         res = PQexec(__con, sendBuf);　//SQL文実行
+                    }else if(strcmp(changestar, "no") == 0){
+                        //何も変更しませんでしたと返す。
+                        sprintf(sendBuf, "何も変更しませんでした．%s", ENTER);　//送信データ作成
+                        sendLen = strlen(sendBuf);　//送信データ長
+                        send(__soc, sendBuf, sendLen, 0);　//送信
+                    }else{
+                        //使用不可のコマンドですと返す。
+                        sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER);　//送信データ作成
+                        sendLen = strlen(sendBuf);　//送信データ長
+                        send(__soc, sendBuf, sendLen, 0);　//送信
+                        return -1;
                     }
                 }else if(strcmp(PQgetvalue(res, 0, 0), "1") == 0){
                     sprintf(sendBuf, "押しメニューをやめますか？%s yes または no%s", ENTER, ENTER);　//送信データ作成
@@ -433,6 +559,17 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
                     if(strcmp(changestar, "yes") == 0){
                         sprintf(sendBuf, "UPDATE push_t SET push_mgr = 0 WHERE menu_id = %d;", changeid);　//SQL文作成
                         res = PQexec(__con, sendBuf);　//SQL文実行
+                    }else if(strcmp(changestar, "no") == 0){
+                        //何も変更しませんでしたと返す。
+                        sprintf(sendBuf, "何も変更しませんでした．%s", ENTER);　//送信データ作成
+                        sendLen = strlen(sendBuf);　//送信データ長
+                        send(__soc, sendBuf, sendLen, 0);　//送信
+                    }else{
+                        //使用不可のコマンドですと返す。
+                        sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER);　//送信データ作成
+                        sendLen = strlen(sendBuf);　//送信データ長
+                        send(__soc, sendBuf, sendLen, 0);　//送信
+                        return -1;
                     }
                 }
             }
@@ -467,6 +604,15 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
             sendLen = strlen(sendBuf);　//送信データ長
             send(__soc, sendBuf, sendLen, 0);　//送信
             return -1;
+        }
+        //入力された文字が数字以外ならエラーを返す。
+        for(int i = 0; i < 2; i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sprintf(sendBuf, "店舗IDは数字で入力してください．%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+                return -1;
+            }
         }
         //クライアントから受信した店舗IDをchangestoreに代入
         sscanf(recvBuf, "%d", &changestore);
@@ -504,6 +650,15 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
             send(__soc, sendBuf, sendLen, 0);　//送信
             return -1;
         }
+        //入力された文字が数字以外ならエラーを返す。
+        for(int i = 0; i < 4; i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sprintf(sendBuf, "商品IDは数字で入力してください．%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+                return -1;
+            }
+        }
         //クライアントから受信した値をchangeidに代入
         sscanf(recvBuf, "%d", &changeid);
         //changeidがchangestoreと同じ値のstore_idを持つmenu_storage_tに存在するか確認
@@ -532,6 +687,17 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
             if(strcmp(changestar, "yes") == 0){
                 sprintf(sendBuf, "UPDATE push_t SET push_cor = 1 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore);　//SQL文作成
                 res = PQexec(__con, sendBuf);　//SQL文実
+            }else if(strcmp(changestar, "no") == 0){
+                //何も変更しませんでしたと表示
+                sprintf(sendBuf, "何も変更しませんでした．%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+            }else{
+                //使用不可のコマンドですと表示
+                sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+                return -1;
             }
             //push_corの値が0の場合、押しメニューをやめますか？と聞く。
         }else if(strcmp(PQgetvalue(res, 0, 0), "1") == 0){
@@ -546,6 +712,17 @@ int menuChg(PGconn *__con, int __soc, int *__u_info){
             if(strcmp(changestar, "yes") == 0){
                 sprintf(sendBuf, "UPDATE push_t SET push_cor = 0 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore);　//SQL文作成
                 res = PQexec(__con, sendBuf);　//SQL文実行
+            }else if(strcmp(changestar, "no") == 0){
+                //何も変更しませんでしたと表示
+                sprintf(sendBuf, "何も変更しませんでした．%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+            }else{
+                //使用不可のコマンドですと表示
+                sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+                return -1;
             }
         }
     }
