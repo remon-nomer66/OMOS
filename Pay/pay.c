@@ -30,10 +30,20 @@ int pay(PGconn *__con, int __soc, int *__u_info){
     res = PQexec(__con, sendBuf);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
         printf("SELECT failed: %s", PQerrorMessage(__con));
+        //ロールバック
+        res = PQexec(__con, "ROLLBACK");
+        if(PQresultStatus(res) != PGRES_COMMAND_OK){
+            printf("ROLLBACK failed: %s", PQerrorMessage(__con));
+            PQclear(res);
+            PQfinish(__con);
+            sprintf(sendBuf, "error occured%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+        }
         PQclear(res);
         PQfinish(__con);
         sprintf(sendBuf, "error occured%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
+        return 0;
     }
 
     // テーブル番号が存在しない場合
@@ -52,10 +62,20 @@ int pay(PGconn *__con, int __soc, int *__u_info){
     res = PQexec(__con, sendBuf);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
         printf("SELECT failed: %s", PQerrorMessage(__con));
+        //ロールバック
+        res = PQexec(__con, "ROLLBACK");
+        if(PQresultStatus(res) != PGRES_COMMAND_OK){
+            printf("ROLLBACK failed: %s", PQerrorMessage(__con));
+            PQclear(res);
+            PQfinish(__con);
+            sprintf(sendBuf, "error occured%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+        }
         PQclear(res);
         PQfinish(__con);
         sprintf(sendBuf, "error occured%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
+        return 0;
     }
 
     // 注文が存在しない場合
@@ -74,10 +94,20 @@ int pay(PGconn *__con, int __soc, int *__u_info){
     res = PQexec(__con, sendBuf);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
         printf("SELECT failed: %s", PQerrorMessage(__con));
+        //ロールバック
+        res = PQexec(__con, "ROLLBACK");
+        if(PQresultStatus(res) != PGRES_COMMAND_OK){
+            printf("ROLLBACK failed: %s", PQerrorMessage(__con));
+            PQclear(res);
+            PQfinish(__con);
+            sprintf(sendBuf, "error occured%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+        }
         PQclear(res);
         PQfinish(__con);
         sprintf(sendBuf, "error occured%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
+        return 0;
     }
     
     // kitchen_flagが0の注文が存在する場合
@@ -95,10 +125,21 @@ int pay(PGconn *__con, int __soc, int *__u_info){
     res = PQexec(__con, sendBuf);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
         printf("SELECT failed: %s", PQerrorMessage(__con));
+        //ロールバック
+        res = PQexec(__con, "ROLLBACK");
+        if(PQresultStatus(res) != PGRES_COMMAND_OK){
+            printf("ROLLBACK failed: %s", PQerrorMessage(__con));
+            PQclear(res);
+            PQfinish(__con);
+            sprintf(sendBuf, "error occured%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+        }
         PQclear(res);
         PQfinish(__con);
         sprintf(sendBuf, "error occured%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
+        return 0;
+
     }
 
     // kitchen_flagが1の注文が存在する場合、割り勘の有無を問う
@@ -115,10 +156,20 @@ int pay(PGconn *__con, int __soc, int *__u_info){
             res = PQexec(__con, sendBuf);
             if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
                 printf("SELECT failed: %s", PQerrorMessage(__con));
+                //ロールバック
+                res = PQexec(__con, "ROLLBACK");
+                if(PQresultStatus(res) != PGRES_COMMAND_OK){
+                    printf("ROLLBACK failed: %s", PQerrorMessage(__con));
+                    PQclear(res);
+                    PQfinish(__con);
+                    sprintf(sendBuf, "error occured%s", ENTER);
+                    send(__soc, sendBuf, sendLen, 0);
+                }
                 PQclear(res);
                 PQfinish(__con);
                 sprintf(sendBuf, "error occured%s", ENTER);
                 send(__soc, sendBuf, sendLen, 0);
+                return 0;
             }
 
             // 割り勘する人数を入力してもらう
@@ -161,11 +212,22 @@ int pay(PGconn *__con, int __soc, int *__u_info){
     res = PQexec(__con, sendBuf);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){ //SELECT失敗
         printf("SELECT failed: %s", PQerrorMessage(__con));
+        //ロールバック
+        res = PQexec(__con, "ROLLBACK");
+        if(PQresultStatus(res) != PGRES_COMMAND_OK){
+            printf("ROLLBACK failed: %s", PQerrorMessage(__con));
+            PQclear(res);
+            PQfinish(__con);
+            sprintf(sendBuf, "error occured%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+        }
         PQclear(res);
         PQfinish(__con);
         sprintf(sendBuf, "error occured%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
+        return 0;
     }
+
 
     //金額を計算する
     //order_tの個数(order_cnt)とmenu_price_tの値段(price)をかけて、合計金額を計算する
@@ -199,14 +261,76 @@ int pay(PGconn *__con, int __soc, int *__u_info){
     }
 
     // もしover(あまり)が0でない場合、
-    if(over != 0){
+    else{
         //○人は△円、□人は▲円です。と送信する
         sprintf(sendBuf, "%d人は%d円、%d人は%d円です。%s", num - over, sum, over, sum + 1, ENTER);
         send(__soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
     }
 
-    // 
+    // お金を受け取り、おつり計算を行う。
+    //もしnum=1の場合、
+    if(num == 1){
+        // お客様から頂戴した金額を入力してもらう
+        sprintf(sendBuf, "お客様から頂戴した金額を入力してください。%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+        recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
+
+        // お客様から頂戴した金額を取得
+        int money = atoi(recvBuf);
+
+        // お客様から頂戴した金額が合計金額よりも少ない場合、
+        while(money < sum){
+            // お客様から頂戴した金額が合計金額よりも少ないことを伝える
+            sprintf(sendBuf, "お客様から頂戴した金額が合計金額よりも少ないです。もう一度入力してください。%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+            recvLen = receive_message(__soc, recvBuf, BUFSIZE); //受信
+
+            // お客様から頂戴した金額を取得
+            money = atoi(recvBuf);
+        }
+
+        // お客様から頂戴した金額が合計金額よりも多い場合、
+        if(money >= sum){
+            // おつりを計算する
+            int change = money - sum;
+
+            // おつりを送信する
+            sprintf(sendBuf, "おつりは%d円です。%s", change, ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+        }
+
+        //お会計終了を伝える
+        sprintf(sendBuf, "お会計終了です。%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
+
+        //お客様の評価を行う,評価を行う関数を呼び出す
+        int flag = evalue(__soc, u_info);
+
+        //flagが1の場合、エラーが発生したことを伝える
+        if(flag == 1){
+            sprintf(sendBuf, "error occured%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+        }
+
+        //flagが0の場合、正常に評価が行われたことを伝える
+        else{
+            sprintf(sendBuf, "評価ありがとうございました。%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+        }
+
+        //トランザクションの終了
+        res = PQexec(__con, "COMMIT");
+        PQclear(res);
+        PQfinish(__con);
+
+        return 0;
+    }
+
 
 
 
