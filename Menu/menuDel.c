@@ -39,6 +39,15 @@ int menuDel(PGconn *__con, int __soc, int *__u_info){
             send(__soc, sendBuf, sendLen, 0);　//送信
             return -1;
         }
+        //入力された文字が数字以外ならエラーを返す。
+        for(int i = 0; i < 4; i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sprintf(sendBuf, "商品IDは数字で入力してください．%s", ENTER);　//送信データ作成
+                sendLen = strlen(sendBuf);　//送信データ長
+                send(__soc, sendBuf, sendLen, 0);　//送信
+                return -1;
+            }
+        }
         //受信した値をdelidに代入
         sscanf(recvBuf, "%d", &delid);
         //テーブル名：recipe_tからテーブル名：menu_charge_tからaccount_idがu_idと一致するmenu_idのmenu_nameを表示
@@ -106,6 +115,15 @@ int menuDel(PGconn *__con, int __soc, int *__u_info){
                 send(__soc, sendBuf, sendLen, 0);　//送信
                 return -1;
             }
+            //入力された文字が数字以外ならエラーを返す。
+            for(i = 0; i < 2; i++){
+                if(isdigit(recvBuf[i]) == 0){
+                    sprintf(sendBuf, "店舗IDは数字で入力してください．%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                    return -1;
+                }
+            }
             //受信した値をchangestoreに代入
             sscanf(recvBuf, "%d", &changestore);
             //削除を実行したい店舗IDが存在するかどうかをテーブル名store_tから確認
@@ -141,6 +159,15 @@ int menuDel(PGconn *__con, int __soc, int *__u_info){
                 sendLen = strlen(sendBuf);　//送信データ長
                 send(__soc, sendBuf, sendLen, 0);　//送信
                 return -1;
+            }
+            //入力された文字が数字以外ならエラーを返す。
+            for(i = 0; i < 4; i++){
+                if(isdigit(recvBuf[i]) == 0){
+                    sprintf(sendBuf, "商品IDは数字で入力してください．%s", ENTER);　//送信データ作成
+                    sendLen = strlen(sendBuf);　//送信データ長
+                    send(__soc, sendBuf, sendLen, 0);　//送信
+                    return -1;
+                }
             }
             //クライアントから受信した値をdelidに代入
             sscanf(recvBuf, "%d", &delid);
