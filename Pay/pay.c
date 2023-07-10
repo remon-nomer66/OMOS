@@ -308,6 +308,30 @@ int pay(PGconn *__con, int __soc, int *__u_info){
         send(__soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);  //送信データを表示
 
+        //order_tから該当するテーブルのデータを移行する
+        sprintf(query, "INSERT INTO summary_t SELECT store_id, menu_id, order_cnt, order_date, order_time, user_id FROM order_t WHERE tableNum = %d", desk_num);
+        res = PQexec(__con, query);
+        if(PQresultStatus(res) != PGRES_COMMAND_OK){
+            PQclear(res);
+            res = PQexec(__con, "ROLLBACK");
+            PQclear(res);
+            PQfinish(__con);
+            return 1;
+        }
+        PQclear(res);
+
+        //order_tから該当するテーブルのデータを削除する
+        sprintf(query, "DELETE FROM order_t WHERE tableNum = %d", desk_num);
+        res = PQexec(__con, query);
+        if(PQresultStatus(res) != PGRES_COMMAND_OK){
+            PQclear(res);
+            res = PQexec(__con, "ROLLBACK");
+            PQclear(res);
+            PQfinish(__con);
+            return 1;
+        }
+        PQclear(res);
+
         //お客様の評価を行う,評価を行う関数を呼び出す
         int flag = evalue(__soc, u_info);
 
@@ -316,7 +340,6 @@ int pay(PGconn *__con, int __soc, int *__u_info){
             sprintf(sendBuf, "error occured%s", ENTER);
             send(__soc, sendBuf, sendLen, 0);
         }
-
         //flagが0の場合、正常に評価が行われたことを伝える
         else{
             sprintf(sendBuf, "評価ありがとうございました。%s", ENTER);
@@ -330,14 +353,4 @@ int pay(PGconn *__con, int __soc, int *__u_info){
 
         return 0;
     }
-
-
-
-
-
-
-
-
-
-
 }
