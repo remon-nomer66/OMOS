@@ -1,6 +1,6 @@
 #include "OMOS.h"
 
-int userReg(PGconn *__con){
+int userReg(PGconn *__con, int __soc){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
     pthread_t selfId = pthread_self();  //スレッドID
@@ -79,7 +79,7 @@ int userReg(PGconn *__con){
     }
 
     //じゃんけんを行い、勝ったら1000pt,あいこは500pt,負けは300ptを付与する
-    point = janken();
+    point = janken(soc);
     point_rate = 1.0;
 
     //useridを電話番号をランダム関数の種にして、生成する。useridはchar型である。
