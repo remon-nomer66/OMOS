@@ -71,7 +71,7 @@ CREATE TABLE order_t(
        kitchen_flag  	integer              DEFAULT 0,   -- 確認フラグ
 	order_date  	       date                 NOT NULL,    -- 注文日
 	order_time  	       time                 NOT NULL,    -- 注文時間
-	account_id	       integer              NOT NULL,    -- アカウントID
+	user_id	       integer              NOT NULL,    -- アカウントID
        PRIMARY KEY (store_id, desk_num, order_time)--,
        --FOREIGN KEY (store_id)
        --  REFERENCES store_t (store_id)
@@ -86,7 +86,7 @@ CREATE TABLE summary_t(
        order_cnt   	       integer              NOT NULL,    -- 個数
        order_date	       date	              NOT NULL,    -- 注文日
        order_time	       time	              NOT NULL,    -- 注文時間
-       account_id	       integer	       NOT NULL,    -- アカウントID
+       user_id	       integer	       NOT NULL,    -- アカウントID
        PRIMARY KEY (menu_id, order_time)
 );
 
