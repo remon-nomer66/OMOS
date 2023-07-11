@@ -1,8 +1,15 @@
 --
--- ver2.0
+-- ver2.1
 --
 
-以前のファイルからの変更点
+ver2.0からの変更点
+
+    - mclientEX関連のコンパイル方法に誤りがあったので修正しました
+        誤   gcc mclient_ex.c -o mclientEX
+        正   make
+
+
+ver1.0からの変更点
 
     - 自作関数に応じて変更しなければならない箇所が変わりました
     - 端末の想定をtest_mclientからmcilentEXに変更しました
@@ -39,7 +46,7 @@ mclientEXについて
     - すでに実行ファイル形式のものがありますが、実行できないときは以下のどちらかの方法を試してください
         - chmod u+x mclientEX
             - https://qiita.com/shisama/items/5f4c4fa768642aad9e06
-        - gcc mclient_ex.c -o mclientEX
+        - make
 
 ファイル構造
     comm_test
