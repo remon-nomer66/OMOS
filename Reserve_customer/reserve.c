@@ -5,7 +5,7 @@ void reserve(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
     int recvLen, sendLen;
 
     while(1){
-        sprintf(sendBuf, "RESERVEの中で扱いたいコマンドを入力してください．%s利用可能なコマンドは\"RECHECK\"，\"REDEL\"です．%sRESERVEから抜ける場合は\"END\"を入力してください%s", ENTER, ENTER, ENTER);
+        sprintf(sendBuf, "RESERVEの中で扱いたいコマンドを入力してください．%s利用可能なコマンドは\"RECHECK\"，\"REDEL\"です．%sRESERVEから抜ける場合は\"END\"を入力してください%s%s", ENTER, ENTER, ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -21,13 +21,13 @@ void reserve(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
             }else if(strcmp(comm, REDEL) == 0){
                 reserveDel(selfId, con, soc, recvBuf, sendBuf, u_info);     //予約削除正常完了: 0
             }else if(strcmp(comm, END) == 0){
-                sprintf(sendBuf, "RESERVEを終了します%s", ENTER);
+                sprintf(sendBuf, "RESERVEを終了します%s%s", ENTER, DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                 break;
             }else{
-                sprintf(sendBuf, "コマンドを正しく入力してください%s", ENTER);
+                sprintf(sendBuf, "コマンドを正しく入力してください%s%s", ENTER, DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);

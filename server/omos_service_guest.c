@@ -1,11 +1,6 @@
 #include "omos.h"
 
-<<<<<<< Updated upstream
 void service_guest(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
-=======
-void service_guest(PGconn *__con, int __soc, int *__auth){
-    char recvBuf[BUFSIZE], sendBuf[BUFSIZE];
->>>>>>> Stashed changes
     char comm[BUFSIZE];
     int recvLen, sendLen;
 
@@ -22,11 +17,7 @@ void service_guest(PGconn *__con, int __soc, int *__auth){
             if(strcmp(comm, UCHG) == 0){
                 userChg();
             }else if(strcmp(comm, RESERVE) == 0){
-<<<<<<< Updated upstream
                 reserve(selfId, con, soc, recvBuf, sendBuf, u_info);
-=======
-                reserve(__con, __soc, __auth);
->>>>>>> Stashed changes
             }else if(strcmp(comm, END) == 0){
                 break;
             }
