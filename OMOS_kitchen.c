@@ -37,7 +37,8 @@ int kitchen(PGconn *__con, int __soc, int __tableNum)
                     resultRows = PQntuples(res);
                     if (resultRows == 0)
                     {
-                        sprintf(sendBuf, "注文されたメニューはありません%s", ENTER); // 注文されたメニューを表示
+                        sprintf(sendBuf, "注文されたメニューはありません%s", ENTER);
+                        return 0; // 注文されたメニューを表示
                     }
                     else
                     {
@@ -79,7 +80,6 @@ int kitchen(PGconn *__con, int __soc, int __tableNum)
                         sendLen = strlen(sendBuf);                             // 送信データ長
                         send(__soc, sendBuf, sendLen, 0);                      // 送信
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データ表示
-                        return 0;
                     }
                 }
             }
