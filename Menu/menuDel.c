@@ -1,16 +1,14 @@
 #include "omos.h"
 
-int menuDel(PGconn *__con, int __soc, int *__u_info){
+int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen;　//送受信データ長
     int u_id, u_auth, u_store, delid, changestore; //ユーザID、ユーザの持つ権限、ユーザの所属、削除したいメニューID、情報を変更したい店舗ID
-    char recvBuf[BUFSIZE], sendBuf[BUFSIZE]　//送受信用バッファ
     char response;　//クライアントからの返答
-    pthread_t selfId = pthread_self();  //スレッド
     PGresult *res;　//PGresult型の変数resを宣言
 
-    u_id = __u_info[0];　//ユーザID
-    u_auth = __u_info[1];　//ユーザの持つ権限
-    u_store = __u_info[2];　//ユーザの所属
+    u_id = u_info[0];　//ユーザID
+    u_auth = u_info[1];　//ユーザの持つ権限
+    u_store = u_info[2];　//ユーザの所属
 
     if(u_auth == AMGR){
         //あなたが削除できるメニュー一覧です。と表示

@@ -1,16 +1,14 @@
 #include "omos.h"
 
-int storageCheck(PGconn *__con, int __soc, int __auth){
+int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
-    char recvBuf[BUFSIZE], sendBuf[BUFSIZE]; //送受信用バッファ
-    pthread_t selfId = pthread_self(); // スレッド
     PGresult *res; //PGresult型の変数resを宣言
     int u_id, u_auth, u_store, OD1, OD2, check, s_id, m_id; //u_系の変数は__authの中身チェック用、OD1はフード・ドリンクの商品ID、OD2はフード・ドリンクの発注数、check1は発注票作成の際、動作続行のチェック用, s_idは店舗IDチェック用、mcheckはメニューIDチェック用
     char check2[BUFSIZE], char OD3[BUFSIZE]; //check2は本部による在庫確認作業を行うための変数, OD3は発注票作成の際、動作続行のチェック用
 
-    u_id = __u_info[0]; //ユーザID
-    u_auth = __u_info[1]; //ユーザの持つ権限
-    u_store = __u_info[2]; //ユーザの所属
+    u_id = u_info[0]; //ユーザID
+    u_auth = u_info[1]; //ユーザの持つ権限
+    u_store = u_info[2]; //ユーザの所属
 
     if (u_auth == ACLERK){ //店員
         //現在の在庫です。と表示
