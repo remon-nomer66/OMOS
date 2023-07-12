@@ -9,7 +9,7 @@ int tableDel(PGconn *__con, int __soc, int __desk_num, int __store_id){
 
     sprintf(sql,"SELECT * FROM order_t WHERE desk_num = %d AND store_id = %d",__desk_num ,__store_id); //order_tに注文情報が残っていないか確認する
     res = PQexec(__con, sql);
-    if (PQresultStatus(res) != PGRES_TAPLES_OK){//もし、注文情報を確認できなかった場合
+    if (PQresultStatus(res) != PGRES_TUPLES_OK){//もし、注文情報を確認できなかった場合
         printf("%s",PQresultErrorMessage(res));
         sprintf(sendBuf, "エラー%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
