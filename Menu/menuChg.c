@@ -1,16 +1,14 @@
 #include "omos.h"
 
-int menuChg(PGconn *__con, int __soc, int *__u_info){
+int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen;　//送受信データ長
     int changeid, changestore, changeprice, changelevel, u_id, u_auth, u_store; //変更する商品ID, 変更を加えたい部分の店舗ID, 変更後の値段, 押しかどうか、ユーザID、ユーザの持つ権限、ユーザの所属
-    char recvBuf[BUFSIZE], sendBuf[BUFSIZE]　//送受信用バッファ
     char response, changeitem, changename, changestar;
-    pthread_t selfId = pthread_self();  //スレッド
     PGresult *res;　//PGresult型の変数resを宣言
 
-    u_id = __u_info[0];　//ユーザID
-    u_auth = __u_info[1];　//ユーザの持つ権限
-    u_store = __u_info[2];　//ユーザの所属
+    u_id = u_info[0];　//ユーザID
+    u_auth = u_info[1];　//ユーザの持つ権限
+    u_store = u_info[2];　//ユーザの所属
 
     if(u_auth == AMGR){
         sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s", ENTER);　//送信データ作成
