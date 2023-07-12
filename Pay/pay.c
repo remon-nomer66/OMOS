@@ -1,10 +1,9 @@
 #include "omos.h"
 
 \* お会計処理 *\
-int pay(PGconn *__con, int __soc, int *__u_info){
+int pay(PGconn *__con, int __soc, int *__u_info, pthread_t selfId){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
-    pthread_t selfId = pthread_self();  //スレッドID
 
     //トランザクション開始
     PGresult *res = PQexec(__con, "BEGIN");
@@ -244,9 +243,8 @@ int pay(PGconn *__con, int __soc, int *__u_info){
 
     // ポイントを使用する場合、pointUse()にu_infoを引数として渡し、ポイントを使用する
     if(recvBuf[0] == 'y'){
-        sum = pointUse(__soc, sum, u_info);
+        sum = pointUse(con, soc, totalPrice, *, selfId);
     }
-
 
     // 割り勘する人数で割る
     sum /= num; //合計金額を人数で割る
@@ -333,7 +331,7 @@ int pay(PGconn *__con, int __soc, int *__u_info){
         PQclear(res);
 
         //お客様の評価を行う,評価を行う関数を呼び出す
-        int flag = evalue(__soc, u_info);
+        int flag = evalue(con, soc, u_info[0], selfId);
 
         //flagが1の場合、エラーが発生したことを伝える
         if(flag == 1){

@@ -1,10 +1,9 @@
 #include "omos.h"
 
-int evalue(PGconn *__con, int __soc, int *__u_info){
+int evalue(PGconn *__con, int __soc, int *__u_info, pthread_t __selfId){
     //お客様の評価を良いか悪いかで聞く
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
-    pthread_t selfId = pthread_self();  //スレッドID
     int evalue; //評価
 
     //トランザクション開始
