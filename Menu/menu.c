@@ -17,11 +17,11 @@ void menu(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
             printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
             sscanf(recvBuf, "%s", comm);
             if(strcmp(comm, MREG) == 0){
-                menuReg();
+                menuReg(selfId, con, soc, recvBuf, sendBuf, u_info);
             }else if(strcmp(comm, MDEL) == 0){
-                menuDel();
+                menuDel(selfId, con, soc, recvBuf, sendBuf, u_info);
             }else if(strcmp(comm, MCHG) == 0){
-                menuChg();
+                menuChg(selfId, con, soc, recvBuf, sendBuf, u_info);
             }else if(strcmp(comm, END) == 0){
                 break;
             }

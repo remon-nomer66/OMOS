@@ -206,7 +206,6 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 sprintf(sendBuf, "%sは不適切な時間です%s", r_hour, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
-                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                 PQclear(res);
                 return -1;
             }
