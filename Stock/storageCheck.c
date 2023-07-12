@@ -94,14 +94,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                          break;
                         }else{
                             //4文字以外の場合はエラーを返す
-                            if (strlen(recvBuf) != 4){
+                            if (strlen(recvBuf) != 5){
                                 sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
                             }
                             //数字以外の場合はエラーを返す
-                            if (isdigit(recvBuf) == 0){
+                            if (!isdigit(recvBuf[0]) || !isdigit(recvBuf[1]) || !isdigit(recvBuf[2]) || !isdigit(recvBuf[3])){
                                 sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
@@ -128,14 +128,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                                 recvBuf[recvLen] = '\0'; //受信データにNULLを追加
                                 //3文字以外の場合はエラーを返す
-                                if (strlen(recvBuf) != 3){
+                                if (strlen(recvBuf) != 4){
                                     sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
                                 }
                                 //数字以外の場合はエラーを返す
-                                if (isdigit(recvBuf) == 0){
+                                if (!isdigit(recvBuf[0]) || !isdigit(recvBuf[1]) || !isdigit(recvBuf[2])){
                                     sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
@@ -166,14 +166,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             break;
                         }else{
                             //4文字以外の場合はエラーを返す
-                            if (strlen(recvBuf) != 4){
+                            if (strlen(recvBuf) != 5){
                                 sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
                             }
                             //数字以外の場合はエラーを返す
-                            if (isdigit(recvBuf) == 0){
+                            if (!isdigit(recvBuf[0]) || !isdigit(recvBuf[1]) || !isdigit(recvBuf[2]) || !isdigit(recvBuf[3])){
                                 sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
@@ -200,14 +200,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                                 recvBuf[recvLen] = '\0'; //受信データにNULLを追加
                                 //3文字以外の場合は場合はエラーを返す
-                                if (strlen(recvBuf) != 3){
+                                if (strlen(recvBuf) != 4){
                                     sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
                                 }
                                 //数字以外の場合はエラーを返す
-                                if (isdigit(recvBuf) == 0){
+                                if (!isdigit(recvBuf[0]) || !isdigit(recvBuf[1]) || !isdigit(recvBuf[2])){
                                     sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
@@ -249,11 +249,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 break;
             }else{
                 // recvBufの中身を確認
-                if (strlen(recvBuf) != 2){ //2桁でなければエラーを表示する。
+                if (strlen(recvBuf) != 3){ //2桁でなければエラーを表示する。
                     sprintf(sendBuf, "店舗IDは2桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
-                }else if (isdigit(recvBuf) == 0){ //数字以外の文字が入っていたら、エラーを表示する。
+                }else if (!isdigit(recvBuf[0]) || !isdigit(recvBuf[1])){ //数字以外の文字が入っていたら、エラーを表示する。
                     sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
@@ -276,11 +276,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                         recvBuf[recvLen] = '\0'; //受信データにNULLを追加
-                        if (strlen(recvBuf) != 4){ //4桁でなければエラーを表示する。
+                        if (strlen(recvBuf) != 5){ //4桁でなければエラーを表示する。
                             sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
-                        }else if (isdigit(recvBuf) == 0){
+                        }else if (!isdigit(recvBuf[0]) || !isdigit(recvBuf[1]) || !isdigit(recvBuf[2]) || !isdigit(recvBuf[3])){
                             //数字以外の文字が入っていたら、エラーを表示する。
                             sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長

@@ -24,6 +24,11 @@ void menu(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 menuChg(selfId, con, soc, recvBuf, sendBuf, u_info);
             }else if(strcmp(comm, END) == 0){
                 break;
+            }else{
+                sprintf(sendBuf, "コマンドが間違っています．%s", DATA_END);
+                sendLen = strlen(sendBuf);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             }
         }
     }
