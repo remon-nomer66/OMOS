@@ -229,6 +229,43 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 PQclear(res);
                 return -1;
             }
+
+            if(!((strcmp(r_hour, "17") >= 0) && (strcmp(r_hour, "22") <= 0) && ((strcmp(r_min, "00") == 0) || (strcmp(r_min, "15") == 0) || (strcmp(r_min, "30") == 0) || (strcmp(r_min, "45") == 0)))){
+                sprintf(sendBuf, "17時から22時までの15分刻みで入力してください%s", ENTER);
+                sendLen = strlen(sendBuf);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                PQclear(res);
+                return -1;
+            }
+
+            sprintf(r_date, "%s-%s-%s", r_year, r_month, r_day);
+            sprintf(r_time, "%s:%s:00", r_hour, r_min);
+
+            //ここまで日付時間チェック
+
+            //当該店舗の卓について，人数的に許容できる卓の番号を格納
+            sprintf(sql, "SELECT * FROM store_table_t WHERE store_id = %d AND desk_max >= %d ORDER BY desk_max ASC", s_num, p_num);
+            res = PQexec(con, sql);
+            if(PQresultStatus(res) != PGRES_TUPLES_OK){
+                printf("%s", PQresultErrorMessage(res));
+                sprintf(sendBuf, "データベースエラー3%s", ENTER);
+                sendLen = strlen(sendBuf);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                PQclear(res);
+                return -1;
+            }
+            tmp = resultRows = PQntuples(res);
+            if(resultRows <= 0){
+                sprintf(sendBuf, "人数エラー%s", ENTER);
+                sendLen = strlen(sendBuf);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+
+                PQclear(res);
+                return -1;
+            }
             for(i = 0; i < resultRows; i++){
                 a_table[i] = atoi(PQgetvalue(res, i, 1));
             }
