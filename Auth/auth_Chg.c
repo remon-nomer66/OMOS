@@ -267,6 +267,17 @@ int auth_Chg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
             }
             
         }
+        else{
+            sprintf(sendBuf, "権限を変更することができません.%s%s", ENTER, DATA_END);
+            sendLen = strlen(sendBuf);
+            send(soc, sendBuf, sendLen, 0);
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+        }
+    }
+
+    //main_authが2だった場合、
+    if(main_auth == 2){
+        //authが
     }
 
     //権限を変更したい人の権限を入力してもらう
