@@ -3,21 +3,19 @@
 #define FGUEST       1
 #define FEMPLOYEE    2
 
-void service_table(int __soc, int __auth){
-    int tel, auth, cnt;
+int service_table(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info){
+    int tel, cnt;
     char comm[BUFSIZE];
-    char recvBuf[BUFSIZE], sendBuf[BUFSIZE];
     int recvLen, sendLen;
     int flag = 0;
-    pthread_t selfId = pthread_self();
 
-    if(__auth != AMGR && __auth != ACLERK){
+    if(u_info[1] != AMGR && u_info[1] != ACLERK){
         while(1){
-            sprintf(sendBuf, "社員としてログインしますか？社員として利用する場合は\"YES\"，お客様として利用する場合は\"NO\"を入力してください．%s", ENTER);
+            sprintf(sendBuf, "社員としてログインしますか？社員として利用する場合は\"YES\"，お客様として利用する場合は\"NO\"を入力してください．%s%s", ENTER, DATA_END);
             sendLen = strlen(sendBuf);
-            send(__soc, sendBuf, sendLen, 0);
+            send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-	        recvLen = receive_message(__soc, recvBuf, BUFSIZE);
+	        recvLen = receive_message(soc, recvBuf, BUFSIZE);
             if(recvLen != 0){
                 printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
                 sscanf(recvBuf, "%s", comm);
@@ -33,158 +31,59 @@ void service_table(int __soc, int __auth){
             }
         }
     }
-    sendLen = strlen(sendBuf);
-    send(__soc, sendBuf, sendLen, 0);
+    sendLen = sprintf(sendBuf, "%s", DATA_END);
+    send(soc, sendBuf, sendLen, 0);
     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
 
     if(flag == FEMPLOYEE){
-        sprintf(sendBuf, "卓を削除するには\"TDEL\"を入力してください%s", ENTER);
-        sendLen = strlen(sendBuf);
-        send(__soc, sendBuf, sendLen, 0);
-        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         if(tableDel() != -1){
-            sprintf(sendBuf, "卓の削除に失敗しました%s", ENTER);
-            sendLen = strlen(sendBuf);
-            send(__soc, sendBuf, sendLen, 0);
-            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+            s_info[0] = 0;  //店舗番号初期化
+            s_info[1] = 0;  //卓番号初期化
+            s_info[2] = 0;  //キッチンか否かのフラグ(一応0にしておく)
+            return 0;
+        }else{
+            return -1;
         }
     }else{
-        while(1){
-            sprintf(sendBuf, "注文する場合は\"ORDER\"，履歴を確認する場合は\"HIST\"，会計を行う場合は\"PAY\"を入力してください．なお，注文する場合は\"ORDER (商品番号) (注文個数)\"で入力してください．%s", ENTER);
-            sendLen = strlen(sendBuf);
-            send(__soc, sendBuf, sendLen, 0);
-            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-            recvLen = receive_message(__soc, recvBuf, BUFSIZE); 
-            if(recvLen != 0){
-                printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                sscanf(recvBuf, "%s", comm);
-                if(strcmp(comm, ORDER) == 0){
-		            if(order() != -1){
-		                printf("order\n");
-                        sprintf(sendBuf, "注文に失敗しました%s", ENTER);
-                        sendLen = strlen(sendBuf);
-                        send(__soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    }
-                }else if(strcmp(comm, HISTORY) == 0){
-		            if(history() != -1){
-                        printf("history\n");
-                        sprintf(sendBuf, "履歴の確認に失敗しました%s", ENTER);
-                        sendLen = strlen(sendBuf);
-                        send(__soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    }
-                }else if(strcmp(comm, PAY) == 0){
-                    while(1){   //店員照会
-                        while(1){
-                            sprintf(sendBuf, "会計を開始します．店員は自身のアカウントでログインしてください．%s", ENTER);
-                            sendLen = strlen(sendBuf);
-                            send(__soc, sendBuf, sendLen, 0);
-                            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                            recvLen = receive_message(__soc, recvBuf, BUFSIZE);
-                            if(recvLen > 0){
-                                recvBuf[recvLen - 1] = '\0';
-                                printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                                cnt = sscanf(recvBuf, "%d", &tel);
-                                if(cnt == 1){
-                                    break;
-                                }
-                            }
-                        }
-                        while(1){
-                            sprintf(sendBuf, "パスワードを入力してください．%s", ENTER);
-                            sendLen = strlen(sendBuf);
-                            send(__soc, sendBuf, sendLen, 0);
-                            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                            recvLen = receive_message(__soc, recvBuf, BUFSIZE);
-                            if(recvLen > 0){
-                                recvBuf[recvLen - 1] = '\0';
-                                printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-                                cnt = sscanf(recvBuf, "%s", comm);
-                                if(cnt == 1){
-                                    if((auth = userCheck()) != -1){   //戻り値-1でなければ会員として正しい
-                                        break;
-                                    }else{
-                                        sprintf(sendBuf, "ログイン画面に戻ります．%s", ENTER);
-                                        sendLen = strlen(sendBuf);
-                                        send(__soc, sendBuf, sendLen, 0);
-                                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                                        break;
-                                    }
-                                    if(auth != AMGR && auth != ACLERK){
-                                        sprintf(sendBuf, "ログイン画面に戻ります．%s", ENTER);
-                                        sendLen = strlen(sendBuf);
-                                        send(__soc, sendBuf, sendLen, 0);
-                                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if(pay() != -1){
-                        sprintf(sendBuf, "会計に失敗しました%s", ENTER);
-                        sendLen = strlen(sendBuf);
-                        send(__soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    }
-                }else{
-                    sprintf(sendBuf, "無効なコマンドです%s", ENTER);
-                    sendLen = strlen(sendBuf);
-                    send(__soc, sendBuf, sendLen, 0);
-                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                }
-            }
+        if(order(user_id, soc, __auth, __table_num, __store_id) != -1){
+            return 0;
+        }else{
+            return -1;
         }
     }
 }
 
-void service_kitchen(int __soc, int __auth){
-    char recvBuf[BUFSIZE], sendBuf[BUFSIZE];
+int service_kitchen(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info){
     char comm[BUFSIZE];
     int recvLen, sendLen;
     int flag = 0;
-    pthread_t selfId = pthread_self();
 
-    if(__auth == AMGR || __auth == ACLERK){
+    if(u_info[1] == AMGR || u_info[1] == ACLERK){
         while(1){
-            sprintf(sendBuf, "完了した商品の登録は\"KFLAG\"，キッチン端末を終了するには\"KDEL\"を入力してください%s", ENTER);
+            sprintf(sendBuf, "完了した商品の登録は\"KFLAG\"，キッチン端末を終了するには\"KDEL\"を入力してください%s%s", ENTER, DATA_END);
             sendLen = strlen(sendBuf);
-            send(__soc, sendBuf, sendLen, 0);
+            send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
 
-            recvLen = receive_message(__soc, recvBuf, BUFSIZE); 
+            recvLen = receive_message(soc, recvBuf, BUFSIZE); 
             if(recvLen != 0){
                 printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
                 sscanf(recvBuf, "%s", comm);
                 if(strcmp(comm, KFLAG) == 0){
 		            if(kitchenFlag() != -1){
-                        sprintf(sendBuf, "完了した商品の登録に失敗しました%s", ENTER);
-                        sendLen = strlen(sendBuf);
-                        send(__soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                        return 0;
                     }
-                }else if(strcmp(comm, END) == 0){
+                }else if(strcmp(comm, KDEL) == 0){
 		            if(kitchenDel() != -1){ //=======キッチン終了関数kitchenDel
-                        break;
-                    }else{
-                        sprintf(sendBuf, "キッチン端末の終了に失敗しました%s", ENTER);
-                        sendLen = strlen(sendBuf);
-                        send(__soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                        return 0;
                     }
                 }else{
                     sprintf(sendBuf, "無効なコマンドです%s", ENTER);
                     sendLen = strlen(sendBuf);
-                    send(__soc, sendBuf, sendLen, 0);
+                    send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                 }
             }   
         }
-    }else if(__auth != AMGR &&  __auth != ACLERK){ //キッチン端末を操作しているのが店長でも店員でもない場合
-        sprintf(sendBuf, "権限がない端末を操作しています．\nログイン画面に戻ります．%s", ENTER);
-        sendLen = strlen(sendBuf);
-        send(__soc, sendBuf, sendLen, 0);
-        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
     }
 }

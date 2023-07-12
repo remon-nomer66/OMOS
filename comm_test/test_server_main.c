@@ -1,9 +1,9 @@
 /**
  * TESTサーバ(端末版)
- * omos_server_main.c
+ * test_server_main.c
 */
 
-#include "test.h"
+#include "omos.h"
 
 void service_start(int __lsoc);
 
@@ -79,7 +79,7 @@ void service_start(int __lsoc){
             send(s_new, sendBuf, sendLen, 0);
         }else{
             printf("Connected to database %s:%s %s\n", dbHost, dbPort, dbName);
-            pthread_create(&worker, NULL, (void *)test_service, (void *)threadParam);
+            pthread_create(&worker, NULL, (void *)test_controller, (void *)threadParam);
             printf("[MAIN THREAD] Created thread ID: %ld\n", worker);
             pthread_detach(worker);
         }

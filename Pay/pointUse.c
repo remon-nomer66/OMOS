@@ -1,36 +1,16 @@
 #include "omos.h"
 
-int pointUse(int __soc, int __totalPrice, int __userid, pthread_t __selfId){
+int pointUse(PGconn *__con, int __soc, int __totalPrice, int *__u_info, pthread_t __selfId){
 
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
-    pthread_t selfId = pthread_self();  //スレッドID
     int point;  //ポイント数
     int usePoint;   //使用するポイント数
     char sql[BUFSIZE];
+    int flag;   //ポイント使用フラグ
 
-    char *dbHost = "kite.cs.miyazaki-u.ac.jp";
-    char *dbPort = "5432";
-    char *dbName = "db42";      //接続先を正しく入力
-    char *dbLogin = "dbuser42";
-    char *dbPwd = "dbpass42";
-    char connInfo[BUFSIZE];
-
-    //DB接続
-    sprintf(connInfo, "host=%s port=%s dbname=%s user=%s password=%s", dbHost, dbPort, dbName, dbLogin, dbPwd);
-    PGconn *con = PQconnectdb(connInfo);
-    if( PQstatus(con) == CONNECTION_BAD ){
-        printf("Connection to database '%s:%s %s' failed.\n", dbHost, dbPort, dbName);
-        printf("%s", PQerrorMessage(con));
-        con = NULL;
-        sendLen = sprintf(sendBuf, "error occured%s", ENTER);
-        send(__lsoc, sendBuf, sendLen, 0);
-    }else{
-        printf("Connected to database %s:%s %s\n", dbHost, dbPort, dbName);
-    }
-
-    //useridを元に、pointをデータベースから取得
-    point = pointCheck(soc, userid, selfId);
+    //u_infoを元に、pointをデータベースから取得
+    point = pointCheck(con, soc, u_info, selfId);
 
     //pointを使用
     while(1){
@@ -47,13 +27,17 @@ int pointUse(int __soc, int __totalPrice, int __userid, pthread_t __selfId){
         }
     }
 
+    //使用分のpointをdis_point()関数に送信、引数をcon,soc, point, u_info,selfIdを渡す
+    flag = dis_point(con, soc, usePoint, u_info[0], selfId); 
+    //もしflagが1だった場合、エラーを返し、終了
+    if(flag == 1){
+        sendLen = sprintf(sendBuf, "ポイント使用に失敗しました。%s", ENTER);
+        send(__lsoc, sendBuf, sendLen, 0);  //送信
+        return -1;
+    }
+
     //合計金額を計算
     __totalPrice -= usePoint;
-
-    //DB切断
-    PQclear(res);
-    PQfinish(con);
-    con = NULL;
 
     //合計金額を送信
     sendLen = sprintf(sendBuf, "合計金額は%d円です。%s", __totalPrice, ENTER);
