@@ -44,9 +44,9 @@ int main(int argc, char *argv[]){
 void service_start(int __lsoc){
     char *dbHost = "kite.cs.miyazaki-u.ac.jp";
     char *dbPort = "5432";
-    char *dbName = "db13";      //接続先を正しく入力
-    char *dbLogin = "dbuser13";
-    char *dbPwd = "dbpass13";
+    char *dbName = "db42";      //接続先を正しく入力
+    char *dbLogin = "dbuser42";
+    char *dbPwd = "dbpass42";
     char connInfo[BUFSIZE];
     char sendBuf[BUFSIZE];
     pthread_t worker;
@@ -79,7 +79,7 @@ void service_start(int __lsoc){
             send(s_new, sendBuf, sendLen, 0);
         }else{
             printf("Connected to database %s:%s %s\n", dbHost, dbPort, dbName);
-            pthread_create(&worker, NULL, (void *)omos_service, (void *)threadParam);
+            pthread_create(&worker, NULL, (void *)omos_controller, (void *)threadParam);
             printf("[MAIN THREAD] Created thread ID: %ld\n", worker);
             pthread_detach(worker);
         }

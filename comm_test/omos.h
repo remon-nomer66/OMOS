@@ -21,8 +21,18 @@
 #include <ctype.h>
 
 #define BUFSIZE 1024
-#define PORT 10000
-#define ENTER "\n"
+#define PORT 10000     //NETBANKサーバのポート番号
+#define ENTER "\n"     //<LF>
+#define DATA_END ".\n" //レスポンスデータの終端デリミタ
+
+//*** レスポンスステータス ***//
+#define OK_STAT    "+OK"     //成功
+#define ER_STAT    "-ERR"    //失敗
+
+//*** エラーコード ***//
+#define E_CODE_100    100  //データベースエラー
+#define E_CODE_200    200  //リクエストコマンドの引数エラー
+#define E_CODE_300    300  //リクエストコマンドが存在しない
 
 //*** プロトコルコマンド ***//
 #define UCHECK  "UCHECK"  //会員照会        不要
@@ -55,9 +65,8 @@
 #define PUSE    "PUSE"    //ポイント使用    関数内部
 #define PUNUSE  "PUNUSE"  //ポイント不使用  関数内部
 #define EVALUE  "EVALUE"  //評価            関数内部
-//卓，キッチンの終了
-//店員への権限付与
-//店員としてログイン？
+
+#define TEST    "TEST"
 
 //その他の定数
 #define GUEST    "GUEST"    //ゲスト
@@ -72,6 +81,10 @@
 #define ACOR    3         //COR
 #define AMGR    4         //店長
 #define ACLERK  5         //店員
+#define ANUREG  6         //未登録
+#define RSRVMAX 3         //予約可能最大数
+#define STREMAX 20        //店舗数
+#define INIT    100       //初期化
 
 //*** スレッド関数に渡す引数情報構造体 ***//
 typedef struct _ThreadParamter {
@@ -81,36 +94,60 @@ typedef struct _ThreadParamter {
   PGconn         *con;      //PGconnオブジェクト（データベース）
 }ThreadParameter;
 
-//作成した関数を「extern int receive_message(int __s, char *__buf, int __maxlen);」の形で記述
+//関数
 extern int receive_message(int __s, char *__buf, int __maxlen);
 extern int setup_listen(unsigned short __port);
-extern void *omos_service(void *__arg);
-extern int service_user(int __soc);
-extern void service_table(int __soc, int __auth);
-extern void service_kitchen(int __soc, int __auth);
-extern void service_guest(int __soc);
-extern void service_employee(int __soc, int __auth, int __register[2]);
+//extern void *omos_service(void *__arg);
+//extern int service_user(int __soc);
+//extern void service_table(int __soc, int __auth);
+//extern void service_kitchen(int __soc, int __auth);
+//extern void service_guest(int __soc);
+//extern void service_employee(int __soc, int __auth, int __register[2]);
 
-extern int userCheck(void);
-extern int userReg(void);
-extern int userChg(void);
-extern int reserveReg(void);
-extern int reserveDel(void);
-extern int order(void);
-extern int kitchen(void);
-extern int kitchenFlag(void);
-extern int tableReg(void);
-extern int tableDel(void);
-extern int menuReg(void);
-extern int menuDel(void); //危険
-extern int menuChg(void);
-extern int demandReg(void);
-extern int reserveCheck(void);
-extern int storageCheck(void);
-extern int correctCheck(void);
-extern int saleCheck(void);
-extern int history(void);
-extern int pay(void);
-extern int kitchenDel(void);
+extern void *test_controller(void *__arg);
+
+extern int test_func(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf);
+
+//extern int userCheck(void);
+//extern int userReg(void);
+//extern int userChg(void);
+//extern int userCheck(void);
+
+//extern int janken(int soc, char *recvBuf, char *sendBuf);
+
+//extern void reserve(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *__auth);
+//extern int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *__auth);
+//extern int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *__auth);
+//extern int reserveDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *__auth);
+//extern int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *__auth);
+
+//extern int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *auth, int table_num, int store_id);
+
+//extern int kitchen(PGconn *__con, int __soc, int __tableNum);
+//extern int kitchenView(void);
+//extern int kitchenFlag(void);
+
+//extern int tableAlt(PGconn *__con, int __soc);
+//extern int tableReg(PGconn *__con, int __soc, int *__u_info, int *__s_info);
+//extern int tableDel(PGconn*__con,int__soc,int__desk_num,int __store_id);
+
+//extern void menu(PGconn *__con, int __soc, int *__auth);
+//extern int menuReg(PGconn *__con, int __soc, int *__u_info);
+//extern int menuDel(PGconn *__con, int __soc, int *__u_info);
+//extern int menuChg(PGconn *__con, int __soc, int *__u_info);
+
+//extern int demandReg(void);
+
+//extern int reserveCheck_s(void);
+//extern int reserveDel_s(void);
+
+//extern int storageCheck(PGconn *__con, int __soc, int __auth);
+
+//extern int correct(PGconn *__con, int __soc, int __auth);
+
+//extern int saleCheck(void);
+//extern int history(void);
+//extern int pay(void);
+//extern int kitchenDel(void);
 
 #endif

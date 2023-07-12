@@ -7,7 +7,7 @@
 //     Error   : -1
 //**********************************************************
 
-#include "test.h"
+#include "omos.h"
 
 int setup_listen(u_short __port){
   struct sockaddr_in server;
@@ -31,7 +31,7 @@ int setup_listen(u_short __port){
   }
 
   /* 接続受け付けの準備 */
-  listen(soc, 5);
+  listen(soc, 50);
 
   printf("listen...\n");
 

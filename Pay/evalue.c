@@ -1,11 +1,20 @@
 #include "omos.h"
 
-int evalue(PGconn *__con, int __soc, pthread_t __selfId, int __user_id){
+int evalue(PGconn *__con, int __soc, int *__u_info, pthread_t __selfId){
     //お客様の評価を良いか悪いかで聞く
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
-    pthread_t selfId = pthread_self();  //スレッドID
     int evalue; //評価
+
+    //トランザクション開始
+    PGresult *res = PQexec(__con, "BEGIN");
+    if(PQresultStatus(res) != PGRES_COMMAND_OK){
+        printf("BEGIN failed: %s", PQerrorMessage(__con));
+        PQclear(res);
+        PQfinish(__con);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+    }
     
     //お客様の評価を良いか悪いかで聞く
     while(1){
@@ -22,25 +31,24 @@ int evalue(PGconn *__con, int __soc, pthread_t __selfId, int __user_id){
         }
     }
 
-    //データベースに接続
-    PGconn *conn = PQsetdbLogin(dbHost, dbPort, NULL, NULL, dbName, dbLogin, dbPwd);
-    if(PQstatus(conn) == CONNECTION_BAD){
-        printf("データベースへの接続に失敗しました。");
-        exit(1);
+    //user_point_tのuser_id=u_info[0]でSELECTする。うまくいかなかった場合、ロールバックする
+    sprintf(sql, "SELECT * FROM user_point_t WHERE user_id = %d", __u_info[0]);
+    res = PQexec(__con, sql);
+    if(PQresultStatus(res) != PGRES_TUPLES_OK){
+        printf("SELECT failed: %s", PQerrorMessage(__con));
+        //ロールバック
+        res = PQexec(__con, "ROLLBACK");
+        PQclear(res);
+        PQfinish(__con);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
     }
 
-    //userDBのポイント倍率を取得
-    char *sql = "SELECT point_rate FROM userDB WHERE user_id = $1";
-    PGresult *res = PQexecParams(conn, sql, 1, NULL, (const char * const *)&__user_id, NULL, NULL, 0);
-    if(PQresultStatus(res) != PGRES_TUPLES_OK){
-        printf("データベースの検索に失敗しました。");
-        exit(1);
-    }
-    int point_rate = atoi(PQgetvalue(res, 0, 0));   //ポイント倍率
-    PQclear(res);
+    //user_point_tのポイント倍率を取得
+    float point_rate = atoi(PQgetvalue(res, 0, 2));
 
     //取得したポイント倍率を表示
-    sendLen = sprintf(sendBuf, "ポイント倍率は%dです。%s", point_rate, ENTER);
+    sendLen = sprintf(sendBuf, "ポイント倍率は%fです。%s", point_rate, ENTER);
     send(__soc, sendBuf, sendLen, 0);  //送信
 
     //良い場合は、ポイント倍率を+0.1する、悪い場合は-0.1する
@@ -50,26 +58,26 @@ int evalue(PGconn *__con, int __soc, pthread_t __selfId, int __user_id){
         point_rate = point_rate - 0.1;
     }
 
-    //userDBのポイント倍率を更新
-    char *sql2 = "UPDATE userDB SET point_rate = $1 WHERE user_id = $2";
-    const char *paramValues[2];
-    char point_rate_str[10];
-    sprintf(point_rate_str, "%d", point_rate);
-    paramValues[0] = point_rate_str;
-    paramValues[1] = __user_id;
-    res = PQexecParams(conn, sql2, 2, NULL, paramValues, NULL, NULL, 0);
+    //user_point_tのポイント倍率(user_mag)をpoint_rateに更新、うまくいかなかった場合、ロールバックする
+    sprintf(sql, "UPDATE user_point_t SET user_mag = %f WHERE user_id = %d", point_rate, u_info[0]);
+    res = PQexec(__con, sql);
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
-        printf("データベースの更新に失敗しました。");
-        exit(1);
+        printf("UPDATE failed: %s", PQerrorMessage(__con));
+        //ロールバック
+        res = PQexec(__con, "ROLLBACK");
+        PQclear(res);
+        PQfinish(__con);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
     }
-    PQclear(res);
-
-    //データベースから切断
-    PQfinish(conn);
 
     //評価を送信
     sendLen = sprintf(sendBuf, "評価を送信しました。%s", ENTER);
     send(__soc, sendBuf, sendLen, 0);  //送信
+
+    //トランザクション終了
+    res = PQexec(__con, "COMMIT");
+    PQclear(res);
 
     return 0;
 

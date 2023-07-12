@@ -44,8 +44,7 @@ int tableDel(PGconn *__con, int __soc, int __desk_num, int __store_id){
   sendLen = sprintf(sendBuf,"%s%d%s%s",OK_STAT,resultRows,ENTER,DATA_END);
   send(__soc, sendBuf, sendLen, 0);
   printf("[C_THREAD %ld]SEND=>%s",selfId,sendBuf);
-
-    
+  
   PQclear(res);
   return 0;
 }    

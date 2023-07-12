@@ -4,6 +4,16 @@ int correct(PGconn *__con, int __soc, int __auth){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
     pthread_t selfId = pthread_self();  //スレッドID
+    char start[13];
+    char end[13];
+    char start_target[6];
+    char end_target[6];
+    char store_id[3];
+    char area_id[3];
+    char product_id[5];
+    int sum = 0;
+    int items_sum = 0;
+    PGresult *res = PQexec(__con, sql);
     
     while(1){
         //期間の指定
@@ -16,7 +26,7 @@ int correct(PGconn *__con, int __soc, int __auth){
         //recvBufに数字８桁含まれていた場合
         if(!isdigit(recvBuf)){
             //取得した開始年月日を格納
-            char start[13];
+            //char start[13];
             strncpy(start, recvBuf, 4);
             start[4] = '-';
             strncpy(start+5, recvBuf+4, 2);
@@ -42,7 +52,7 @@ int correct(PGconn *__con, int __soc, int __auth){
         //recvBufに数字８桁含まれていた場合
         if(!isdigit(recvBuf)){
             //取得した終了年月日を格納
-            char end[13];
+            //char end[13];
             strncpy(end, recvBuf, 4);
             end[4] = '-';
             strncpy(end+5, recvBuf+4, 2);
@@ -85,7 +95,7 @@ int correct(PGconn *__con, int __soc, int __auth){
             //recvBufの値が0000から2359の範囲の場合
             if(recvBuf >= 0000 && recvBuf <= 2359){
                 //取得した対象の時間を格納
-                char start_target[6];
+                //char start_target[6];
                 strncpy(start_target, recvBuf, 2);
                 start_target[2] = ':';
                 strncpy(start_target+3, recvBuf+2, 2);
@@ -111,7 +121,7 @@ int correct(PGconn *__con, int __soc, int __auth){
             //recvBufの値が0000から2359の範囲の場合
             if(recvBuf >= 0000 && recvBuf <= 2359){
                 //取得した対象の時間を格納
-                char end_target[6];
+                //char end_target[6];
                 strncpy(end_target, recvBuf, 2);
                 end_target[2] = ':';
                 strncpy(end_target+3, recvBuf+2, 2);
@@ -154,10 +164,10 @@ int correct(PGconn *__con, int __soc, int __auth){
         //sqlに入力された店舗番号が存在するかどうか確認する
         char sql[BUFSIZE];
         sprintf(sql, "SELECT * FROM store_t WHERE store_id = %s", recvBuf);
-        PGresult *res = PQexec(__con, sql);
+        //PGresult *res = PQexec(__con, sql);
         if(PQntuples(res) == 1){
             //入力された店舗番号を格納
-            char store_id[3];
+            //char store_id[3];
             strncpy(store_id, recvBuf, 2);
             store_id[2] = '\0';
         }
@@ -195,10 +205,10 @@ int correct(PGconn *__con, int __soc, int __auth){
         //sqlに入力された地域番号が存在するかどうか確認する
         char sql[BUFSIZE];
         sprintf(sql, "SELECT * FROM area_t WHERE area_id = %s", recvBuf);
-        PGresult *res = PQexec(__con, sql);
+        //PGresult *res = PQexec(__con, sql);
         if(PQntuples(res) == 1){
             //入力された地域番号を格納
-            char area_id[3];
+            //char area_id[3];
             strncpy(area_id, recvBuf, 1);
             area_id[2] = '\0';
         }
@@ -236,10 +246,10 @@ int correct(PGconn *__con, int __soc, int __auth){
         //sqlに入力された商品番号が存在するかどうか確認する
         char sql[BUFSIZE];
         sprintf(sql, "SELECT * FROM product_t WHERE product_id = %s", recvBuf);
-        PGresult *res = PQexec(__con, sql);
+        //PGresult *res = PQexec(__con, sql);
         if(PQntuples(res) == 1){
             //入力された商品番号を格納
-            char product_id[5];
+            //char product_id[5];
             strncpy(product_id, recvBuf, 4);
             product_id[4] = '\0';
         }
@@ -288,7 +298,7 @@ int correct(PGconn *__con, int __soc, int __auth){
     "INNER JOIN price_change_t ON summary.menu_id = price_change_t.menu_id "
     "INNER JOIN user_authority_t ON summary.user_id = user_authority_t.user_id "
     //CORの地域情報を取得と絞り込み
-    "WHERE summary.order_date >= %s AND summary.order_date <= %s AND user_authority_t.auth = %d", start, end, auth
+    "WHERE summary.order_date >= %s AND summary.order_date <= %s AND user_authority_t.auth = %d", start, end, auth;
 
     //時間指定がある場合、テーブルを条件によって絞り込む
     if(start_target != NULL){
@@ -311,13 +321,13 @@ int correct(PGconn *__con, int __soc, int __auth){
     }
 
     //絞り込んだ内容で、商品の個数（order_cnt）と金額（price）を取得してこれらの値を掛け算し、全て足し算
-    int sum = 0;
+    //int sum = 0;
     for(int i = 0; i < PQntuples(res); i++){
         sum += atoi(PQgetvalue(res, i, 3)) * atoi(PQgetvalue(res, i, 4));
     }
 
      //絞り込んだ内容から期間指定の範囲内でOrder_Cntの値を取得し、全て足し算
-    int items_sum = 0;
+    //int items_sum = 0;
     for(int i = 0; i < PQntuples(res); i++){
         items_sum += atoi(PQgetvalue(res, i, 3));
     }
