@@ -3,8 +3,8 @@
 int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
     PGresult *res; //PGresult型の変数resを宣言
-    int u_id, u_auth, u_store, OD1, OD2, check, s_id, m_id; //u_系の変数はauthの中身チェック用、OD1はフード・ドリンクの商品ID、OD2はフード・ドリンクの発注数、check1は発注票作成の際、動作続行のチェック用, s_idは店舗IDチェック用、mcheckはメニューIDチェック用
-    char check2[BUFSIZE], OD3[BUFSIZE]; //check2は本部による在庫確認作業を行うための変数, OD3は発注票作成の際、動作続行のチェック用
+    int u_id, u_auth, u_store, OD1, OD2, check, s_id, m_id; //u_系の変数はauthの中身チェック用、OD1はフード・ドリンクの商品ID、OD2はフード・ドリンクの発注数、checkは発注票作成の際、動作続行のチェック用, s_idは店舗IDチェック用、mcheckはメニューIDチェック用
+    char OD3[BUFSIZE]; //OD3は発注票作成の際、動作続行のチェック用
 
     u_id = u_info[0]; //ユーザID
     u_auth = u_info[1]; //ユーザの持つ権限
@@ -85,7 +85,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 if (strcmp(recvBuf, "フード") == 0){
                     while (1){
                         check = 0;
-                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s", ENTER); //送信データ作成
+                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s", ENTER, ENTER); //送信データ作成
                         sendLen = strlen(sendBuf);//送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -119,8 +119,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
                             }
-                            //取得したmenu_nameをOD3に挿入
-                            OD3 = PQgetvalue(res, 0, 0);
+                            //取得したmenu_nameを文字列としてOD3に挿入
+                            sprintf(OD3, "%s", PQgetvalue(res, 0, 0));
                             if (check != 1){
                                 sprintf(sendBuf, "何個注文しますか？3桁で入力してください。（例：001）%s", ENTER); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
@@ -143,7 +143,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 }
                                 //入力されている個数の値をOD2に代入
                                 sscanf(recvBuf, "%d", &OD2);
-                                if (check1 != 1){
+                                if (check != 1){
                                     //テーブル名：store_order_tのmenu_idにOD1を挿入、store_orderにOD2を挿入、menu_nameにOD3を挿入
                                     sprintf(sendBuf, "INSERT INTO store_order_t (menu_id, store_order, menu_name) VALUES (%d, %d, '%s')", OD1, OD2, OD3); //SQL文作成
                                     res = PQexec(con, sendBuf); //実行
@@ -157,7 +157,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 }else if (strcmp(recvBuf, "ドリンク") == 0){
                     while(1){
                         check = 0;
-                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s", ENTER); //送信データ作成
+                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s", ENTER, ENTER); //送信データ作成
                         sendLen = strlen(sendBuf);//送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -191,8 +191,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
                             }
-                            //取得したmenu_nameをOD3に挿入
-                            OD3 = PQgetvalue(res, 0, 0);
+                            //取得したmenu_nameを文字列としてOD3に挿入
+                            strcpy(OD3, PQgetvalue(res, 0, 0));
                             if (check != 1){
                                 sprintf(sendBuf, "何個注文しますか？3桁で入力してください。（例：001）%s", ENTER); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
@@ -215,7 +215,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 }
                                 //入力されている個数の値をOD2に代入
                                 sscanf(recvBuf, "%d", &OD2);
-                                if (check1 != 1){
+                                if (check != 1){
                                     //テーブル名：store_order_tのmenu_idにOD1を挿入、store_orderにOD2を挿入、menu_nameにOD3を挿入
                                     sprintf(sendBuf, "INSERT INTO store_order_t (menu_id, store_order, menu_name) VALUES (%d, %d, '%s')", OD1, OD2, OD3); //SQL文作成
                                     res = PQexec(con, sendBuf); //実行
@@ -236,11 +236,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 break;
             }
         }
-    }else if (auth == ACOR){ //COR
+    }else if (u_auth == ACOR){ //COR
         while (1){
             check = 0; 
             // どの店舗IDを選ぶかを確認する。
-            sprintf(sendBuf, "どの店舗IDの在庫を確認しますか？2桁で入力してください。（例：01）%s操作を終了したい場合は exit と入力してください．%s", ENTER); //送信データ作成
+            sprintf(sendBuf, "どの店舗IDの在庫を確認しますか？2桁で入力してください。（例：01）%s操作を終了したい場合は exit と入力してください．%s", ENTER, ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -261,7 +261,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     //s_idに入力された値を代入
                     sscanf(recvBuf, "%d", &s_id);
                     // テーブル名：summary_tからstore_idがs_idと同じものを取得して表示
-                    sprintf(sendBuf, "SELECT * FROM summary_t WHERE store_id = %s", s_id); //SQL文作成
+                    sprintf(sendBuf, "SELECT * FROM summary_t WHERE store_id = %d", s_id); //SQL文作成
                     res = PQexec(con, sendBuf); //実行
                     // もしうまくいかなければエラーを表示する
                     if (PQresultStatus(res) != PGRES_TUPLES_OK){
@@ -289,7 +289,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             //m_idに入力された値を代入
                             sscanf(recvBuf, "%d", &m_id);
                             //テーブル名：menu_storage_tからstore_idがs_idと同じもの、かつmenu_idがm_idと同じものを取得して表示。また、テーブル名：recipe_tからmenu_idがm_idと同じもののmenu_nameを取得して表示。
-                            sprintf(sendBuf, "SELECT menu_storage_t.store_id, menu_storage_t.menu_id, menu_storage_t.stock, recipe_t.menu_name FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = %s AND menu_storage_t.menu_id = %s", s_id, m_id); //SQL文作成
+                            sprintf(sendBuf, "SELECT menu_storage_t.store_id, menu_storage_t.menu_id, menu_storage_t.stock, recipe_t.menu_name FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = %d AND menu_storage_t.menu_id = %d", s_id, m_id); //SQL文作成
                             res = PQexec(con, sendBuf); //実行
                             // もしうまくいかなければその店舗に指定された商品IDが存在しないことを示すエラーを表示する
                             if (PQresultStatus(res) != PGRES_TUPLES_OK){
