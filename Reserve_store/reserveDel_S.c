@@ -1,6 +1,6 @@
 #include "omos.h"
 
-void resereveDel_S(PGconn *__con, int __soc, int id){
+void resereveDel_s(PGconn *__con, int __soc, int id){
 
 int recvLen, sendLen;
 char recvBuf[BUFSIZE], sendBuf[BUFSIZE];
