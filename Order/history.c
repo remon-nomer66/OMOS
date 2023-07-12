@@ -1,9 +1,19 @@
 #include "OMOS.h"
 
-int history(PGconn *__con, int *__s_store){
+int history(pthread_t selfId, PGconn *__con, int *__s_store){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
-    pthread_t selfId = pthread_self();  //スレッドID
+
+    //トランザクションの開始
+    PGresult *res = PQexec(__con, "BEGIN");
+    if(PQresultStatus(res) != PGRES_COMMAND_OK){
+        printf("BEGIN failed: %s", PQerrorMessage(__con));
+        PQclear(res);
+        PQfinish(__con);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+    }
+
 
     //order_tのstore_id = s_store[0], desk_num=s_store[1]となる一致するレコードを取得する
     char sql[BUFSIZE];
@@ -12,7 +22,6 @@ int history(PGconn *__con, int *__s_store){
     if(PQresultStatus(res) != PGRES_TUPLES_OK){
         printf("No data retrieved\n");
         PQclear(res);
-        PQfinish(__con);
         exit(1);
     }
 
@@ -31,7 +40,6 @@ int history(PGconn *__con, int *__s_store){
     if(PQresultStatus(res) != PGRES_TUPLES_OK){
         printf("No data retrieved\n");
         PQclear(res);
-        PQfinish(__con);
         exit(1);
     }
 
@@ -46,7 +54,6 @@ int history(PGconn *__con, int *__s_store){
             if(PQresultStatus(resPrice) != PGRES_TUPLES_OK){
                 printf("No data retrieved\n");
                 PQclear(resPrice);
-                PQfinish(__con);
                 exit(1);
             }
             // menu_priceとmenu_cntを掛け算し、合計金額を計算
@@ -59,5 +66,22 @@ int history(PGconn *__con, int *__s_store){
         }
     }
 
-    printf(" 合計金額: %d\n", totalAmount);
+    //顧客に合計金額を表示する
+    sprintf(sendBuf, "合計金額: %d%s", totalAmount, ENTER);
+    sendLen = strlen(sendBuf);
+    send(__soc, sendBuf, sendLen, 0);
+    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+
+    //トランザクションの終了
+    res = PQexec(__con, "COMMIT");
+    if(PQresultStatus(res) != PGRES_COMMAND_OK){
+        printf("COMMIT failed: %s", PQerrorMessage(__con));
+        PQclear(res);
+        PQfinish(__con);
+        sprintf(sendBuf, "error occured%s", ENTER);
+        send(__soc, sendBuf, sendLen, 0);
+    }
+
+    PQclear(res);   //メモリ解放
+    
 }
