@@ -12,7 +12,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
 
     if (u_auth == ACLERK){ //店員
         //現在の在庫です。と表示
-        sprintf(sendBuf, "現在の在庫です。");
+        sprintf(sendBuf, "現在の在庫です。%s%s", ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         // 在庫一斉表示
@@ -28,7 +28,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             recvBuf[recvLen] = '\0'; //受信データにNULLを追加
         }
         //在庫切れが近い商品です。と表示
-        sprintf(sendBuf, "在庫切れが近い商品です。");
+        sprintf(sendBuf, "在庫切れが近い商品です。%s%s", ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         // テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
@@ -56,7 +56,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             recvBuf[recvLen] = '\0'; //受信データにNULLを追加
         }
         //在庫切れが近い商品です。と表示
-        sprintf(sendBuf, "在庫切れが近い商品です。");
+        sprintf(sendBuf, "在庫切れが近い商品です。%s%s", ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         // テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
@@ -71,13 +71,13 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             recvBuf[recvLen] = '\0'; //受信データにNULLを追加
         }
         while (1){
-            sprintf(sendBuf, "発注しますか？ (y/n) %s", ENTER); //送信データ作成
+            sprintf(sendBuf, "発注しますか？ (y/n) %s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen] = '\0'; //受信データにNULLを追加
             if (strcmp(recvBuf, "y") == 0){
-                sprintf(sendBuf, "フードとドリンク、どちらを発注しますか？(フード/ドリンク)%s", ENTER); //送信データ作成
+                sprintf(sendBuf, "フードとドリンク、どちらを発注しますか？(フード/ドリンク)%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -85,7 +85,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 if (strcmp(recvBuf, "フード") == 0){
                     while (1){
                         check = 0;
-                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s", ENTER, ENTER); //送信データ作成
+                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf);//送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -95,14 +95,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         }else{
                             //4文字以外の場合はエラーを返す
                             if (strlen(recvBuf) != 4){
-                                sprintf(sendBuf, "商品IDは4桁で入力してください。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
                             }
                             //数字以外の場合はエラーを返す
                             if (isdigit(recvBuf) == 0){
-                                sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
@@ -114,7 +114,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             res = PQexec(con, sendBuf); //実行
                             // もしうまくいかなければエラーを表示する
                             if (PQresultStatus(res) != PGRES_TUPLES_OK){
-                                sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
@@ -122,21 +122,21 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             //取得したmenu_nameを文字列としてOD3に挿入
                             sprintf(OD3, "%s", PQgetvalue(res, 0, 0));
                             if (check != 1){
-                                sprintf(sendBuf, "何個注文しますか？3桁で入力してください。（例：001）%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "何個注文しますか？3桁で入力してください。（例：001）%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                                 recvBuf[recvLen] = '\0'; //受信データにNULLを追加
                                 //3文字以外の場合はエラーを返す
                                 if (strlen(recvBuf) != 3){
-                                    sprintf(sendBuf, "注文数は3桁で入力してください。%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
                                 }
                                 //数字以外の場合はエラーを返す
                                 if (isdigit(recvBuf) == 0){
-                                    sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
@@ -157,7 +157,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 }else if (strcmp(recvBuf, "ドリンク") == 0){
                     while(1){
                         check = 0;
-                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s", ENTER, ENTER); //送信データ作成
+                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf);//送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -167,14 +167,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         }else{
                             //4文字以外の場合はエラーを返す
                             if (strlen(recvBuf) != 4){
-                                sprintf(sendBuf, "商品IDは4桁で入力してください。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
                             }
                             //数字以外の場合はエラーを返す
                             if (isdigit(recvBuf) == 0){
-                                sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
@@ -186,7 +186,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             res = PQexec(con, sendBuf); //実行
                             // もしうまくいかなければエラーを表示する
                             if (PQresultStatus(res) != PGRES_TUPLES_OK){
-                                sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
@@ -194,21 +194,21 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             //取得したmenu_nameを文字列としてOD3に挿入
                             strcpy(OD3, PQgetvalue(res, 0, 0));
                             if (check != 1){
-                                sprintf(sendBuf, "何個注文しますか？3桁で入力してください。（例：001）%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "何個注文しますか？3桁で入力してください。（例：001）%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                                 recvBuf[recvLen] = '\0'; //受信データにNULLを追加
                                 //3文字以外の場合は場合はエラーを返す
                                 if (strlen(recvBuf) != 3){
-                                    sprintf(sendBuf, "注文数は3桁で入力してください。%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
                                 }
                                 //数字以外の場合はエラーを返す
                                 if (isdigit(recvBuf) == 0){
-                                    sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
@@ -228,7 +228,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     }
                 }else{
                     // 入力されている文字が不正であることを伝える。
-                    sprintf(sendBuf, "入力された値が不正です。%s", ENTER); //送信データ作成
+                    sprintf(sendBuf, "入力された値が不正です。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                 }
@@ -240,7 +240,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         while (1){
             check = 0; 
             // どの店舗IDを選ぶかを確認する。
-            sprintf(sendBuf, "どの店舗IDの在庫を確認しますか？2桁で入力してください。（例：01）%s操作を終了したい場合は exit と入力してください．%s", ENTER, ENTER); //送信データ作成
+            sprintf(sendBuf, "どの店舗IDの在庫を確認しますか？2桁で入力してください。（例：01）%s操作を終了したい場合は exit と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -250,11 +250,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             }else{
                 // recvBufの中身を確認
                 if (strlen(recvBuf) != 2){ //2桁でなければエラーを表示する。
-                    sprintf(sendBuf, "店舗IDは2桁で入力してください。%s", ENTER); //送信データ作成
+                    sprintf(sendBuf, "店舗IDは2桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                 }else if (isdigit(recvBuf) == 0){ //数字以外の文字が入っていたら、エラーを表示する。
-                    sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER); //送信データ作成
+                    sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                 }else{
@@ -265,24 +265,24 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     res = PQexec(con, sendBuf); //実行
                     // もしうまくいかなければエラーを表示する
                     if (PQresultStatus(res) != PGRES_TUPLES_OK){
-                        sprintf(sendBuf, "選択した店舗IDは存在しません。%s", ENTER); //送信データ作成
+                        sprintf(sendBuf, "選択した店舗IDは存在しません。%s%s", ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         check = 1;
                     }if (check != 1){
                         // 閲覧したい商品の商品IDを入力させる。
-                        sprintf(sendBuf, "閲覧したい商品の商品IDを4桁で入力してください（例：0001）。%s", ENTER); //送信データ作成
+                        sprintf(sendBuf, "閲覧したい商品の商品IDを4桁で入力してください（例：0001）。%s%s", ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                         recvBuf[recvLen] = '\0'; //受信データにNULLを追加
                         if (strlen(recvBuf) != 4){ //4桁でなければエラーを表示する。
-                            sprintf(sendBuf, "商品IDは4桁で入力してください。%s", ENTER); //送信データ作成
+                            sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                         }else if (isdigit(recvBuf) == 0){
                             //数字以外の文字が入っていたら、エラーを表示する。
-                            sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER); //送信データ作成
+                            sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                         }else{
@@ -293,7 +293,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             res = PQexec(con, sendBuf); //実行
                             // もしうまくいかなければその店舗に指定された商品IDが存在しないことを示すエラーを表示する
                             if (PQresultStatus(res) != PGRES_TUPLES_OK){
-                                sprintf(sendBuf, "選択した店舗には指定された商品は存在しません。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "選択した店舗には指定された商品は存在しません。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
