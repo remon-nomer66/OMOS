@@ -58,7 +58,7 @@ CREATE TABLE store_table_t(
        desk_num		integer              NOT NULL,     -- 卓番号
        desk_max		integer              NOT NULL,     -- 卓上限人数
        desk_use             integer              DEFAULT 0,     -- 卓使用フラグ
-       PRIMARY KEY (store_id)
+       PRIMARY KEY (store_id, desk_num)
 );
 
 --
