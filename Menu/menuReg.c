@@ -1,14 +1,14 @@
 #include "omos.h"
 
 int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
-    int recvLen, sendLen;　//送受信データ長
-    int newmid, newmprice, newmstar, newmstock, newmlimit, newmlevel, newmstore;　//新規登録する商品ID, 価格, 評価, 初期在庫数, メニューレベル
+    int recvLen, sendLen; //送受信データ長
+    int newmid, newmprice, newmstar, newmstock, newmlimit, newmlevel, newmstore; //新規登録する商品ID, 価格, 評価, 初期在庫数, メニューレベル
     char newmname; //新規登録する商品名
-    PGresult *res;　//PGresult型の変数resを宣言
+    PGresult *res; //PGresult型の変数resを宣言
 
-    u_id = u_info[0];　//ユーザID
-    u_auth = u_info[1];　//ユーザの持つ権限
-    u_store = u_info[2];　//ユーザの所属
+    u_id = u_info[0]; //ユーザID
+    u_auth = u_info[1]; //ユーザの持つ権限
+    u_store = u_info[2]; //ユーザの所属
 
     if(u_auth == AMGR){
         //登録したい商品IDを入力してください。
