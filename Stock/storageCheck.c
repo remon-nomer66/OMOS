@@ -17,7 +17,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         send(soc, sendBuf, sendLen, 0);
         // 在庫一斉表示
         //テーブル名：menu_storage_tからstore_idがu_storeのものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
-        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d", u_store);　//SQL文を作成
+        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d", u_store); //SQL文を作成
         res = PQexec(con, sendBuf); //送信データを実行
         // 実行結果を表示
         for (int i = 0; i < PQntuples(res); i++){
@@ -32,8 +32,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         // テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
-        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d AND menu_storage_t.storage < menu_storage_t.min_storage", u_store);　//SQL文を作成
-        res = PQexec(con, sendBuf);　//送信データを実行
+        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d AND menu_storage_t.storage < menu_storage_t.min_storage", u_store); //SQL文を作成
+        res = PQexec(con, sendBuf); //送信データを実行
         // 実行結果を表示
         for (int i = 0; i < PQntuples(res); i++){
             sprintf(sendBuf, "%s %s %s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2)); //送信データ作成
@@ -45,7 +45,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
     }else if (u_auth == AMGR){ //店長
         // 在庫一斉表示
         //テーブル名：menu_storage_tからstore_idがu_storeのものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
-        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d", u_store);　//SQL文を作成
+        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d", u_store); //SQL文を作成
         res = PQexec(con, sendBuf); //送信データを実行
         // 実行結果を表示
         for (int i = 0; i < PQntuples(res); i++){
@@ -60,8 +60,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         // テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
-        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d AND menu_storage_t.storage < menu_storage_t.min_storage", u_store);　//SQL文を作成
-        res = PQexec(con, sendBuf);　//送信データを実行
+        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d AND menu_storage_t.storage < menu_storage_t.min_storage", u_store); //SQL文を作成
+        res = PQexec(con, sendBuf); //送信データを実行
         // 実行結果を表示
         for (int i = 0; i < PQntuples(res); i++){
             sprintf(sendBuf, "%s %s %s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2)); //送信データ作成
@@ -253,21 +253,21 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     sprintf(sendBuf, "店舗IDは2桁で入力してください。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
-                }else if (isdigit(recvBuf) == 0){　//数字以外の文字が入っていたら、エラーを表示する。
-                    sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER);　//送信データ作成
-                    sendLen = strlen(sendBuf);　//送信データ長
-                    send(soc, sendBuf, sendLen, 0);　//送信
+                }else if (isdigit(recvBuf) == 0){ //数字以外の文字が入っていたら、エラーを表示する。
+                    sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER); //送信データ作成
+                    sendLen = strlen(sendBuf); //送信データ長
+                    send(soc, sendBuf, sendLen, 0); //送信
                 }else{
                     //s_idに入力された値を代入
                     sscanf(recvBuf, "%d", &s_id);
                     // テーブル名：summary_tからstore_idがs_idと同じものを取得して表示
-                    sprintf(sendBuf, "SELECT * FROM summary_t WHERE store_id = %s", s_id);　//SQL文作成
-                    res = PQexec(con, sendBuf);　//実行
+                    sprintf(sendBuf, "SELECT * FROM summary_t WHERE store_id = %s", s_id); //SQL文作成
+                    res = PQexec(con, sendBuf); //実行
                     // もしうまくいかなければエラーを表示する
                     if (PQresultStatus(res) != PGRES_TUPLES_OK){
-                        sprintf(sendBuf, "選択した店舗IDは存在しません。%s", ENTER);　//送信データ作成
-                        sendLen = strlen(sendBuf);　//送信データ長
-                        send(soc, sendBuf, sendLen, 0);　//送信
+                        sprintf(sendBuf, "選択した店舗IDは存在しません。%s", ENTER); //送信データ作成
+                        sendLen = strlen(sendBuf); //送信データ長
+                        send(soc, sendBuf, sendLen, 0); //送信
                         check = 1;
                     }if (check != 1){
                         // 閲覧したい商品の商品IDを入力させる。
@@ -289,26 +289,26 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             //m_idに入力された値を代入
                             sscanf(recvBuf, "%d", &m_id);
                             //テーブル名：menu_storage_tからstore_idがs_idと同じもの、かつmenu_idがm_idと同じものを取得して表示。また、テーブル名：recipe_tからmenu_idがm_idと同じもののmenu_nameを取得して表示。
-                            sprintf(sendBuf, "SELECT menu_storage_t.store_id, menu_storage_t.menu_id, menu_storage_t.stock, recipe_t.menu_name FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = %s AND menu_storage_t.menu_id = %s", s_id, m_id);　//SQL文作成
-                            res = PQexec(con, sendBuf);　//実行
+                            sprintf(sendBuf, "SELECT menu_storage_t.store_id, menu_storage_t.menu_id, menu_storage_t.stock, recipe_t.menu_name FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = %s AND menu_storage_t.menu_id = %s", s_id, m_id); //SQL文作成
+                            res = PQexec(con, sendBuf); //実行
                             // もしうまくいかなければその店舗に指定された商品IDが存在しないことを示すエラーを表示する
                             if (PQresultStatus(res) != PGRES_TUPLES_OK){
-                                sprintf(sendBuf, "選択した店舗には指定された商品は存在しません。%s", ENTER);　//送信データ作成
-                                sendLen = strlen(sendBuf);　//送信データ長
-                                send(soc, sendBuf, sendLen, 0);　//送信
+                                sprintf(sendBuf, "選択した店舗には指定された商品は存在しません。%s", ENTER); //送信データ作成
+                                sendLen = strlen(sendBuf); //送信データ長
+                                send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
                             }
                             if (check != 1){
                                 //実行結果を表示
                                 for (int i = 0; i < PQntuples(res); i++){
                                     for (int j = 0; j < PQnfields(res); j++){
-                                        sprintf(sendBuf, "%s ", PQgetvalue(res, i, j));　//送信データ作成
-                                        sendLen = strlen(sendBuf);　//送信データ長
-                                        send(soc, sendBuf, sendLen, 0);　//送信
+                                        sprintf(sendBuf, "%s ", PQgetvalue(res, i, j)); //送信データ作成
+                                        sendLen = strlen(sendBuf); //送信データ長
+                                        send(soc, sendBuf, sendLen, 0); //送信
                                     }
-                                    sprintf(sendBuf, "%s", ENTER);　//送信データ作成
-                                    sendLen = strlen(sendBuf);　//送信データ長
-                                    send(soc, sendBuf, sendLen, 0);　//送信
+                                    sprintf(sendBuf, "%s", ENTER); //送信データ作成
+                                    sendLen = strlen(sendBuf); //送信データ長
+                                    send(soc, sendBuf, sendLen, 0); //送信
                                 }
                             }
                         }
