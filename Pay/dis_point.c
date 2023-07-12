@@ -17,7 +17,7 @@ int dispoint(PGconn *__con, int __soc, int dispoint, int *__u_info, pthread_t __
     }
 
     //u_info[0]を元に、user_point_tテーブルからuser_pointを取得
-    sprintf(sql, "UPDATE user_point_t SET user_point = user_point - %d WHERE user_id = %d;", dispoint, __u_info[0]);
+    sprintf(sql, "UPDATE user_point_t SET user_point = user_point - %d WHERE user_id = %d;", dispoint, u_info[0]);
     res = PQexec(__con, sql);
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("UPDATE failed: %s", PQerrorMessage(__con));

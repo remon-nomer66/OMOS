@@ -1,9 +1,8 @@
 #include "OMOS.h"
 
-int userChange(PGconn *__con, int __soc){
+int userChange(pthread_t selfId, PGconn *__con, int __soc){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
-    pthread_t selfId = pthread_self();  //スレッドID
     int phoneNum;  //電話番号
     char userPass;  //パスワード
     char userName;  //氏名
@@ -24,9 +23,11 @@ int userChange(PGconn *__con, int __soc){
         sprintf(sendBuf, "電話番号を入力してください(09024681234)。%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
-        
+        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
+
         //入力が数字11桁の場合、電話番号として扱う
         if( strlen(recvBuf) == 11 && isdigit(recvBuf) ){
             phoneNum = atoi(recvBuf);  //文字列を数値に変換
@@ -43,8 +44,10 @@ int userChange(PGconn *__con, int __soc){
         sprintf(sendBuf, "パスワードを入力してください(12345678)。%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
         //入力が英数字8桁の場合、パスワードとして扱う
         if( strlen(recvBuf) == 8 && isalnum(recvBuf) ){
@@ -82,6 +85,15 @@ int userChange(PGconn *__con, int __soc){
         sprintf(sendBuf, "会員が存在しません。%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        //ロールバック
+        res = PQexec(__con, "ROLLBACK");
+        if(PQresultStatus(res) != PGRES_COMMAND_OK){
+            printf("ROLLBACK failed: %s", PQerrorMessage(__con));
+            PQclear(res);
+            PQfinish(__con);
+            sprintf(sendBuf, "error occured%s", ENTER);
+            send(__soc, sendBuf, sendLen, 0);
+        }
         PQclear(res);
         PQfinish(__con);
         sprintf(sendBuf, "error occured%s", ENTER);
@@ -90,11 +102,12 @@ int userChange(PGconn *__con, int __soc){
     }
 
     //user_tテーブルに電話番号とパスワードが一致する会員がいた場合、電話番号、氏名を取得し、表示する。
-    phoneNum = PQgetvalue(res, 0, 0);  //電話番号を取得
+    phoneNum = PQgetvalue(res, 0, 1);  //電話番号を取得
     userName = PQgetvalue(res, 0, 2);  //氏名を取得
     sprintf(sendBuf, "電話番号:%s 氏名:%s%s", phoneNum, userName, ENTER); //送信データ作成
     sendLen = strlen(sendBuf);  //送信データ長
     send(__lsoc, sendBuf, sendLen, 0); //送信
+    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
 
     //変更する内容の選択を行う。0:電話番号、1:パスワード、2:氏名を数字入力してもらう。
     while(1){
@@ -102,8 +115,10 @@ int userChange(PGconn *__con, int __soc){
         sprintf(sendBuf, "0:電話番号、1:パスワード、2:氏名%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
         //入力が数字1桁の場合、変更する内容として扱う
         if( strlen(recvBuf) == 1 && isdigit(recvBuf) ){
@@ -113,6 +128,7 @@ int userChange(PGconn *__con, int __soc){
             sprintf(sendBuf, "入力が不正です。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(__lsoc, sendBuf, sendLen, 0); //送信
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         }
     }
 
@@ -122,8 +138,10 @@ int userChange(PGconn *__con, int __soc){
             sprintf(sendBuf, "電話番号を入力してください。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(__lsoc, sendBuf, sendLen, 0); //送信
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+            printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
             //入力が数字11桁の場合、電話番号として扱う
             if( strlen(recvBuf) == 11 && isdigit(recvBuf) ){
@@ -133,13 +151,16 @@ int userChange(PGconn *__con, int __soc){
                 sprintf(sendBuf, "入力が不正です。%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf);  //送信データ長
                 send(__lsoc, sendBuf, sendLen, 0); //送信
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             }
         }else if(changeNum == 1){
             sprintf(sendBuf, "パスワードを入力してください。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(__lsoc, sendBuf, sendLen, 0); //送信
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+            printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
             //入力が英数字8桁の場合、パスワードとして扱う
             if( strlen(recvBuf) == 8 && isalnum(recvBuf) ){
@@ -147,16 +168,18 @@ int userChange(PGconn *__con, int __soc){
                 break;
             }else{
                 sprintf(sendBuf, "入力が不正です。%s", ENTER); //送信データ作成
-                sendLen = strlen(sendBuf
-                );  //送信データ長
+                sendLen = strlen(sendBuf);  //送信データ長
                 send(__lsoc, sendBuf, sendLen, 0); //送信
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             }
         }else if(changeNum == 2){
             sprintf(sendBuf, "氏名を入力してください。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(__lsoc, sendBuf, sendLen, 0); //送信
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+            printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
             //入力が30文字以下の場合、氏名として扱う
             if( strlen(recvBuf) <= 30 ){
@@ -166,6 +189,7 @@ int userChange(PGconn *__con, int __soc){
                 sprintf(sendBuf, "氏名は30文字を超えないようにしてください。%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf);  //送信データ長
                 send(__lsoc, sendBuf, sendLen, 0); //送信
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             }
         }
     }
@@ -177,8 +201,10 @@ int userChange(PGconn *__con, int __soc){
         sprintf(sendBuf, "変更しますか？(y/n)%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
         //入力がyの場合、変更する。
         if( strcmp(recvBuf, "y") == 0 ){
@@ -196,6 +222,7 @@ int userChange(PGconn *__con, int __soc){
             sprintf(sendBuf, "変更を中止しました。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(__lsoc, sendBuf, sendLen, 0); //送信
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         }
     //パスワードを変更する場合(changeNum=1)、内容を確認してもらう。変更前のパスワード(userPass)と変更後(new_userPass)を表示してもらう
     }else if(changeNum == 1){
@@ -204,8 +231,10 @@ int userChange(PGconn *__con, int __soc){
         sprintf(sendBuf, "変更しますか？(y/n)%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
         //入力がyの場合、変更する。
         if( strcmp(recvBuf, "y") == 0 ){
@@ -223,6 +252,7 @@ int userChange(PGconn *__con, int __soc){
             sprintf(sendBuf, "変更を中止しました。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(__lsoc, sendBuf, sendLen, 0); //送信
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         }
     //氏名を変更する場合(changeNum=2)、内容を確認してもらう。変更前の氏名(userName)と変更後(new_userName)を表示してもらう
     }else if(changeNum == 2){
@@ -231,8 +261,10 @@ int userChange(PGconn *__con, int __soc){
         sprintf(sendBuf, "変更しますか？(y/n)%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
         //入力がyの場合、変更する。
         if( strcmp(recvBuf, "y") == 0 ){
@@ -250,11 +282,13 @@ int userChange(PGconn *__con, int __soc){
             sprintf(sendBuf, "変更を中止しました。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(__lsoc, sendBuf, sendLen, 0); //送信
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         }
     }else{
         sprintf(sendBuf, "error occured%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
     }
 
     //コミット

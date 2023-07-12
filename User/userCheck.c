@@ -23,8 +23,10 @@ int userCheck(PGconn *__con, int __soc){
         sprintf(sendBuf, "電話番号を入力してください(09024681234)。%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
         
         //入力が数字11桁の場合、電話番号として扱う
         if( strlen(recvBuf) == 11 && isdigit(recvBuf) ){
@@ -47,8 +49,10 @@ int userCheck(PGconn *__con, int __soc){
             sprintf(sendBuf, "パスワードを入力してください。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(__lsoc, sendBuf, sendLen, 0); //送信
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+            printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
             //入力が英数字8桁の場合、パスワードとして扱う
             if( strlen(recvBuf) == 8 && isalnum(recvBuf) ){
@@ -64,6 +68,7 @@ int userCheck(PGconn *__con, int __soc){
         sprintf(sendBuf, "電話番号が不正です。%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
     }
 
     //user_tテーブルからSELECTで同一の電話番号を検索
@@ -77,7 +82,16 @@ int userCheck(PGconn *__con, int __soc){
         sprintf(sendBuf, "パスワードが不正です。%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
     }
+
+    //ようこそ、氏名さん！
+    sprintf(sendBuf, "ようこそ、%sさん！%s", userName, ENTER); //送信データ作成
+    sendLen = strlen(sendBuf);  //送信データ長
+    send(__lsoc, sendBuf, sendLen, 0); //送信
+    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+
+    
 
     //トランザクション終了
     res = PQexec(__con, "COMMIT");
