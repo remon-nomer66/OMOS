@@ -2,7 +2,6 @@
 
 int auth_Chg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen;   //送受信データ長
-    pthread_t selfId = pthread_self();  //スレッドID
     char sql[BUFSIZE];
     PGresult *res;
     int auth;
@@ -277,11 +276,76 @@ int auth_Chg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
 
     //main_authが2だった場合、
     if(main_auth == 2){
-        //authが
+        //authが3だった場合、権限を本部にするか、店長にするかを問う
+        if(auth == 2){
+            sprintf(sendBuf, "権限を本部にする場合は2、店長にする場合は4を入力してください.%s%s", ENTER, DATA_END);
+            sendLen = strlen(sendBuf);
+            send(soc, sendBuf, sendLen, 0);
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+            //もし、2か4以外の数字が入力された場合、再度入力させる
+            while(1){
+                //権限を受信
+                recvLen = recv(soc, recvBuf, BUFSIZE, 0);
+                recvBuf[recvLen] = '\0';
+                printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
+                //2か4以外の数字が入力された場合、再度入力させる
+                if(atoi(recvBuf) != 2 && atoi(recvBuf) != 4){
+                    sprintf(sendBuf, "2か4を入力してください.%s%s", ENTER, DATA_END);
+                    sendLen = strlen(sendBuf);
+                    send(soc, sendBuf, sendLen, 0);
+                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                }
+                else{
+                    break;
+                }
+            }
+            //2が入力された場合、権限を2に変更する
+            if(atoi(recvBuf) == 2){
+                sprintf(sql, "UPDATE user_authority_t SET user_authority = 2 WHERE user_id = %d", atoi(PQgetvalue(res, 0, 0)));
+                res = PQexec(con, sql);
+                if(PQresultStatus(res) != PGRES_COMMAND_OK){
+                    printf("%s", PQresultErrorMessage(res));
+                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sendLen = strlen(sendBuf);
+                    send(soc, sendBuf, sendLen, 0);
+                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                    //ロールバック
+                    res = PQexec(con, "ROLLBACK");
+                    PQclear(res);
+                    return -1;
+                }
+                sprintf(sendBuf, "権限を本部に変更しました.%s%s", ENTER, DATA_END);
+                sendLen = strlen(sendBuf);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+            }
+            //4が入力された場合、権限を4に変更する
+            else if(atoi(recvBuf) == 4){
+                sprintf(sql, "UPDATE user_authority_t SET user_authority = 4 WHERE user_id = %d", atoi(PQgetvalue(res, 0, 0)));
+                res = PQexec(con, sql);
+                if(PQresultStatus(res) != PGRES_COMMAND_OK){
+                    printf("%s", PQresultErrorMessage(res));
+                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sendLen = strlen(sendBuf);
+                    send(soc, sendBuf, sendLen, 0);
+                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                    //ロールバック
+                    res = PQexec(con, "ROLLBACK");
+                    PQclear(res);
+                    return -1;
+                }
+                sprintf(sendBuf, "権限を店長に変更しました.%s%s", ENTER, DATA_END);
+                sendLen = strlen(sendBuf);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+            }
+        }
     }
 
-    //権限を変更したい人の権限を入力してもらう
-    sprintf(sendBuf, "権限を変更したい人の権限を入力してください.[店員:5]%s%s", ENTER, DATA_END);
-    
+    //トランザクション終了
+    res = PQexec(con, "COMMIT");
+    PQclear(res);
 
+    return 0;
+    
 }
