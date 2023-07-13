@@ -15,7 +15,6 @@ int userReg(pthread_t selfId, PGconn *__con, int __soc, int *__u_info){
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("BEGIN failed: %s", PQerrorMessage(__con));
         PQclear(res);
-        PQfinish(__con);
         sprintf(sendBuf, "error occured%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
     }
@@ -146,7 +145,6 @@ int userReg(pthread_t selfId, PGconn *__con, int __soc, int *__u_info){
     //トランザクションの終了
     res = PQexec(__con, "COMMIT");
     PQclear(res);
-    PQfinish(__con);
 
     return 0;
 }
