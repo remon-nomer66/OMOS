@@ -29,7 +29,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen] = '\0';
         //4文字以外の場合はエラーを返す
-        if(recvLen != 4){
+        if(recvLen != 5){
             sprintf(sendBuf, "商品IDは4文字で入力してください．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
@@ -97,7 +97,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen] = '\0'; //受信データにNULLを追加
             //入力された文字列に数字以外が含まれるならエラーを返す。
             for(i = 0; i < recvLen; i++){
-                if(isdigit(recvBuf[i]) == 0){
+                if(!isdigit(recvBuf[i])){
                     sprintf(sendBuf, "値段は数字で入力してください．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
@@ -129,7 +129,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen] = '\0';
             //4文字以外の場合はエラーを返す
-            if(recvLen != 4){
+            if(recvLen != 5){
                 sprintf(sendBuf, "商品IDは4桁で入力してください。%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
@@ -232,7 +232,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen] = '\0';
             //2文字以外の場合はエラーを返す
-            if(recvLen != 2){
+            if(recvLen != 3){
                 sprintf(sendBuf, "店舗IDは2文字で入力してください．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
@@ -276,7 +276,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen] = '\0';
             //4文字以外の場合はエラーを返す
-            if(recvLen != 4){
+            if(recvLen != 5){
                 sprintf(sendBuf, "商品IDは4文字で入力してください．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
@@ -284,7 +284,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             }
             //入力された文字が数字以外ならエラーを返す。
             for(i = 0; i < 4; i++){
-                if(isdigit(recvBuf[i]) == 0){
+                if(!isdigit(recvBuf[i])){
                     sprintf(sendBuf, "商品IDは数字で入力してください．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
@@ -328,7 +328,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 recvBuf[recvLen] = '\0'; //受信データにNULLを追加
                 //入力された文字が数字以外ならエラーを返す。
                 for(i = 0; i < recvLen; i++){
-                    if(isdigit(recvBuf[i]) == 0){
+                    if(!isdigit(recvBuf[i])){
                         sprintf(sendBuf, "値段は数字で入力してください．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
@@ -434,7 +434,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen] = '\0';
             //4文字以外の場合はエラーを返す
-            if(recvLen != 4){
+            if(recvLen != 5){
                 sprintf(sendBuf, "商品IDは4桁で入力してください。%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
@@ -597,7 +597,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen] = '\0';
         //2文字以外の場合はエラーを返す
-        if(recvLen != 2){
+        if(recvLen != 3){
             sprintf(sendBuf, "店舗IDは2桁で入力してください．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
@@ -642,7 +642,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen] = '\0';
         //入力が4文字以外の場合は商品IDを4桁で入力するようにエラーを返す
-        if(recvLen != 4){
+        if(recvLen != 5){
             sprintf(sendBuf, "商品IDは4桁で入力してください．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
