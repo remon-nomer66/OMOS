@@ -1,4 +1,4 @@
-#include "OMOS.h"
+#include "omos.h"
 
 int userReg(pthread_t selfId, PGconn *__con, int __soc, int *__u_info){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ

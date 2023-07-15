@@ -1,4 +1,4 @@
-#include "OMOS.h"
+#include "omos.h"
 
 int userCheck(PGconn *__con, int __soc){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
