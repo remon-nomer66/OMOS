@@ -35,6 +35,13 @@ VALUES (
     10, 2, '宮崎'
 );
 
+INSERT INTO chain_t (
+    chain_id, store_id
+)
+VALUES (
+    1, 10
+);
+
 INSERT INTO store_table_t (
     store_id, desk_num, desk_max, desk_use
 )
@@ -75,6 +82,13 @@ INSERT INTO menu_charge_t (
 )
 VALUES (
     1234, 1001
+);
+
+INSERT INTO menu_detail_t (
+    menu_id, layer, id, season
+)
+VALUES (
+    1234, 1, 11, 0
 );
 
 INSERT INTO push_t (
