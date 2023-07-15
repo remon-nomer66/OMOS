@@ -21,22 +21,22 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         res = PQexec(con, sendBuf); //送信データを実行
         // 実行結果を表示
         for (int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "%s %s %s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2)); //送信データ作成
+            sprintf(sendBuf, "%s %s %s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2), ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen] = '\0'; //受信データにNULLを追加
         }
         //在庫切れが近い商品です。と表示
-        sprintf(sendBuf, "在庫切れが近い商品です。%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "在庫切れが近い商品です（発注済を除く）。%s%s", ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
-        // テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
-        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d AND menu_storage_t.storage < menu_storage_t.min_storage", u_store); //SQL文を作成
+        // テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するかつテーブル名：menu_storage_tのstorage_flagが0ものを抽出し、menu_nameを表示
+        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d AND menu_storage_t.storage < menu_storage_t.min_storage AND menu_storage_t.storage_flag = 0", u_store); //SQL文を作成
         res = PQexec(con, sendBuf); //送信データを実行
         // 実行結果を表示
         for (int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "%s %s %s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2)); //送信データ作成
+            sprintf(sendBuf, "%s %s %s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2), ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -49,22 +49,22 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         res = PQexec(con, sendBuf); //送信データを実行
         // 実行結果を表示
         for (int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "%s %s %s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2)); //送信データ作成
+            sprintf(sendBuf, "%s %s %s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2), ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen] = '\0'; //受信データにNULLを追加
         }
         //在庫切れが近い商品です。と表示
-        sprintf(sendBuf, "在庫切れが近い商品です。%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "在庫切れが近い商品です（発注済を除く）。%s%s", ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
-        // テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
-        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d AND menu_storage_t.storage < menu_storage_t.min_storage", u_store); //SQL文を作成
+        // テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するかつテーブル名：menu_storage_tのstorage_flagが0ものを抽出し、menu_nameを表示
+        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d AND menu_storage_t.storage < menu_storage_t.min_storage AND menu_storage_t.storage_flag = 0", u_store); //SQL文を作成
         res = PQexec(con, sendBuf); //送信データを実行
         // 実行結果を表示
         for (int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "%s %s %s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2)); //送信データ作成
+            sprintf(sendBuf, "%s %s %s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), PQgetvalue(res, i, 2), ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -144,8 +144,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 //入力されている個数の値をOD2に代入
                                 sscanf(recvBuf, "%d", &OD2);
                                 if (check != 1){
-                                    //テーブル名：store_order_tのmenu_idにOD1を挿入、store_orderにOD2を挿入、menu_nameにOD3を挿入
-                                    sprintf(sendBuf, "INSERT INTO store_order_t (menu_id, store_order, menu_name) VALUES (%d, %d, '%s')", OD1, OD2, OD3); //SQL文作成
+                                    //テーブル名：store_order_tのmenu_idにOD1を挿入、store_order_cntにOD2を挿入、menu_nameにOD3を挿入、store_order_dateに現在の日付を挿入、store_order_timeに現在の時刻を挿入
+                                    sprintf(sendBuf, "INSERT INTO store_order_t (menu_id, store_order_cnt, menu_name, store_order_date, store_order_time) VALUES (%d, %d, '%s', current_date, current_time)", OD1, OD2, OD3); //SQL文作成                                    
+                                    res = PQexec(con, sendBuf); //実行
+                                    //テーブル名：menu_storage_tのstorage_flagに1を挿入
+                                    sprintf(sendBuf, "UPDATE menu_storage_t SET storage_flag = 1 WHERE menu_id = %d", OD1); //SQL文作成
                                     res = PQexec(con, sendBuf); //実行
                                 }
                                 //テーブル名：store_order_tの中身をcsvファイルとして出力
@@ -216,8 +219,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 //入力されている個数の値をOD2に代入
                                 sscanf(recvBuf, "%d", &OD2);
                                 if (check != 1){
-                                    //テーブル名：store_order_tのmenu_idにOD1を挿入、store_orderにOD2を挿入、menu_nameにOD3を挿入
-                                    sprintf(sendBuf, "INSERT INTO store_order_t (menu_id, store_order, menu_name) VALUES (%d, %d, '%s')", OD1, OD2, OD3); //SQL文作成
+                                    //テーブル名：store_order_tのmenu_idにOD1を挿入、store_order_cntにOD2を挿入、menu_nameにOD3を挿入、store_order_dateに現在の日付を挿入、store_order_timeに現在の時刻を挿入
+                                    sprintf(sendBuf, "INSERT INTO store_order_t (menu_id, store_order_cnt, menu_name, store_order_date, store_order_time) VALUES (%d, %d, '%s', current_date, current_time)", OD1, OD2, OD3); //SQL文作成
+                                    res = PQexec(con, sendBuf); //実行
+                                    //テーブル名：menu_storage_tのstorage_flagに1を挿入
+                                    sprintf(sendBuf, "UPDATE menu_storage_t SET storage_flag = 1 WHERE menu_id = %d", OD1); //SQL文作成
                                     res = PQexec(con, sendBuf); //実行
                                 }
                                 //テーブル名：store_order_tの中身をcsvファイルとして出力
@@ -289,7 +295,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             //m_idに入力された値を代入
                             sscanf(recvBuf, "%d", &m_id);
                             //テーブル名：menu_storage_tからstore_idがs_idと同じもの、かつmenu_idがm_idと同じものを取得して表示。また、テーブル名：recipe_tからmenu_idがm_idと同じもののmenu_nameを取得して表示。
-                            sprintf(sendBuf, "SELECT menu_storage_t.store_id, menu_storage_t.menu_id, menu_storage_t.stock, recipe_t.menu_name FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = %d AND menu_storage_t.menu_id = %d", s_id, m_id); //SQL文作成
+                            sprintf(sendBuf, "SELECT menu_storage_t.store_id, menu_storage_t.menu_id, menu_storage_t.storage, recipe_t.menu_name FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = %d AND menu_storage_t.menu_id = %d", s_id, m_id); //SQL文作成
                             res = PQexec(con, sendBuf); //実行
                             // もしうまくいかなければその店舗に指定された商品IDが存在しないことを示すエラーを表示する
                             if (PQresultStatus(res) != PGRES_TUPLES_OK){
