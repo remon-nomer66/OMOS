@@ -308,11 +308,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 //実行結果を表示
                                 for (int i = 0; i < PQntuples(res); i++){
                                     for (int j = 0; j < PQnfields(res); j++){
-                                        sprintf(sendBuf, "%s ", PQgetvalue(res, i, j)); //送信データ作成
+                                        sprintf(sendBuf, "%s", PQgetvalue(res, i, j)); //送信データ作成
                                         sendLen = strlen(sendBuf); //送信データ長
                                         send(soc, sendBuf, sendLen, 0); //送信
                                     }
-                                    sprintf(sendBuf, "%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                 }
