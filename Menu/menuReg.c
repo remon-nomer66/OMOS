@@ -3,6 +3,8 @@
 int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
     int newmid, newmprice, newmstar, newmstock, newmlimit, newmlevel, newmstore; //新規登録する商品ID, 価格, 評価, 初期在庫数, メニューレベル
+    int u_id, u_auth, u_store; //ユーザID, 権限, 所属
+    int i; //ループカウンタ
     char newmname; //新規登録する商品名
     PGresult *res; //PGresult型の変数resを宣言
 
@@ -16,7 +18,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //商品IDを受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //4文字以外の場合はエラーを返す。
         if(strlen(recvBuf) != 4){
             sendLen = sprintf(sendBuf, "商品IDは4桁で入力してください。%s", ENTER);
@@ -47,11 +49,11 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //商品名を受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力をnewmnameに格納
-        sscanf(recvBuf, "%s", newmname);
+        sscanf(recvBuf, "%s", &newmname);
         //商品名と同じmenu_nameがテーブル名：menu_tにいないかを確認。
-        sprintf(sendBuf, "SELECT * FROM menu_t WHERE menu_name = %s;", newmname);
+        sprintf(sendBuf, "SELECT * FROM menu_t WHERE menu_name = %s;", &newmname);
         res = PQexec(con, sendBuf);
         //存在している場合は、存在していることを伝える。
         if(PQntuples(res) != 0){
@@ -64,7 +66,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //商品価格を受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力をnewmpriceに格納
         sscanf(recvBuf, "%d", &newmprice);
         //新商品の価格が0以上であるかを確認。
@@ -86,7 +88,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //押しにするかどうかを受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力をnewmstarに格納
         sscanf(recvBuf, "%d", &newmstar);
         //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
@@ -100,7 +102,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //初期在庫数を受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力された文字が数字以外ならエラーを返す。
         if(!isdigit(recvBuf[0])){
             sendLen = sprintf(sendBuf, "数字を入力してください。%s", ENTER);
@@ -114,7 +116,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //在庫下限を受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力された文字が数字以外ならエラーを返す。
         if(!isdigit(recvBuf[0])){
             sendLen = sprintf(sendBuf, "数字を入力してください。%s", ENTER);
@@ -124,7 +126,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力をnewmlimitに格納
         sscanf(recvBuf, "%d", &newmlimit);
         //テーブル名：recipe_tのmenuidにnewmidを、menu_nameにnewmnameを挿入
-        sprintf(sendBuf, "INSERT INTO menu_t VALUES(%d, %s);", newmid, newmname);
+        sprintf(sendBuf, "INSERT INTO menu_t VALUES(%d, %s);", newmid, &newmname);
         res = PQexec(con, sendBuf);
         //テーブル名：price_charge_tのmenuidにnewmidを、priceにnewmpriceを挿入
         sprintf(sendBuf, "INSERT INTO price_charge_t VALUES(%d, %d);", newmid, newmprice);
@@ -144,7 +146,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //商品IDを受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //4文字以外の場合はエラーを返す
         if(recvLen != 4){
             sendLen = sprintf(sendBuf, "商品IDは4桁で入力してください。%s", ENTER);
@@ -175,11 +177,11 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //商品名を受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力をnewmnameに格納
-        sscanf(recvBuf, "%s", newmname);
+        sscanf(recvBuf, "%s", &newmname);
         //商品名と同じmenu_nameがテーブル名：menu_tにいないかを確認。
-        sprintf(sendBuf, "SELECT * FROM menu_t WHERE menu_name = %s;", newmname);
+        sprintf(sendBuf, "SELECT * FROM menu_t WHERE menu_name = %s;", &newmname);
         res = PQexec(con, sendBuf);
         //存在している場合は、存在していることを伝える。
         if(PQntuples(res) != 0){
@@ -192,7 +194,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //商品価格を受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力された文字が数字以外ならエラーを返す。
         for(i = 0; i < recvLen; i++){
             if(!isdigit(recvBuf[i])){
@@ -214,7 +216,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //押しにするかどうかを受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力をnewmstarに格納
         sscanf(recvBuf, "%d", &newmstar);
         //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
@@ -228,7 +230,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //メニューレベルを受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力をnewmlevelに格納
         sscanf(recvBuf, "%d", &newmlevel);
         //newmlevelの値が0以上かつ4以下であるかを確認。
@@ -244,7 +246,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             send(soc, sendBuf, sendLen, 0);
             //店舗IDを受信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-            recvBuf[recvLen] = '\0';
+            recvBuf[recvLen-1] = '\0';
             //2文字以外の場合はエラーを返す
             if(strlen(recvBuf) != 2){
                 sendLen = sprintf(sendBuf, "店舗IDは2桁で入力してください。%s", ENTER);
@@ -267,7 +269,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //初期在庫数を受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力された文字が数字以外ならエラーを返す。
         for(i = 0; i < strlen(recvBuf); i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
@@ -283,7 +285,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         //在庫下限を受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //入力された文字が数字以外ならエラーを返す。
         for(i = 0; i < strlen(recvBuf); i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
@@ -295,7 +297,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力をnewmlimitに格納
         sscanf(recvBuf, "%d", &newmlimit);
         //テーブル名：recipe_tのmenuidにnewmidを、menu_nameにnewmnameを挿入
-        sprintf(sendBuf, "INSERT INTO menu_t VALUES(%d, %s);", newmid, newmname);
+        sprintf(sendBuf, "INSERT INTO menu_t VALUES(%d, %s);", newmid, &newmname);
         res = PQexec(con, sendBuf);
         //テーブル名：price_charge_tのmenuidにnewmidを、priceにnewmpriceを挿入
         sprintf(sendBuf, "INSERT INTO price_charge_t VALUES(%d, %d);", newmid, newmprice);

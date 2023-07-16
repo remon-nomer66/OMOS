@@ -25,7 +25,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
         //在庫切れが近い商品です。と表示
         sprintf(sendBuf, "在庫切れが近い商品です（発注済を除く）。%s%s", ENTER, DATA_END);
@@ -40,7 +40,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
     }else if (u_auth == AMGR){ //店長
         // 在庫一斉表示
@@ -53,7 +53,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
         //在庫切れが近い商品です。と表示
         sprintf(sendBuf, "在庫切れが近い商品です（発注済を除く）。%s%s", ENTER, DATA_END);
@@ -68,20 +68,20 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
         while (1){
             sprintf(sendBuf, "発注しますか？ (y/n) %s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             if (strcmp(recvBuf, "y") == 0){
                 sprintf(sendBuf, "フードとドリンク、どちらを発注しますか？(フード/ドリンク)%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 if (strcmp(recvBuf, "フード") == 0){
                     while (1){
                         check = 0;
@@ -89,7 +89,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         sendLen = strlen(sendBuf);//送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                        recvBuf[recvLen] = '\0';//受信データにNULLを追加
+                        recvBuf[recvLen-1] = '\0';//受信データにNULLを追加
                         if (strcmp(recvBuf, "exit") == 0){
                          break;
                         }else{
@@ -126,7 +126,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                                recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 //3文字以外の場合はエラーを返す
                                 if (strlen(recvBuf) != 4){
                                     sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
@@ -164,7 +164,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         sendLen = strlen(sendBuf);//送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                        recvBuf[recvLen] = '\0';//受信データにNULLを追加
+                        recvBuf[recvLen-1] = '\0';//受信データにNULLを追加
                         if (strcmp(recvBuf, "exit") == 0){
                             break;
                         }else{
@@ -201,7 +201,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                                recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 //3文字以外の場合は場合はエラーを返す
                                 if (strlen(recvBuf) != 4){
                                     sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
@@ -250,7 +250,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             if (strcmp(recvBuf, "exit") == 0){
                 break;
             }else{
@@ -281,7 +281,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                        recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+                        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                         if (strlen(recvBuf) != 5){ //4桁でなければエラーを表示する。
                             sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長

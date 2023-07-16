@@ -29,7 +29,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-        recvBuf[recvLen] = '\0';
+        recvBuf[recvLen-1] = '\0';
         //4文字以外の場合はエラーを返す
         if(recvLen != 4){
             sprintf(sendBuf, "商品IDは4桁で入力してください．%s", ENTER); //送信データ作成
@@ -65,7 +65,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-        recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         //受信した内容をresponseに入れる
         sscanf(recvBuf, "%s", response);
         if(response == 'y'){ //削除する場合
@@ -90,13 +90,13 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
         }
-    }else if(auth == AHQ){
+    }else if(u_auth == AHQ){
         //情報を変更したいものがショップメニューかどうかを聞く。
         sprintf(sendBuf, "情報を変更したいものはショップメニューですか？%s yes または no%s", ENTER, ENTER); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-        recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         //受信した内容をresponseに代入
         sscanf(recvBuf, "%s", response);
         if(strcmp(response, "yes") == 0){
@@ -105,7 +105,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen] = '\0';
+            recvBuf[recvLen-1] = '\0';
             //2文字以外の場合はエラーを返す
             if(recvLen != 2){
                 sprintf(sendBuf, "店舗IDは2桁で入力してください．%s", ENTER); //送信データ作成
@@ -150,7 +150,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen] = '\0';
+            recvBuf[recvLen-1] = '\0';
             //4文字以外の場合はエラーを返す
             if(recvLen != 4){
                 sprintf(sendBuf, "商品IDは4桁で入力してください．%s", ENTER); //送信データ作成
@@ -183,7 +183,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen] = '\0'; //受信データにNULLを追加
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //クライアントから受信した値をresponseに代入
             sscanf(recvBuf, "%s", response);
             if(response == 'y'){ //削除する場合
