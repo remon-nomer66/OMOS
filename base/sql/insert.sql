@@ -85,10 +85,10 @@ VALUES (
 );
 
 INSERT INTO menu_storage_t (
-    menu_id, store_id, storage, min_storage
+    menu_id, store_id, storage, min_storage, storage_flag
 )
 VALUES (
-    1234, 1, 100, 30
+    1234, 1, 100, 30, 0
 );
 
 SET search_path to reserve;
