@@ -15,6 +15,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         sprintf(sendBuf, "現在の在庫です。%s%s", ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         // 在庫一斉表示
         //テーブル名：menu_storage_tからstore_idがu_storeのものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
         sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d", u_store); //SQL文を作成
@@ -27,10 +29,13 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
+        PQclear(res); //resのメモリを解放
         //在庫切れが近い商品です。と表示
         sprintf(sendBuf, "在庫切れが近い商品です（発注済を除く）。%s%s", ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         // テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するかつテーブル名：menu_storage_tのstorage_flagが0ものを抽出し、menu_nameを表示
         sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d AND menu_storage_t.storage < menu_storage_t.min_storage AND menu_storage_t.storage_flag = 0", u_store); //SQL文を作成
         res = PQexec(con, sendBuf); //送信データを実行
@@ -42,6 +47,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
+        PQclear(res); //resのメモリを解放
     }else if (u_auth == AMGR){ //店長
         // 在庫一斉表示
         //テーブル名：menu_storage_tからstore_idがu_storeのものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
@@ -55,10 +61,13 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
+        PQclear(res); //メモリ解放
         //在庫切れが近い商品です。と表示
         sprintf(sendBuf, "在庫切れが近い商品です（発注済を除く）。%s%s", ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         // テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するかつテーブル名：menu_storage_tのstorage_flagが0ものを抽出し、menu_nameを表示
         sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d AND menu_storage_t.storage < menu_storage_t.min_storage AND menu_storage_t.storage_flag = 0", u_store); //SQL文を作成
         res = PQexec(con, sendBuf); //送信データを実行
@@ -70,6 +79,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
+        PQclear(res); //resのメモリを解放
         while (1){
             sprintf(sendBuf, "発注しますか？ (y/n) %s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
@@ -77,12 +87,12 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             if (strcmp(recvBuf, "y") == 0){
-                sprintf(sendBuf, "フードとドリンク、どちらを発注しますか？(フード/ドリンク)%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "フードとドリンク、どちらを発注しますか？(food/drink)%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
-                if (strcmp(recvBuf, "フード") == 0){
+                if (strcmp(recvBuf, "food") == 0){
                     while (1){
                         check = 0;
                         sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
@@ -98,6 +108,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
+                                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
                             //数字以外の場合はエラーを返す
@@ -105,6 +117,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
+                                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
                             //入力されている商品IDの値をOD1に代入
@@ -117,8 +131,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
+                                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
+                            PQclear(res); //resのメモリを解放
                             //取得したmenu_nameを文字列としてOD3に挿入
                             sprintf(OD3, "%s", PQgetvalue(res, 0, 0));
                             if (check != 1){
@@ -132,6 +149,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                     sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
+                                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                     check = 1;
                                 }
                                 //数字以外の場合はエラーを返す
@@ -139,6 +158,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                     sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
+                                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                     check = 1;
                                 }
                                 //入力されている個数の値をOD2に代入
@@ -147,17 +168,20 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                     //テーブル名：store_order_tのmenu_idにOD1を挿入、store_order_cntにOD2を挿入、menu_nameにOD3を挿入、store_order_dateに現在の日付を挿入、store_order_timeに現在の時刻を挿入
                                     sprintf(sendBuf, "INSERT INTO store_order_t (menu_id, store_order_cnt, menu_name, store_order_date, store_order_time) VALUES (%d, %d, '%s', current_date, current_time)", OD1, OD2, OD3); //SQL文作成                                    
                                     res = PQexec(con, sendBuf); //実行
+                                    PQclear(res); //resのメモリを解放
                                     //テーブル名：menu_storage_tのstorage_flagに1を挿入
                                     sprintf(sendBuf, "UPDATE menu_storage_t SET storage_flag = 1 WHERE menu_id = %d", OD1); //SQL文作成
                                     res = PQexec(con, sendBuf); //実行
+                                    PQclear(res); //resのメモリを解放
                                 }
                                 //テーブル名：store_order_tの中身をcsvファイルとして出力
                                 sprintf(sendBuf, "COPY store_order_t TO 'store_order_t.csv' WITH CSV");
                                 res = PQexec(con, sendBuf); //実行
+                                PQclear(res); //resのメモリを解放
                             }
                         }
                     }
-                }else if (strcmp(recvBuf, "ドリンク") == 0){
+                }else if (strcmp(recvBuf, "drink") == 0){
                     while(1){
                         check = 0;
                         sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
@@ -173,6 +197,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
+                                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
                             //数字以外の場合はエラーを返す
@@ -180,6 +206,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
+                                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
                             //入力されている商品IDの値をOD1に代入
@@ -192,8 +220,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
+                                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
+                            PQclear(res); //resのメモリを解放
                             //取得したmenu_nameを文字列としてOD3に挿入
                             strcpy(OD3, PQgetvalue(res, 0, 0));
                             if (check != 1){
@@ -207,6 +238,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                     sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
+                                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                     check = 1;
                                 }
                                 //数字以外の場合はエラーを返す
@@ -214,6 +247,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                     sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
+                                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                     check = 1;
                                 }
                                 //入力されている個数の値をOD2に代入
@@ -222,13 +257,16 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                     //テーブル名：store_order_tのmenu_idにOD1を挿入、store_order_cntにOD2を挿入、menu_nameにOD3を挿入、store_order_dateに現在の日付を挿入、store_order_timeに現在の時刻を挿入
                                     sprintf(sendBuf, "INSERT INTO store_order_t (menu_id, store_order_cnt, menu_name, store_order_date, store_order_time) VALUES (%d, %d, '%s', current_date, current_time)", OD1, OD2, OD3); //SQL文作成
                                     res = PQexec(con, sendBuf); //実行
+                                    PQclear(res); //resのメモリを解放
                                     //テーブル名：menu_storage_tのstorage_flagに1を挿入
                                     sprintf(sendBuf, "UPDATE menu_storage_t SET storage_flag = 1 WHERE menu_id = %d", OD1); //SQL文作成
                                     res = PQexec(con, sendBuf); //実行
+                                    PQclear(res); //resのメモリを解放
                                 }
                                 //テーブル名：store_order_tの中身をcsvファイルとして出力
                                 sprintf(sendBuf, "COPY store_order_t TO 'store_order_t.csv' WITH CSV");
                                 res = PQexec(con, sendBuf); //実行
+                                PQclear(res); //resのメモリを解放
                             }
                         }
                     }
@@ -237,6 +275,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     sprintf(sendBuf, "入力された値が不正です。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
+                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 }
             }else if (strcmp(recvBuf, "n") == 0){
                 break;
@@ -259,10 +299,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     sprintf(sendBuf, "店舗IDは2桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
+                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 }else if (!isdigit(recvBuf[0]) || !isdigit(recvBuf[1])){ //数字以外の文字が入っていたら、エラーを表示する。
                     sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
+                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 }else{
                     //s_idに入力された値を代入
                     sscanf(recvBuf, "%d", &s_id);
@@ -274,8 +318,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         sprintf(sendBuf, "選択した店舗IDは存在しません。%s%s", ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
+                        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                         check = 1;
-                    }if (check != 1){
+                    }
+                    PQclear(res); //resのメモリを解放
+                    if(check != 1){
                         // 閲覧したい商品の商品IDを入力させる。
                         sprintf(sendBuf, "閲覧したい商品の商品IDを4桁で入力してください（例：0001）。%s%s", ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
@@ -286,11 +333,15 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
+                            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                         }else if (!isdigit(recvBuf[0]) || !isdigit(recvBuf[1]) || !isdigit(recvBuf[2]) || !isdigit(recvBuf[3])){
                             //数字以外の文字が入っていたら、エラーを表示する。
                             sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
+                            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                         }else{
                             //m_idに入力された値を代入
                             sscanf(recvBuf, "%d", &m_id);
@@ -302,8 +353,11 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 sprintf(sendBuf, "選択した店舗には指定された商品は存在しません。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
+                                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
+                            PQclear(res); //resのメモリを解放
                             if (check != 1){
                                 //実行結果を表示
                                 for (int i = 0; i < PQntuples(res); i++){
@@ -311,14 +365,18 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                         sprintf(sendBuf, "%s", PQgetvalue(res, i, j)); //送信データ作成
                                         sendLen = strlen(sendBuf); //送信データ長
                                         send(soc, sendBuf, sendLen, 0); //送信
+                                        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                     }
                                     sprintf(sendBuf, "%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
+                                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 }
                             }
                         }
-                   }
+                    }
                 }
             }
         }
