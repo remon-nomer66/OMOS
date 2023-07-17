@@ -2,7 +2,7 @@
 
 int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
-    int u_id, u_auth, u_store, delid, changestore; //ユーザID、ユーザの持つ権限、ユーザの所属、削除したいメニューID、情報を変更したい店舗ID
+    int u_id, u_auth, u_store, delid, changestore, changeid, i; //ユーザID、ユーザの持つ権限、ユーザの所属、削除したいメニューID、情報を変更したい店舗ID、情報を変更したいメニューID、ループカウンタ
     char response; //クライアントからの返答
     PGresult *res; //PGresult型の変数resを宣言
 
@@ -68,7 +68,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         //受信した内容をresponseに入れる
         sscanf(recvBuf, "%s", &response);
-        if(&response == 'y'){ //削除する場合
+        if(response == 'y'){ //削除する場合
             //テーブル名：recipe_t, price_charge_t, push_t, menu_storage_t, menu_charge_tからテーブル名：menu_charge_tからaccount_idがu_idと一致するmenu_idのものを削除
             sprintf(sendBuf, "DELETE FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_charge_t WHERE account_id = %d);", u_id); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
@@ -80,7 +80,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             res = PQexec(con, sendBuf); //SQL文実行
             sprintf(sendBuf, "DELETE FROM menu_charge_t WHERE account_id = %d;", u_id); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
-        }else if(&response == 'n'){ //削除しない場合
+        }else if(response == 'n'){ //削除しない場合
             sprintf(sendBuf, "削除を中止しました．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
@@ -186,7 +186,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //クライアントから受信した値をresponseに代入
             sscanf(recvBuf, "%s", &response);
-            if(&response == 'y'){ //削除する場合
+            if(response == 'y'){ //削除する場合
                 //テーブル名：recipe_t, price_charge_t, push_t, menu_storage_t, menu_charge_tからテーブル名：menu_charge_tからaccount_idがu_idと一致するmenu_idのものを削除
                 sprintf(sendBuf, "DELETE FROM recipe_t WHERE menu_id = %d;", changeid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
@@ -201,7 +201,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "削除しました．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
-            }else if(&response == 'n'){ //削除しない場合
+            }else if(response == 'n'){ //削除しない場合
                 sprintf(sendBuf, "削除を中止しました．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
@@ -211,7 +211,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
-        }else ifif(strcmp(&response, "no") == 0){
+        }else if(strcmp(&response, "no") == 0){
             sprintf(sendBuf, "削除を中止しました．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信

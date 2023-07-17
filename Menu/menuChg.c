@@ -2,7 +2,7 @@
 
 int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
-    int changeid, changestore, changeprice, changelevel, u_id, u_auth, u_store; //変更する商品ID, 変更を加えたい部分の店舗ID, 変更後の値段, 押しかどうか、ユーザID、ユーザの持つ権限、ユーザの所属
+    int changeid, changestore, changeprice, changelevel, u_id, u_auth, u_store, i; //変更する商品ID, 変更を加えたい部分の店舗ID, 変更後の値段, 押しかどうか、ユーザID、ユーザの持つ権限、ユーザの所属, ループ用変数
     char response, changeitem, changename, changestar;
     PGresult *res; //PGresult型の変数resを宣言
 
@@ -19,7 +19,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         res = PQexec(con, sendBuf); //SQL文実行
         //クライアントに実行結果を表示
         for(int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
@@ -105,7 +105,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 }
             }
             //クライアントから受信した変更内容をchangepriceに代入
-            sscanf(recvBuf, "%s", &changeprice);
+            sscanf(recvBuf, "%d", &changeprice);
             //テーブル名：menu_storage_tのstore_idとu_storeが一致し、changeidと同じmenu_idを持つ、テーブル名：recipe_tのpriceの内容をchangepriceに変更
             sprintf(sendBuf, "UPDATE recipe_t SET price = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeprice, changeid, u_store); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
@@ -133,7 +133,6 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
-                continue;
             }
             //入力された文字が数字以外ならエラーを返す。
             for(int i = 0; i < 4; i++){
@@ -141,7 +140,6 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     sprintf(sendBuf, "商品IDは数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
-                    continue;
                 }
             }
             //クライアントから受信した値をchangeidに代入
