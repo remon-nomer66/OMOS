@@ -6,7 +6,7 @@ void menu(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
     int flag = 0;
 
     while(1){
-        sprintf(sendBuf, "MENUの中で扱いたいコマンドを入力してください．%s利用可能なコマンドは\"MREG\"，\"MDEL\"，\"MCHG\"です．%sMENUを終了するには\"END\"と入力してください．%s", ENTER, ENTER, DATA_END);
+        sprintf(sendBuf, "MENUの中で扱いたいコマンドを入力してください．%s利用可能なコマンドは\"MREG\"，\"MDEL\"，\"MCHG\"です．%sMENUを終了するには\"END\"と入力してください．%s%s", ENTER, ENTER, ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
