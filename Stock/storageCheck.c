@@ -3,7 +3,7 @@
 int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
     PGresult *res; //PGresult型の変数resを宣言
-    int u_id, u_auth, u_store, OD1, OD2, check, s_id, m_id; //u_系の変数はauthの中身チェック用、OD1はフード・ドリンクの商品ID、OD2はフード・ドリンクの発注数、checkは発注票作成の際、動作続行のチェック用, s_idは店舗IDチェック用、mcheckはメニューIDチェック用
+    int u_id, u_auth, u_store, o_id, o_amount, OD1, OD2, check, s_id, m_id; //u_系の変数はauthの中身チェック用、o_系統の変数は発注情報、OD1はフード・ドリンクの商品ID、OD2はフード・ドリンクの発注数、checkは発注票作成の際、動作続行のチェック用, s_idは店舗IDチェック用、mcheckはメニューIDチェック用
     char OD3[BUFSIZE]; //OD3は発注票作成の際、動作続行のチェック用
 
     u_id = u_info[0]; //ユーザID
@@ -95,12 +95,12 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 if (strcmp(recvBuf, "food") == 0){
                     while (1){
                         check = 0;
-                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は end と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf);//送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                         recvBuf[recvLen-1] = '\0';//受信データにNULLを追加
-                        if (strcmp(recvBuf, "exit") == 0){
+                        if (strcmp(recvBuf, "end") == 0){
                          break;
                         }else{
                             //4文字以外の場合はエラーを返す
@@ -121,24 +121,24 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
-                            //入力されている商品IDの値をOD1に代入
-                            sscanf(recvBuf, "%d", &OD1);
-                            //テーブル名：recipe_tからOD1と同じmenu_idを持つmenu_nameを取得
-                            sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id = %d", OD1); //SQL文作成
-                            res = PQexec(con, sendBuf); //実行
-                            // もしうまくいかなければエラーを表示する
-                            if (PQresultStatus(res) != PGRES_TUPLES_OK){
-                                sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s%s", ENTER, DATA_END); //送信データ作成
-                                sendLen = strlen(sendBuf); //送信データ長
-                                send(soc, sendBuf, sendLen, 0); //送信
-                                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
-                                check = 1;
-                            }
-                            PQclear(res); //resのメモリを解放
-                            //取得したmenu_nameを文字列としてOD3に挿入
-                            sprintf(OD3, "%s", PQgetvalue(res, 0, 0));
                             if (check != 1){
+                                //入力されている商品IDの値をOD1に代入
+                                sscanf(recvBuf, "%d", &OD1);
+                                //テーブル名：recipe_tからOD1と同じmenu_idを持つmenu_nameを取得
+                                sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id = %d", OD1); //SQL文作成
+                                res = PQexec(con, sendBuf); //実行
+                               // もしうまくいかなければエラーを表示する
+                                if (PQresultStatus(res) != PGRES_TUPLES_OK){
+                                    sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s%s", ENTER, DATA_END); //送信データ作成
+                                    sendLen = strlen(sendBuf); //送信データ長
+                                    send(soc, sendBuf, sendLen, 0); //送信
+                                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                                    check = 1;
+                                }
+                                //取得したmenu_nameを文字列としてOD3に挿入
+                                sprintf(OD3, "%s", PQgetvalue(res, 0, 0));
+                                PQclear(res); //resのメモリを解放
                                 sprintf(sendBuf, "何個注文しますか？3桁で入力してください。（例：001）%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
@@ -182,15 +182,15 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         }
                     }
                 }else if (strcmp(recvBuf, "drink") == 0){
-                    while(1){
+                    while (1){
                         check = 0;
-                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は exit と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "どのドリンクを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は end と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf);//送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                         recvBuf[recvLen-1] = '\0';//受信データにNULLを追加
-                        if (strcmp(recvBuf, "exit") == 0){
-                            break;
+                        if (strcmp(recvBuf, "end") == 0){
+                         break;
                         }else{
                             //4文字以外の場合はエラーを返す
                             if (strlen(recvBuf) != 4){
@@ -210,30 +210,30 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
-                            //入力されている商品IDの値をOD1に代入
-                            sscanf(recvBuf, "%d", &OD1);
-                            //テーブル名：recipe_tからOD1と同じmenu_idを持つmenu_nameを取得
-                            sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id = %d", OD1); //SQL文作成
-                            res = PQexec(con, sendBuf); //実行
-                            // もしうまくいかなければエラーを表示する
-                            if (PQresultStatus(res) != PGRES_TUPLES_OK){
-                                sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s%s", ENTER, DATA_END); //送信データ作成
-                                sendLen = strlen(sendBuf); //送信データ長
-                                send(soc, sendBuf, sendLen, 0); //送信
-                                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
-                                check = 1;
-                            }
-                            PQclear(res); //resのメモリを解放
-                            //取得したmenu_nameを文字列としてOD3に挿入
-                            strcpy(OD3, PQgetvalue(res, 0, 0));
                             if (check != 1){
+                                //入力されている商品IDの値をOD1に代入
+                                sscanf(recvBuf, "%d", &OD1);
+                                //テーブル名：recipe_tからOD1と同じmenu_idを持つmenu_nameを取得
+                                sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id = %d", OD1); //SQL文作成
+                                res = PQexec(con, sendBuf); //実行
+                               // もしうまくいかなければエラーを表示する
+                                if (PQresultStatus(res) != PGRES_TUPLES_OK){
+                                    sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s%s", ENTER, DATA_END); //送信データ作成
+                                    sendLen = strlen(sendBuf); //送信データ長
+                                    send(soc, sendBuf, sendLen, 0); //送信
+                                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                                    check = 1;
+                                }
+                                //取得したmenu_nameを文字列としてOD3に挿入
+                                sprintf(OD3, "%s", PQgetvalue(res, 0, 0));
+                                PQclear(res); //resのメモリを解放
                                 sprintf(sendBuf, "何個注文しますか？3桁で入力してください。（例：001）%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
-                                //3文字以外の場合は場合はエラーを返す
+                                //3文字以外の場合はエラーを返す
                                 if (strlen(recvBuf) != 3){
                                     sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
@@ -255,7 +255,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 sscanf(recvBuf, "%d", &OD2);
                                 if (check != 1){
                                     //テーブル名：store_order_tのmenu_idにOD1を挿入、store_order_cntにOD2を挿入、menu_nameにOD3を挿入、store_order_dateに現在の日付を挿入、store_order_timeに現在の時刻を挿入
-                                    sprintf(sendBuf, "INSERT INTO store_order_t (menu_id, store_order_cnt, menu_name, store_order_date, store_order_time) VALUES (%d, %d, '%s', current_date, current_time)", OD1, OD2, OD3); //SQL文作成
+                                    sprintf(sendBuf, "INSERT INTO store_order_t (menu_id, store_order_cnt, menu_name, store_order_date, store_order_time) VALUES (%d, %d, '%s', current_date, current_time)", OD1, OD2, OD3); //SQL文作成                                    
                                     res = PQexec(con, sendBuf); //実行
                                     PQclear(res); //resのメモリを解放
                                     //テーブル名：menu_storage_tのstorage_flagに1を挿入

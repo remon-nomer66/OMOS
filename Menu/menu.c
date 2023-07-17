@@ -29,6 +29,11 @@ void menu(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                recvLen = receive_message(soc, recvBuf, BUFSIZE);
+                if(recvLen > 0){
+                    recvBuf[recvLen - 1] = '\0';
+                    printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
+                }
             }
         }
     }
