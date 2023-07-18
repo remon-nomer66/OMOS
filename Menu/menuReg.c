@@ -2,10 +2,10 @@
 
 int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
-    int newmid, newmprice, newmstar, newmstock, newmlimit, newmlevel, newmstore; //新規登録する商品ID, 価格, 評価, 初期在庫数, メニューレベル
+    int newmid, newmprice, newmstar, newmstock, newmlimit, newmlevel, newmstore, f_or_d; //新規登録する商品ID, 価格, 評価, 初期在庫数, メニューレベル、、店舗id、フードかドリンクか
     int u_id, u_auth, u_store; //ユーザID, 権限, 所属
     int i; //ループカウンタ
-    char newmname; //新規登録する商品名
+    char newmname[BUFSIZE], newmrecipe[LONG_BUFSIZE]; //新規登録する商品名
     PGresult *res; //PGresult型の変数resを宣言
 
     u_id = u_info[0]; //ユーザID
@@ -45,16 +45,29 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             return -1;
         }
         PQclear(res);
+        //フードかドリンクかを聞く。フードなら0を、ドリンクなら1を入力させる。
+        sendLen = sprintf(sendBuf, "登録する商品がフードなら0を、ドリンクなら1を入力してください。%s%s", ENTER, DATA_END);
+        send(soc, sendBuf, sendLen, 0);
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0);
+        recvBuf[recvLen-1] = '\0';
+        //入力をf_or_dに格納
+        sscanf(recvBuf, "%d", &f_or_d);
+        //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
+        if(newmstar != 0 && newmstar != 1){
+            sendLen = sprintf(sendBuf, "フードなら0を、ドリンクなら1を入力してください。%s%s", ENTER, DATA_END);
+            send(soc, sendBuf, sendLen, 0);
+            return -1;
+        }
         //商品名を入力してください。
-        sendLen = sprintf(sendBuf, "商品名を入力してください。（例：'たこわさ'　※' 'は必須です。）%s%s", ENTER, DATA_END);
+        sendLen = sprintf(sendBuf, "商品名を入力してください。（例：たこわさ）%s%s", ENTER, DATA_END);
         send(soc, sendBuf, sendLen, 0);
         //商品名を受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
         //入力をnewmnameに格納
-        sscanf(recvBuf, "%s", &newmname);
+        sscanf(recvBuf, "%s", newmname);
         //商品名と同じmenu_nameがテーブル名：recipe_tにいないかを確認。
-        sprintf(sendBuf, "SELECT * FROM recipe_t WHERE menu_name = %s;", &newmname);
+        sprintf(sendBuf, "SELECT * FROM recipe_t WHERE menu_name = %s;", newmname);
         res = PQexec(con, sendBuf);
         //存在している場合は、存在していることを伝える。
         if(PQntuples(res) != 0){
@@ -63,6 +76,14 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             return -1;
         }
         PQclear(res);
+        //新商品のレシピを入力してください。
+        sendLen = sprintf(sendBuf, "新商品のレシピを入力してください。（例：たこを切って，わさびを和えます）%s%s", ENTER, DATA_END);
+        send(soc, sendBuf, sendLen, 0);
+        //商品レシピを受信
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0);
+        recvBuf[recvLen-1] = '\0';
+        //入力をnewmrecipeに格納
+        sscanf(recvBuf, "%s", newmrecipe);
         //新商品の価格を入力してください。
         sendLen = sprintf(sendBuf, "新商品の価格を入力してください。%s%s", ENTER, DATA_END);
         send(soc, sendBuf, sendLen, 0);
@@ -127,16 +148,16 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         }
         //入力をnewmlimitに格納
         sscanf(recvBuf, "%d", &newmlimit);
-        //テーブル名：recipe_tのmenuidにnewmidを、menu_nameにnewmnameを挿入
-        sprintf(sendBuf, "INSERT INTO recipe_t VALUES(%d, %s);", newmid, &newmname);
+        //テーブル名：recipe_tのmenuidにnewmidを、menu_nameにnewmnameを、recipeにnewmrecipeを、f_or_dにf_or_dを挿入
+        sprintf(sendBuf, "INSERT INTO recipe_t VALUES(%d, %s, %s, %d);", newmid, newmname, newmrecipe, f_or_d);
         res = PQexec(con, sendBuf);
         PQclear(res);
         //テーブル名：menu_price_tのmenuidにnewmidを、priceにnewmpriceを挿入
         sprintf(sendBuf, "INSERT INTO menu_price_t VALUES(%d, %d);", newmid, newmprice);
         res = PQexec(con, sendBuf);
         PQclear(res);
-        //テーブル名：push_tのmenuidにnewmidを、push_mgrにnewmstarを、layerに4を挿入
-        sprintf(sendBuf, "INSERT INTO push_t VALUES(%d, %d, 4);", newmid, newmstar);
+        //テーブル名：push_tのmenuidにnewmidを、push_mgrにnewmstarを挿入
+        sprintf(sendBuf, "INSERT INTO push_t VALUES(%d, 0, 0, %d);", newmid, newmstar);
         res = PQexec(con, sendBuf);
         PQclear(res);
         //テーブル名：menu_storage_tのmenuidにnewmidを、store_idにu_storeを、storageにnewmstockを、min_storageにnewmlimitを挿入
@@ -145,6 +166,10 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         PQclear(res);
         //テーブル名：menu_charge_tのmenuidにnewmidを、user_idにu_idを挿入
         sprintf(sendBuf, "INSERT INTO menu_charge_t VALUES(%d, %d);", newmid, u_id);
+        res = PQexec(con, sendBuf);
+        PQclear(res);
+        //テーブル名：menu_detail_tのmenuidにnewmidを、layerに3を、idにu_storeを、seasonに0を挿入
+        sprintf(sendBuf, "INSERT INTO menu_detail_t VALUES(%d, 3, %d, 0);", newmid, u_store);
         res = PQexec(con, sendBuf);
         PQclear(res);
     }else if(u_auth == AHQ){
@@ -186,9 +211,9 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
         //入力をnewmnameに格納
-        sscanf(recvBuf, "%s", &newmname);
+        sscanf(recvBuf, "%s", newmname);
         //商品名と同じmenu_nameがテーブル名：menu_tにいないかを確認。
-        sprintf(sendBuf, "SELECT * FROM menu_t WHERE menu_name = %s;", &newmname);
+        sprintf(sendBuf, "SELECT * FROM menu_t WHERE menu_name = %s;", newmname);
         res = PQexec(con, sendBuf);
         //存在している場合は、存在していることを伝える。
         if(PQntuples(res) != 0){
@@ -304,13 +329,13 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力をnewmlimitに格納
         sscanf(recvBuf, "%d", &newmlimit);
         //テーブル名：recipe_tのmenuidにnewmidを、menu_nameにnewmnameを挿入
-        sprintf(sendBuf, "INSERT INTO recipe_t VALUES(%d, %s);", newmid, &newmname);
+        sprintf(sendBuf, "INSERT INTO recipe_t VALUES(%d, %s);", newmid, newmname);
         res = PQexec(con, sendBuf);
-        //テーブル名：price_charge_tのmenuidにnewmidを、priceにnewmpriceを挿入
-        sprintf(sendBuf, "INSERT INTO price_charge_t VALUES(%d, %d);", newmid, newmprice);
+        //テーブル名：menu_price_tのmenuidにnewmidを、priceにnewmpriceを挿入
+        sprintf(sendBuf, "INSERT INTO menu_price_t VALUES(%d, %d);", newmid, newmprice);
         res = PQexec(con, sendBuf);
-        //テーブル名：push_tのmenuidにnewmidを、pushにnewmstarを、layerにnewmlevelを挿入
-        sprintf(sendBuf, "INSERT INTO push_t VALUES(%d, %d, %d);", newmid, newmstar, newmlevel);
+        //テーブル名：push_tのmenuidにnewmidを、push_mgrにnewmstarを、layerにnewmlevelを挿入
+        sprintf(sendBuf, "INSERT INTO push_t VALUES(%d, 0, 0, %d, %d);", newmid, newmstar, newmlevel);
         res = PQexec(con, sendBuf);
         //テーブル名：menu_storage_tのmenuidにnewmidを、store_idにnewmstoreを、storageにnewmstockを、min_storageにnewmlimitを挿入
         sprintf(sendBuf, "INSERT INTO menu_storage_t VALUES(%d, %d, %d, %d);", newmid, newmstore, newmstock, newmlimit);

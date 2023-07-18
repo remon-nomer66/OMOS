@@ -35,6 +35,13 @@ VALUES (
     10, 2, '宮崎'
 );
 
+INSERT INTO chain_t (
+    chain_id, store_id
+)
+VALUES (
+    1, 10
+);
+
 INSERT INTO store_table_t (
     store_id, desk_num, desk_max, desk_use
 )
@@ -57,10 +64,10 @@ VALUES (
 );
 
 INSERT INTO recipe_t (
-    menu_id, menu_name, recipe
+    menu_id, menu_name, recipe, f_or_d
 )
 VALUES (
-    1234, 'たこわさ', 'たこを切って，わさびを和えます'
+    1234, 'たこわさ', 'たこを切って，わさびを和えます', 0
 );
 
 INSERT INTO menu_price_t (
@@ -77,6 +84,13 @@ VALUES (
     1234, 1001
 );
 
+INSERT INTO menu_detail_t (
+    menu_id, layer, id, season
+)
+VALUES (
+    1234, 1, 11, 0
+);
+
 INSERT INTO push_t (
     menu_id, push_hq, push_cor, push_mgr, layer
 )
@@ -85,10 +99,10 @@ VALUES (
 );
 
 INSERT INTO menu_storage_t (
-    menu_id, store_id, storage, min_storage, storage_flag
+    menu_id, store_id, storage, min_storage
 )
 VALUES (
-    1234, 1, 100, 30, 0
+    1234, 1, 100, 30
 );
 
 SET search_path to reserve;
