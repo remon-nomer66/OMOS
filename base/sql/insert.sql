@@ -64,10 +64,10 @@ VALUES (
 );
 
 INSERT INTO recipe_t (
-    menu_id, menu_name, recipe
+    menu_id, menu_name, recipe, f_or_d
 )
 VALUES (
-    1234, 'たこわさ', 'たこを切って，わさびを和えます'
+    1234, 'たこわさ', 'たこを切って，わさびを和えます', 0
 );
 
 INSERT INTO menu_price_t (
@@ -99,10 +99,10 @@ VALUES (
 );
 
 INSERT INTO menu_storage_t (
-    menu_id, store_id, storage, min_storage, storage_flag
+    menu_id, store_id, storage, min_storage
 )
 VALUES (
-    1234, 1, 100, 30, 0
+    1234, 1, 100, 30
 );
 
 SET search_path to reserve;
