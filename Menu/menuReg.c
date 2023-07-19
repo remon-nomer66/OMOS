@@ -14,14 +14,14 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
 
     if(u_auth == AMGR){
         //登録したい商品IDを入力してください。
-        sendLen = sprintf(sendBuf, "登録したい商品ID（4桁）を入力してください。（例：0001）%s%s", ENTER, DATA_END);
+        sendLen = sprintf(sendBuf, "登録したい商品ID（4桁：半角数字）を入力してください。（例：0001）%s%s", ENTER, DATA_END);
         send(soc, sendBuf, sendLen, 0);
         //商品IDを受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
         //4文字以外の場合はエラーを返す。
         if(strlen(recvBuf) != 4){
-            sendLen = sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END);
+            sendLen = sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
             return -1;
         }
@@ -173,7 +173,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         res = PQexec(con, sendBuf);
         PQclear(res);
         //テーブル名：menu_storage_tのmenuidにnewmidを、store_idにu_storeを、storageにnewmstockを、min_storageにnewmlimitを挿入
-        sprintf(sendBuf, "INSERT INTO menu_storage_t VALUES(%d, %d, %d, %d);", newmid, u_store, newmstock, newmlimit);
+        sprintf(sendBuf, "INSERT INTO menu_storage_t VALUES(%d, %d, %d, %d, 0);", newmid, u_store, newmstock, newmlimit);
         res = PQexec(con, sendBuf);
         PQclear(res);
         //テーブル名：menu_charge_tのmenuidにnewmidを、user_idにu_idを挿入
@@ -186,14 +186,14 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         PQclear(res);
     }else if(u_auth == AHQ){
         //登録したい商品IDを入力してください。
-        sendLen = sprintf(sendBuf, "登録したい商品ID（4桁）を入力してください。（例：0001）%s%s", ENTER, DATA_END);
+        sendLen = sprintf(sendBuf, "登録したい商品ID（4桁：半角数字）を入力してください。（例：0001）%s%s", ENTER, DATA_END);
         send(soc, sendBuf, sendLen, 0);
         //商品IDを受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
         //4文字以外の場合はエラーを返す。
         if(strlen(recvBuf) != 4){
-            sendLen = sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END);
+            sendLen = sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
             return -1;
         }
@@ -295,17 +295,25 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力をnewmstarに格納
         sscanf(recvBuf, "%d", &newmstar);
         //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
-        if(newmstar != 0 || newmstar != 1){
+        if(newmstar != 0 && newmstar != 1){
             sendLen = sprintf(sendBuf, "押しメニューにするかどうかは１か０で入力してください。%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
             return -1;
         }
         //どのメニューレベルで登録しますか？ 選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューです．
-        sendLen = sprintf(sendBuf, "どのメニューレベルで登録しますか？%s 選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューです．%s", ENTER, ENTER);
+        sendLen = sprintf(sendBuf, "どのメニューレベルで登録しますか？%s 選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューです．%s%s", ENTER, ENTER, DATA_END);
         send(soc, sendBuf, sendLen, 0);
         //メニューレベルを受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
+        //数字以外が入力されていないかを確認
+        for(i = 0; i < recvLen-1; i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //入力をnewmlevelに格納
         sscanf(recvBuf, "%d", &newmlevel);
         //newmlevelの値が1以上かつ5以下であるかを確認。
@@ -315,36 +323,70 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             return -1;
         }if(newmlevel == 3){
             //どの店舗のメニューなのかを確認。
-            sendLen = sprintf(sendBuf, "登録する店舗の店舗ID（2桁）を入力してください。%s%s", ENTER, DATA_END);
+            sendLen = sprintf(sendBuf, "登録する店舗の店舗ID（3桁：半角数字）を入力してください。%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
             //店舗IDを受信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0);
             recvBuf[recvLen-1] = '\0';
-            //2文字以外の場合はエラーを返す
-            if(strlen(recvBuf) != 2){
-                sendLen = sprintf(sendBuf, "店舗IDは2桁で入力してください。%s%s", ENTER, DATA_END);
+            //3文字以外の場合はエラーを返す
+            if(strlen(recvBuf) != 3){
+                sendLen = sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください。%s%s", ENTER, DATA_END);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
             }
             //入力された文字が数字以外ならエラーを返す。
-            for(i = 0; i < 2; i++){
+            for(i = 0; i < 3; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
                     sendLen = sprintf(sendBuf, "店舗IDは数字で入力してください。%s%s", ENTER, DATA_END);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
                 }
             }
-            //入力をnewmstoreに格納
+            //入力をu_storeに格納
             sscanf(recvBuf, "%d", &u_store);
             //newmseasonの値を0にする。
             newmseason = 0;
+            //newmregionの値をu_storeにする。
+            newmregion = u_store;
+        }else if(newmlevel == 4){
+            //どの地域のメニューなのかを入力してくださいと聞く。打ち込むのは01～49の2桁の数字。
+            sendLen = sprintf(sendBuf, "登録する地域の地域ID（2桁：半角数字）を入力してください。%s%s", ENTER, DATA_END);
+            send(soc, sendBuf, sendLen, 0);
+            //地域IDを受信
+            recvLen = recv(soc, recvBuf, BUFSIZE, 0);
+            recvBuf[recvLen-1] = '\0';
+            //数字以外が入力されていないかを確認
+            for(i = 0; i < recvLen-1; i++){
+                if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                    sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
+                    send(soc, sendBuf, sendLen, 0);
+                    return -1;
+                }
+            }
+            //入力をnewmregionに格納
+            sscanf(recvBuf, "%d", &newmregion);
+            //newmregionの値が1以上かつ49以下であるかを確認。
+            if(newmregion < 1 || newmregion > 49){
+                sendLen = sprintf(sendBuf, "地域IDは1以上49以下で入力してください。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         }else if(newmlevel == 5){ //newmlevelの値が5の場合はどのシーズンにするかを聞く。
             //どのシーズンにするかを確認。
-            sendLen = sprintf(sendBuf, "どのシーズンにするかを入力してください。%s 選択肢は1：春、2：夏、3：秋、4：冬です。%s", ENTER, ENTER);
+            sendLen = sprintf(sendBuf, "どのシーズンにするかを入力してください。%s 選択肢は1：春、2：夏、3：秋、4：冬です。%s%s", ENTER, ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
             //シーズンを受信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0);
             recvBuf[recvLen-1] = '\0';
+            //数字以外が入力されていないかを確認
+            for(i = 0; i < recvLen-1; i++){
+                if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                    sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
+                    send(soc, sendBuf, sendLen, 0);
+                    return -1;
+                }
+            }
             //入力をnewmseasonに格納
             sscanf(recvBuf, "%d", &newmseason);
             //newmseasonの値が1以上かつ4以下であるかを確認。
@@ -353,9 +395,13 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
             }
+            //newmregionの値をu_storeにする。
+            newmregion = u_store;
         }else{
             //newmseasonの値を0にする。
             newmseason = 0;
+            //newmregionの値をu_storeにする。
+            newmregion = u_store;
         }
         //初期在庫数を入力してください。
         sendLen = sprintf(sendBuf, "初期在庫数を入力してください。%s%s", ENTER, DATA_END);
@@ -407,8 +453,8 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "INSERT INTO menu_charge_t VALUES(%d, %d);", newmid, u_id);
         res = PQexec(con, sendBuf);
         PQclear(res);
-        //テーブル名：menu_detail_tのmenuidにnewmidを、layerにnewmlevelを、idにu_storeを、seasonに0を挿入
-        sprintf(sendBuf, "INSERT INTO menu_detail_t VALUES(%d, %d, %d, %d);", newmid, newmlevel, u_store, newmseason);
+        //テーブル名：menu_detail_tのmenuidにnewmidを、layerにnewmlevelを、idにnewmregionを、seasonに0を挿入
+        sprintf(sendBuf, "INSERT INTO menu_detail_t VALUES(%d, %d, %d, %d);", newmid, newmlevel, newmregion, newmseason);
         res = PQexec(con, sendBuf);
         PQclear(res);
     }
