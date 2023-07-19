@@ -640,8 +640,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0); //送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
-        //changestoreと同じ値のstore_idとを持っているmenu_idをテーブル名：menu_storage_tから取得
-        sprintf(sendBuf, "SELECT menu_id FROM menu_storage_t WHERE store_id = %d;", changestore); //SQL文作成
+        //changestoreと同じ値のstore_idを持っているmenu_idをテーブル名：menu_storage_tから、そのmenu_idのmenu_nameをテーブル名：recipe_tから取得
+        sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         //1つも無ければエラーを返す
         if(PQntuples(res) == 0){
@@ -650,9 +650,9 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
         }
-        //実行結果を表示
+        //実行結果（menuidとmenuname）を表示
         for(int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "menu_id:%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "menu_id:%s%smenu_name:%s%s%s", PQgetvalue(res, i, 0), ENTER, PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
