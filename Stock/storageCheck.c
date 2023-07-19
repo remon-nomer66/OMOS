@@ -94,7 +94,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 if (strcmp(recvBuf, "food") == 0){
                     while (1){
                         check = 0;
-                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は end と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "どのフードを注文しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001） %s操作を終了したい場合は end と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf);//送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -104,7 +104,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         }else{
                             //4文字以外の場合はエラーを返す
                             if (strlen(recvBuf) != 4){
-                                sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -146,14 +146,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 }
                                 PQclear(res); //resのメモリを解放
                                 if (check != 1){
-                                    sprintf(sendBuf, "何個注文しますか？3桁で入力してください。（例：001）%s%s", ENTER, DATA_END); //送信データ作成
+                                    sprintf(sendBuf, "何個注文しますか？3桁：半角数字で入力してください。（例：001）%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                                     recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                     //3文字以外の場合はエラーを返す
                                     if (strlen(recvBuf) != 3){
-                                        sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                                        sprintf(sendBuf, "注文数は3桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                         sendLen = strlen(sendBuf); //送信データ長
                                         send(soc, sendBuf, sendLen, 0); //送信
                                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -195,7 +195,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 }else if (strcmp(recvBuf, "drink") == 0){
                     while (1){
                         check = 0;
-                        sprintf(sendBuf, "どのドリンクを注文しますか？商品ID（4桁）を打ち込んでください。（例：0001） %s操作を終了したい場合は end と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "どのドリンクを注文しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001） %s操作を終了したい場合は end と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf);//送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -205,7 +205,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         }else{
                             //4文字以外の場合はエラーを返す
                             if (strlen(recvBuf) != 4){
-                                sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -247,14 +247,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 }
                                 PQclear(res); //resのメモリを解放
                                 if (check != 1){
-                                    sprintf(sendBuf, "何個注文しますか？3桁で入力してください。（例：001）%s%s", ENTER, DATA_END); //送信データ作成
+                                    sprintf(sendBuf, "何個注文しますか？3桁：半角数字で入力してください。（例：001）%s%s", ENTER, DATA_END); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                                     recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                     //3文字以外の場合はエラーを返す
                                     if (strlen(recvBuf) != 3){
-                                        sprintf(sendBuf, "注文数は3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                                        sprintf(sendBuf, "注文数は3桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                                         sendLen = strlen(sendBuf); //送信データ長
                                         send(soc, sendBuf, sendLen, 0); //送信
                                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -309,7 +309,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         while (1){
             check = 0; 
             // どの店舗IDを選ぶかを確認する。
-            sprintf(sendBuf, "どの店舗IDの在庫を確認しますか？3桁で入力してください。（例：001）%s操作を終了したい場合は exit と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "どの店舗IDの在庫を確認しますか？3桁：半角数字で入力してください。（例：001）%s操作を終了したい場合は exit と入力してください．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -318,8 +318,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 break;
             }else{
                 // recvBufの中身を確認
-                if (strlen(recvBuf) != 3){ //3桁でなければエラーを表示する。
-                    sprintf(sendBuf, "店舗IDは3桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                if (strlen(recvBuf) != 3){ //3桁：半角数字でなければエラーを表示する。
+                    sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -357,13 +357,13 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     PQclear(res); //resのメモリを解放
                     if(check != 1){
                         // 閲覧したい商品の商品IDを入力させる。
-                        sprintf(sendBuf, "閲覧したい商品の商品IDを4桁で入力してください（例：0001）。%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "閲覧したい商品の商品IDを4桁：半角数字で入力してください（例：0001）。%s%s", ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
-                        if (strlen(recvBuf) != 4){ //4桁でなければエラーを表示する。
-                            sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                        if (strlen(recvBuf) != 4){ //4桁：半角数字でなければエラーを表示する。
+                            sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
