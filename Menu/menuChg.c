@@ -3,7 +3,7 @@
 int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
     int changeid, changestore, changeprice, changelevel, u_id, u_auth, u_store, i; //変更する商品ID, 変更を加えたい部分の店舗ID, 変更後の値段, 押しかどうか、ユーザID、ユーザの持つ権限、ユーザの所属, ループ用変数
-    char response, changeitem, changename, changestar;
+    char response[BUFSIZE], changeitem[BUFSIZE], changename[BUFSIZE], changestar[BUFSIZE];
     PGresult *res; //PGresult型の変数resを宣言
 
     u_id = u_info[0]; //ユーザID
@@ -23,7 +23,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
-        sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
+        sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -123,14 +123,14 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             }
-            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';
             //4文字以外の場合はエラーを返す
             if(recvLen != 4){
-                sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
             }
@@ -223,8 +223,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //受信した内容をresponseに代入
         sscanf(recvBuf, "%s", &response);
         if(strcmp(&response, "yes") == 0){
-            //情報を変更したい店舗ID（2桁）を聞く。
-            sprintf(sendBuf, "情報を変更したい店舗ID（2桁）を入力してください。（例：01）%s%s", ENTER, DATA_END); //送信データ作成
+            //情報を変更したい店舗ID（2桁：半角数字）を聞く。
+            sprintf(sendBuf, "情報を変更したい店舗ID（2桁：半角数字）を入力してください。（例：01）%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -268,7 +268,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
             }
-            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -426,14 +426,14 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
             }
-            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';
             //4文字以外の場合はエラーを返す
             if(recvLen != 4){
-                sprintf(sendBuf, "商品IDは4桁で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -579,30 +579,42 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "選べる店舗IDです．%s%s", ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
-        //u_storeと一致するregion_idを持つ、テーブル名：region_tのstore_idを表示
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+        //テーブル名：region_tからu_storeと同じregion_idを持つstore_idを取得
         sprintf(sendBuf, "SELECT store_id FROM region_t WHERE region_id = %d;", u_store); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
+        //1つも無ければエラーを返す
+        if(PQntuples(res) == 0){
+            sprintf(sendBuf, "あなたが選べる店舗IDがありません．%s%s", ENTER, DATA_END); //送信データ作成
+            sendLen = strlen(sendBuf); //送信データ長
+            send(soc, sendBuf, sendLen, 0); //送信
+            return -1;
+        }
         //実行結果を表示
         for(int i = 0; i < PQntuples(res); i++){
             sprintf(sendBuf, "store_id:%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
+            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
+        PQclear(res); //メモリ解放
         //どの店舗IDを選択するかを聞く
-        sprintf(sendBuf, "どの店舗IDを選択しますか？（2桁）（例：01）%s%s", ENTER, DATA_END); //送信データ作成
+        sprintf(sendBuf, "どの店舗IDを選択しますか？（3桁：半角数字）（例：001）%s%s", ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';
-        //2文字以外の場合はエラーを返す
-        if(recvLen != 2){
-            sprintf(sendBuf, "店舗IDは2桁で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+        //3文字以外の場合はエラーを返す
+        if(recvLen != 3){
+            sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
         }
         //入力された文字が数字以外ならエラーを返す。
-        for(int i = 0; i < 2; i++){
+        for(int i = 0; i < recvLen-1; i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
                 sprintf(sendBuf, "店舗IDは数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
@@ -615,33 +627,46 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //情報を変更したい店舗IDが存在するかどうかをテーブル名store_tから確認
         sprintf(sendBuf, "SELECT COUNT(*) FROM store_t WHERE store_id = %d;", changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
-        //テーブル名store_tから取得した値が0の場合、店舗IDが存在しないことを表示
-        if(strcmp(PQgetvalue(res, 0, 0), "0") == 0){
-            sprintf(sendBuf, "その店舗IDは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+        //1つも無ければエラーを返す
+        if(PQntuples(res) == 0){
+            sprintf(sendBuf, "選べない店舗IDです．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
         }
+        PQclear(res); //メモリ解放
         sprintf(sendBuf, "メニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         //changestoreと同じ値のstore_idとを持っているmenu_idをテーブル名：menu_storage_tから取得
         sprintf(sendBuf, "SELECT menu_id FROM menu_storage_t WHERE store_id = %d;", changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
+        //1つも無ければエラーを返す
+        if(PQntuples(res) == 0){
+            sprintf(sendBuf, "この店舗には選べるメニューがありません．%s%s", ENTER, DATA_END); //送信データ作成
+            sendLen = strlen(sendBuf); //送信データ長
+            send(soc, sendBuf, sendLen, 0); //送信
+            return -1;
+        }
         //実行結果を表示
         for(int i = 0; i < PQntuples(res); i++){
             sprintf(sendBuf, "menu_id:%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
+            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
-        sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
+        PQclear(res); //メモリ解放
+        sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';
-        //入力が4文字以外の場合は商品IDを4桁で入力するようにエラーを返す
+        //入力が4文字以外の場合は商品IDを4桁：半角数字で入力するようにエラーを返す
         if(recvLen != 4){
-            sprintf(sendBuf, "商品IDは4桁で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -660,34 +685,39 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //changeidがchangestoreと同じ値のstore_idを持つmenu_storage_tに存在するか確認
         sprintf(sendBuf, "SELECT COUNT(*) FROM menu_storage_t WHERE menu_id = %d AND store_id = %d;", changeid, changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
-        //テーブル名menu_storage_tから取得した値が0の場合、menu_idが存在しないことを表示
-        if(strcmp(PQgetvalue(res, 0, 0), "0") == 0){
-            sprintf(sendBuf, "そのメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+        //1つも無ければエラーを返す
+        if(PQntuples(res) == 0){
+            sprintf(sendBuf, "選べない商品IDです．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
         }
+        PQclear(res); //メモリ解放
         //changeidと同じmenu_idを持つテーブル名：push_tのpush_corの値を取得する。このときテーブル名：menu_storage_tを見てstore_idとchangestoreが一致していなければならない。
         sprintf(sendBuf, "SELECT push_cor FROM push_t WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         //push_corの値が0の場合、押しメニューにしますか？と聞く。
         if(strcmp(PQgetvalue(res, 0, 0), "0") == 0){
+            PQclear(res); //メモリ解放
             sprintf(sendBuf, "押しメニューにしますか？%s yes または no%s%s", ENTER, ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //クライアントから受信した変更内容をchangestarに代入
-            sscanf(recvBuf, "%s", &changestar);
+            sscanf(recvBuf, "%s", changestar);
             //クライアントから受信したchangestarがyesの場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと一致するmenu_idを持つテーブル名：push_tのpush_corの値を1に変更
-            if(strcmp(&changestar, "yes") == 0){
+            if(strcmp(changestar, "yes") == 0){
                 sprintf(sendBuf, "UPDATE push_t SET push_cor = 1 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実
-            }else if(strcmp(&changestar, "no") == 0){
+                PQclear(res); //メモリ解放
+            }else if(strcmp(changestar, "no") == 0){
                 //何も変更しませんでしたと表示
                 sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
+                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             }else{
                 //使用不可のコマンドですと表示
                 sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
@@ -697,22 +727,26 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             }
             //push_corの値が0の場合、押しメニューをやめますか？と聞く。
         }else if(strcmp(PQgetvalue(res, 0, 0), "1") == 0){
+            PQclear(res); //メモリ解放
             sprintf(sendBuf, "押しにするのを止めますか？%s yes または no%s%s", ENTER, ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //クライアントから受信した変更内容をchangestarに代入
-            sscanf(recvBuf, "%s", &changestar);
+            sscanf(recvBuf, "%s", changestar);
             //クライアントから受信したchangestarがyesの場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと一致するmenu_idを持つテーブル名：push_tのpush_corの値を0に変更
-            if(strcmp(&changestar, "yes") == 0){
+            if(strcmp(changestar, "yes") == 0){
                 sprintf(sendBuf, "UPDATE push_t SET push_cor = 0 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
+                PQclear(res); //メモリ解放
             }else if(strcmp(&changestar, "no") == 0){
                 //何も変更しませんでしたと表示
                 sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
+                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             }else{
                 //使用不可のコマンドですと表示
                 sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
