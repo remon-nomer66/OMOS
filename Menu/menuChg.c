@@ -62,20 +62,20 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         //クライアントから受信した変更内容をchangeitemに代入
-        sscanf(recvBuf, "%s", &changeitem);
+        sscanf(recvBuf, "%s", changeitem);
         //変更内容がnameの場合、どう変更するかを聞く。
-        if(strcmp(&changeitem, "name") == 0){
+        if(strcmp(changeitem, "name") == 0){
             sprintf(sendBuf, "どんな商品名にしますか？%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //クライアントから受信した変更内容をchangenameに代入
-            sscanf(recvBuf, "%s", &changename);
+            sscanf(recvBuf, "%s", changename);
             //テーブル名：menu_storage_tのstore_idとu_storeが一致し、changeidと同じmenu_idを持つ、テーブル名：recipe_tのmenu_nameの内容をchangenameに変更する。
-            sprintf(sendBuf, "UPDATE recipe_t SET menu_name = '%s' WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", &changename, changeid, u_store); //SQL文作成
+            sprintf(sendBuf, "UPDATE recipe_t SET menu_name = '%s' WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changename, changeid, u_store); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
-        }else if(strcmp(&changeitem, "price") == 0){
+        }else if(strcmp(changeitem, "price") == 0){
             //現在の価格は以下の通りです。と表示
             sprintf(sendBuf, "現在の価格は以下の通りです。%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
@@ -109,7 +109,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //テーブル名：menu_storage_tのstore_idとu_storeが一致し、changeidと同じmenu_idを持つ、テーブル名：recipe_tのpriceの内容をchangepriceに変更
             sprintf(sendBuf, "UPDATE recipe_t SET price = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeprice, changeid, u_store); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
-        }else if(strcmp(&changeitem, "star") == 0){
+        }else if(strcmp(changeitem, "star") == 0){
             sprintf(sendBuf, "メニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
@@ -164,12 +164,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 //クライアントから受信した変更内容をchangestarに代入
-                sscanf(recvBuf, "%s", &changestar);
+                sscanf(recvBuf, "%s", changestar);
                 //クライアントから受信したchangestarがyesの場合、テーブル名：menu_storage_tのstore_idとu_storeが一致し、changeidと一致するmenu_idを持つテーブル名：push_tのpush_hqの値を1に変更
-                if(strcmp(&changestar, "yes") == 0){
+                if(strcmp(changestar, "yes") == 0){
                     sprintf(sendBuf, "UPDATE push_t SET push_hq = 1 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
-                }else if(strcmp(&changestar, "no") == 0){
+                }else if(strcmp(changestar, "no") == 0){
                     //何も変更しませんでしたと返す。
                     sprintf(sendBuf, "何も変更しませんでした。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
@@ -188,12 +188,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 //クライアントから受信した変更内容をchangestarに代入
-                sscanf(recvBuf, "%s", &changestar);
+                sscanf(recvBuf, "%s", changestar);
                 //クライアントから受信したchangestarがyesの場合、テーブル名：menu_storage_tのstore_idとu_storeが一致し、changeidと一致するmenu_idを持つテーブル名：push_tのpush_hqの値を0に変更
-                if(strcmp(&changestar, "yes") == 0){
+                if(strcmp(changestar, "yes") == 0){
                     sprintf(sendBuf, "UPDATE push_t SET push_hq = 0 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
-                }else if(strcmp(&changestar, "no") == 0){
+                }else if(strcmp(changestar, "no") == 0){
                     //何も変更しませんでしたと返す。
                     sprintf(sendBuf, "何も変更しませんでした。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
@@ -221,8 +221,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         //受信した内容をresponseに代入
-        sscanf(recvBuf, "%s", &response);
-        if(strcmp(&response, "yes") == 0){
+        sscanf(recvBuf, "%s", response);
+        if(strcmp(response, "yes") == 0){
             //情報を変更したい店舗ID（2桁：半角数字）を聞く。
             sprintf(sendBuf, "情報を変更したい店舗ID（2桁：半角数字）を入力してください。（例：01）%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
@@ -306,19 +306,19 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //受信した内容をchangeitemに代入
-            sscanf(recvBuf, "%s", &changeitem);
-            if(strcmp(&changeitem, "name") == 0){
+            sscanf(recvBuf, "%s", changeitem);
+            if(strcmp(changeitem, "name") == 0){
                 sprintf(sendBuf, "どんな商品名にしますか？%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 //クライアントから受信した変更内容をchangenameに代入
-                sscanf(recvBuf, "%s", &changename);
+                sscanf(recvBuf, "%s", changename);
                 //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：recipe_tのmenu_nameの内容をchangenameに変更する。
-                sprintf(sendBuf, "UPDATE recipe_t SET menu_name = '%s' WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", &changename, changeid, changestore); //SQL文作成
+                sprintf(sendBuf, "UPDATE recipe_t SET menu_name = '%s' WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changename, changeid, changestore); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
-            }else if(strcmp(&changeitem, "price") == 0){
+            }else if(strcmp(changeitem, "price") == 0){
                 sprintf(sendBuf, "どんな値段にしますか？%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
@@ -338,7 +338,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：recipe_tのpriceの内容をchangepriceに変更
                 sprintf(sendBuf, "UPDATE recipe_t SET price = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeprice, changeid, changestore); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
-            }else if(strcmp(&changeitem, "level") == 0){
+            }else if(strcmp(changeitem, "level") == 0){
                 //どのメニューレベルにするかを聞く。選択肢は0：コモンメニュー、1：ブランドメニュー洋食、2：ブランドメニュー和食、3：ブランドメニュー中華であることも伝える。
                 sprintf(sendBuf, "どのメニューレベルにしますか？%s 選択肢は0：コモンメニュー、1：ブランドメニュー洋食、2：ブランドメニュー和食、3：ブランドメニュー中華です．%s", ENTER, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
@@ -357,7 +357,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：push_tのlayerの内容をchangelevelに変更
                 sprintf(sendBuf, "UPDATE push_t SET layer = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changelevel, changeid, changestore); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
-            }else if(strcmp(&changeitem, "star") == 0){
+            }else if(strcmp(changeitem, "star") == 0){
                 //menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：push_tのpush_mgrの値を確認する。
                 sprintf(sendBuf, "SELECT push_mgr FROM push_t WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
@@ -369,12 +369,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                     recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     //クライアントから受信した変更内容をchangestarに代入
-                    sscanf(recvBuf, "%s", &changestar);
+                    sscanf(recvBuf, "%s", changestar);
                     //changestarがyesの場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：push_tのpush_mgrの内容を1に変更
-                    if(strcmp(&changestar, "yes") == 0){
+                    if(strcmp(changestar, "yes") == 0){
                         sprintf(sendBuf, "UPDATE push_t SET push_mgr = 1 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore); //SQL文作成
                         res = PQexec(con, sendBuf); //SQL文実行
-                    }else if(strcmp(&changestar, "no") == 0){
+                    }else if(strcmp(changestar, "no") == 0){
                         //何も変更しませんでしたと返す。
                         sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
@@ -394,12 +394,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                     recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     //クライアントから受信した変更内容をchangestarに代入
-                    sscanf(recvBuf, "%s", &changestar);
+                    sscanf(recvBuf, "%s", changestar);
                     //changestarがyesの場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：push_tのpush_mgrの内容を0に変更
-                    if(strcmp(&changestar, "yes") == 0){
+                    if(strcmp(changestar, "yes") == 0){
                         sprintf(sendBuf, "UPDATE push_t SET push_mgr = 0 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore); //SQL文作成
                         res = PQexec(con, sendBuf); //SQL文実行
-                    }else if(strcmp(&changestar, "no") == 0){
+                    }else if(strcmp(changestar, "no") == 0){
                         //何も変更しませんでしたと返す。
                         sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
@@ -413,7 +413,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     }
                 }
             }
-        }else if(strcmp(&response, "no") == 0){
+        }else if(strcmp(response, "no") == 0){
             sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
@@ -463,19 +463,19 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
-            sscanf(recvBuf, "%s", &changeitem);
-            if(strcmp(&changeitem, "name") == 0){
+            sscanf(recvBuf, "%s", changeitem);
+            if(strcmp(changeitem, "name") == 0){
                 sprintf(sendBuf, "どんな商品名にしますか？%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 //クライアントから受信した変更内容をchangenameに代入
-                sscanf(recvBuf, "%s", &changename);
+                sscanf(recvBuf, "%s", changename);
                 //changeidと同じmenu_idを持つ、テーブル名：recipe_tのmenu_nameの内容をchangenameに変更する。
-                sprintf(sendBuf, "UPDATE recipe_t SET menu_name = '%s' WHERE menu_id = %d;", &changename, changeid); //SQL文作成
+                sprintf(sendBuf, "UPDATE recipe_t SET menu_name = '%s' WHERE menu_id = %d;", changename, changeid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
-            }else if(strcmp(&changeitem, "price") == 0){
+            }else if(strcmp(changeitem, "price") == 0){
                 sprintf(sendBuf, "どんな値段にしますか？%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
@@ -495,7 +495,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //changeidと同じmenu_idを持つ、テーブル名：price_charge_tのpriceの内容をchangepriceに変更する。
                 sprintf(sendBuf, "UPDATE price_charge_t SET price = %d WHERE menu_id = %d;", changeprice, changeid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
-            }else if(strcmp(&changeitem, "level") == 0){
+            }else if(strcmp(changeitem, "level") == 0){
                 //どのメニューレベルにするかを聞く。選択肢は0：コモンメニュー、1：ブランドメニュー洋食、2：ブランドメニュー和食、3：ブランドメニュー中華、4：ショップメニューであることも伝える。
                 sprintf(sendBuf, "どのメニューレベルにしますか？%s 選択肢は0：コモンメニュー、1：ブランドメニュー洋食、2：ブランドメニュー和食、3：ブランドメニュー中華、4：ショップメニューです．%s", ENTER, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
@@ -514,7 +514,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //changeidと同じmenu_idを持つ、テーブル名：push_tのlayerの内容をchangelevelに変更する。
                 sprintf(sendBuf, "UPDATE push_t SET layer = %d WHERE menu_id = %d;", changelevel, changeid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
-            }else if(strcmp(&changeitem, "star") == 0){
+            }else if(strcmp(changeitem, "star") == 0){
                 //changeidと同じmenu_idを持つ、テーブル名：push_tのpush_mgrの値を確認する。
                 sprintf(sendBuf, "SELECT push_mgr FROM push_t WHERE menu_id = %d;", changeid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
@@ -526,12 +526,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                     recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     //クライアントから受信した変更内容をchangestarに代入
-                    sscanf(recvBuf, "%s", &changestar);
+                    sscanf(recvBuf, "%s", changestar);
                     //changestarがyesの場合、changeidと同じmenu_idを持つ、テーブル名：push_tのpush_mgrの内容を1に変更
-                    if(strcmp(&changestar, "yes") == 0){
+                    if(strcmp(changestar, "yes") == 0){
                         sprintf(sendBuf, "UPDATE push_t SET push_mgr = 1 WHERE menu_id = %d;", changeid); //SQL文作成
                         res = PQexec(con, sendBuf); //SQL文実行
-                    }else if(strcmp(&changestar, "no") == 0){
+                    }else if(strcmp(changestar, "no") == 0){
                         //何も変更しませんでしたと返す。
                         sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
@@ -550,12 +550,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                     recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     //クライアントから受信した変更内容をchangestarに代入
-                    sscanf(recvBuf, "%s", &changestar);
+                    sscanf(recvBuf, "%s", changestar);
                     //changestarがyesの場合、changeidと同じmenu_idを持つ、テーブル名：push_tのpush_mgrの内容を0に変更
-                    if(strcmp(&changestar, "yes") == 0){
+                    if(strcmp(changestar, "yes") == 0){
                         sprintf(sendBuf, "UPDATE push_t SET push_mgr = 0 WHERE menu_id = %d;", changeid); //SQL文作成
                         res = PQexec(con, sendBuf); //SQL文実行
-                    }else if(strcmp(&changestar, "no") == 0){
+                    }else if(strcmp(changestar, "no") == 0){
                         //何も変更しませんでしたと返す。
                         sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
@@ -740,7 +740,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "UPDATE push_t SET push_cor = 0 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 PQclear(res); //メモリ解放
-            }else if(strcmp(&changestar, "no") == 0){
+            }else if(strcmp(changestar, "no") == 0){
                 //何も変更しませんでしたと表示
                 sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
