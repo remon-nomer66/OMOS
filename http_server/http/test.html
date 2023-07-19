@@ -1,33 +1,100 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>test</title>
-</head>
-<body>
-    <form id=order>
-        <label for="mid-1">1</label>
-        <select class="order" name="mid-1">
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
+    <head>
+        <title>login</title>
+    </head>
+    <body>
+        <h1>注文画面</h1>
+        <label for="tab">タブ</label>
+        <select id="tab" name="client-tab">
+            <option value="1">コモンメニュー</option>
+            <option value="2">ブランドメニュー</option>
+            <option value="3">ショップメニュー</option>
+            <option value="4">リージョナルメニュー</option>
+            <option value="5">シーズンメニュー</option>
         </select>
-        <br>
-        <label for="mid-2">2</label>
-        <select class="order" name="mid-2">
-            <option value="0">0</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-        </select>
-        <br>
-        <input id="btn" type="button" value="送信" />
-    </form>
-    <div id="result"></div>
-    <script src="../javascript/test.js"></script>
-</body>
+        <div id="prev">
+            <form id="order">
+                <table border="1">
+                    <tbody>
+                        <tr>
+                            <th></th>
+                            <th>商品名</th>
+                            <th>価格</th>
+                            <th>おすすめ</th>
+                            <th>注文数</th>
+                        </tr>
+                        <tr>
+                            <td><input id="mid-1234" type="checkbox" name="order-c"></td>
+                            <td>たこわさ</td>
+                            <td>300</td>
+                            <td>✔</td>
+                            <td>
+                                <select class="order" name="mid-1234">
+                                    <option value="0">0</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input id="mid-5" type="checkbox" name="order-c"></td>
+                            <td>お刺身</td>
+                            <td>580</td>
+                            <td></td>
+                            <td>
+                                <select class="order" name="mid-5">
+                                    <option value="0">0</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input id="mid-10" type="checkbox" name="order-c"></td>
+                            <td>串揚げ</td>
+                            <td>1168</td>
+                            <td>✔</td>
+                            <td>
+                                <select class="order" name="mid-10">
+                                    <option value="0">0</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input id="mid-15" type="checkbox" name="order-c"></td>
+                            <td>筍の天ぷら</td>
+                            <td>1413</td>
+                            <td>✔</td>
+                            <td>
+                                <select class="order" name="mid-15">
+                                    <option value="0">0</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <input id="btn" type="button" value="送信">
+            </form>
+        </div>
+        <div id="result"></div>
+        <script src="../javascript/order.js"></script>
+
+    </body>
 </html>

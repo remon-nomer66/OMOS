@@ -1,14 +1,14 @@
 #include "omos.h"
 #include "test.h"
 
-int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
+int reserveDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
 int recvLen, sendLen;   //送受信データ長
     char sql[BUFSIZE];
     PGresult *res;
     int resultRows, i, cnt, param;
     int reserve_no[RSRVMAX];
     char reserve_date[RSRVMAX][11];
-    char reserve_time[RSRVMAX][9];
+    char reserve_time[RSRVMAX][6];
     int reserve_store_id[RSRVMAX];
     int reserve_desk_num[RSRVMAX];
     char reserve_store_name[RSRVMAX][30];
@@ -50,9 +50,11 @@ int recvLen, sendLen;   //送受信データ長
 
         //予約削除可能な時
         for(i = 0; i < resultRows; i++){
-	    reserve_no[i] = atoi(PQgetvalue(res, i, 0));
-            strcpy(reserve_date[i], PQgetvalue(res, i, 3));
-            strcpy(reserve_time[i], PQgetvalue(res, i, 4));
+            reserve_no[i] = atoi(PQgetvalue(res, i, 0));
+            strncpy(reserve_date[i], PQgetvalue(res, i, 3), 10);
+            reserve_date[i][10] = '\0';
+            strncpy(reserve_time[i], PQgetvalue(res, i, 4), 5);
+            reserve_time[i][5] = '\0';
             reserve_store_id[i] = atoi(PQgetvalue(res, i, 5));
             reserve_desk_num[i] = atoi(PQgetvalue(res, i, 6));
         }
@@ -86,17 +88,19 @@ int recvLen, sendLen;   //送受信データ長
             strcpy(reserve_store_name[i], PQgetvalue(res, 0, 0));
         }
         sprintf(sendBuf, "削除する予約番号を入力してください%s予約削除から抜ける場合は\"END\"と入力してください%s予約番号 店舗名 予約日 予約時間%s", ENTER, ENTER, ENTER);
-        for(i = 0; i < tmp; i++){
-            sprintf(buf, "%d %s %s %s%s", i + 1, reserve_store_name[i], reserve_date
-		    [i], reserve_time[i], ENTER);
-            strcat(sendBuf, buf);
-        }
-	    sprintf(buf, "%s", DATA_END);
-	    strcat(sendBuf, buf);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-
+        for(i = 0; i < tmp; i++){
+            sprintf(sendBuf, "%d %s %s %s%s", i + 1, reserve_store_name[i], reserve_date[i], reserve_time[i], ENTER);
+            sendLen = strlen(sendBuf);
+            send(soc, sendBuf, sendLen, 0);
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+        }
+        sprintf(sendBuf, "%s", DATA_END);
+        sendLen = strlen(sendBuf);
+        send(soc, sendBuf, sendLen, 0);
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         //削除対象を受け取り
         while(1){
             recvLen = receive_message(soc, recvBuf, BUFSIZE);
