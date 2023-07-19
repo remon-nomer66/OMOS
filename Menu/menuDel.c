@@ -31,7 +31,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';
         //4文字以外の場合はエラーを返す
-        if(recvLen != 4){
+        if(strlen(recvBuf) !=4){
             sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
@@ -107,7 +107,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';
             //2文字以外の場合はエラーを返す
-            if(recvLen != 2){
+            if(strlen(recvBuf) !=2){
                 sprintf(sendBuf, "店舗IDは2桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
@@ -152,7 +152,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';
             //4文字以外の場合はエラーを返す
-            if(recvLen != 4){
+            if(strlen(recvBuf) !=4){
                 sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
