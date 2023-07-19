@@ -52,8 +52,8 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvBuf[recvLen-1] = '\0';
         //入力をfodに格納
         sscanf(recvBuf, "%d", &fod);
-        //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
-        if(newmstar != 0 && newmstar != 1){
+        //fodが0か1であるかを確認。どちらでもない場合はエラーを返す。
+        if(fod != 0 && fod != 1){
             sendLen = sprintf(sendBuf, "フードなら0を、ドリンクなら1を入力してください。%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
             return -1;
@@ -67,7 +67,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力をnewmnameに格納
         sscanf(recvBuf, "%s", newmname);
         //商品名と同じmenu_nameがテーブル名：recipe_tにいないかを確認。
-        sprintf(sendBuf, "SELECT * FROM recipe_t WHERE menu_name = %s;", newmname);
+        sprintf(sendBuf, "SELECT * FROM recipe_t WHERE menu_name = '%s';", newmname);
         res = PQexec(con, sendBuf);
         //存在している場合は、存在していることを伝える。
         if(PQntuples(res) != 0){
@@ -112,6 +112,14 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //押しにするかどうかを受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
+        //数字以外が入力されていないかを確認
+        for(i = 0; i < recvLen-1; i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //入力をnewmstarに格納
         sscanf(recvBuf, "%d", &newmstar);
         //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
@@ -127,10 +135,12 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
         //入力された文字が数字以外ならエラーを返す。
-        if(!isdigit(recvBuf[0])){
-            sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
-            send(soc, sendBuf, sendLen, 0);
-            return -1;
+        for(i=0; i<recvLen-1; i++){
+            if(!isdigit(recvBuf[i])){
+                sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
         }
         //入力をnewmstockに格納
         sscanf(recvBuf, "%d", &newmstock);
@@ -141,15 +151,17 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
         //入力された文字が数字以外ならエラーを返す。
-        if(!isdigit(recvBuf[0])){
-            sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
-            send(soc, sendBuf, sendLen, 0);
-            return -1;
+        for(i=0; i<recvLen-1; i++){
+            if(!isdigit(recvBuf[i])){
+                sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
         }
         //入力をnewmlimitに格納
         sscanf(recvBuf, "%d", &newmlimit);
         //テーブル名：recipe_tのmenuidにnewmidを、menu_nameにnewmnameを、recipeにnewmrecipeを、fodにfodを挿入
-        sprintf(sendBuf, "INSERT INTO recipe_t VALUES(%d, %s, %s, %d);", newmid, newmname, newmrecipe, fod);
+        sprintf(sendBuf, "INSERT INTO recipe_t VALUES(%d, '%s', '%s', %d);", newmid, newmname, newmrecipe, fod);
         res = PQexec(con, sendBuf);
         PQclear(res);
         //テーブル名：menu_price_tのmenuidにnewmidを、priceにnewmpriceを挿入
@@ -212,8 +224,8 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvBuf[recvLen-1] = '\0';
         //入力をfodに格納
         sscanf(recvBuf, "%d", &fod);
-        //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
-        if(newmstar != 0 && newmstar != 1){
+        //fodが0か1であるかを確認。どちらでもない場合はエラーを返す。
+        if(fod != 0 && fod != 1){
             sendLen = sprintf(sendBuf, "フードなら0を、ドリンクなら1を入力してください。%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
             return -1;
@@ -227,7 +239,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力をnewmnameに格納
         sscanf(recvBuf, "%s", newmname);
         //商品名と同じmenu_nameがテーブル名：recipe_tにいないかを確認。
-        sprintf(sendBuf, "SELECT * FROM recipe_t WHERE menu_name = %s;", newmname);
+        sprintf(sendBuf, "SELECT * FROM recipe_t WHERE menu_name = '%s';", newmname);
         res = PQexec(con, sendBuf);
         //存在している場合は、存在していることを伝える。
         if(PQntuples(res) != 0){
@@ -272,6 +284,14 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //押しにするかどうかを受信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
+        //数字以外が入力されていないかを確認
+        for(i = 0; i < recvLen-1; i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //入力をnewmstarに格納
         sscanf(recvBuf, "%d", &newmstar);
         //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
@@ -344,10 +364,12 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
         //入力された文字が数字以外ならエラーを返す。
-        if(!isdigit(recvBuf[0])){
-            sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
-            send(soc, sendBuf, sendLen, 0);
-            return -1;
+        for(i=0; i<recvLen-1; i++){
+            if(!isdigit(recvBuf[i])){
+                sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
         }
         //入力をnewmstockに格納
         sscanf(recvBuf, "%d", &newmstock);
