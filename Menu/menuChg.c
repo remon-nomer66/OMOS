@@ -593,11 +593,9 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         }
         //実行結果を表示
         for(int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "store_id:%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "store_id:%s%s", PQgetvalue(res, i, 0), ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
-            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
         PQclear(res); //メモリ解放
         //どの店舗IDを選択するかを聞く
@@ -627,6 +625,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //changestoreが選べる店舗IDに含まれているかどうかをテーブル名region_tから確認
         sprintf(sendBuf, "SELECT COUNT(*) FROM region_t WHERE region_id = %d AND store_id = %d;", u_store, changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
+        //実行結果を表示
+        for(int i = 0; i < PQntuples(res); i++){
+            sprintf(sendBuf, "COUNT:%s%s", PQgetvalue(res, i, 0), ENTER); //送信データ作成
+            sendLen = strlen(sendBuf); //送信データ長
+            send(soc, sendBuf, sendLen, 0); //送信
+        }
         //1行も無ければエラーを返す
         if(PQntuples(res) == 0){
             sprintf(sendBuf, "あなたが選べる店舗IDではありません．%s%s", ENTER, DATA_END); //送信データ作成
@@ -652,11 +656,9 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         }
         //実行結果（menuidとmenuname）を表示
         for(int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "menu_id:%s%smenu_name:%s%s%s", PQgetvalue(res, i, 0), ENTER, PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "menu_id:%s%smenu_name:%s%s", PQgetvalue(res, i, 0), ENTER, PQgetvalue(res, i, 1), ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
-            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
         PQclear(res); //メモリ解放
         sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
