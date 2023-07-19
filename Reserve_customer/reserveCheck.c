@@ -143,7 +143,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 return -1;
             }
 
-            //現在の月以前の予約でないか
+	        //現在の月以前の予約でないか
             if((atoi(r_year) == (local->tm_year + 1900)) && (atoi(r_month) < (local->tm_mon + 1))){
                 sprintf(sendBuf, "%sは不適切な月です%s", r_month, ENTER);
                 sendLen = strlen(sendBuf);
@@ -406,7 +406,12 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     PQclear(res);
                     return -1;
                 }
-                sprintf(sendBuf, "登録された内容は以下のとおりです%s店舗名：%s%s日時：%s %s%s人数：%d%s", ENTER, PQgetvalue(res, 0, 0), ENTER, r_date, r_time, ENTER, p_num, ENTER);
+                sprintf(sendBuf, "登録された内容は以下のとおりです%s店舗名：%s%s日時：%s:%s %s%s人数：%d%s", ENTER, PQgetvalue(res, 0, 0), ENTER, r_date, r_hour, r_min, ENTER, p_num, ENTER);
+                sendLen = strlen(sendBuf);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+		
+                sprintf(sendBuf, "%s", DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);

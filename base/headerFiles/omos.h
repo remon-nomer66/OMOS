@@ -22,7 +22,7 @@
 
 #define BUFSIZE 1024
 #define LONG_BUFSIZE 4096
-#define PORT 10000     //NETBANKサーバのポート番号
+#define PORT 10000
 #define ENTER "\n"     //<LF>
 #define DATA_END ".\n" //レスポンスデータの終端デリミタ
 
@@ -66,6 +66,7 @@
 #define PUSE    "PUSE"    //ポイント使用    関数内部
 #define PUNUSE  "PUNUSE"  //ポイント不使用  関数内部
 #define EVALUE  "EVALUE"  //評価            関数内部
+#define HIST    "HIST"
 
 #define KDEL    "KDEL"
 
@@ -75,6 +76,7 @@
 #define CEKMAX  5         //パスワード試行回数の最大値
 #define YES     "YES"
 #define NO      "NO"
+#define OK      "OK"
 #define TABEMAX 10        //卓の最大数
 #define END     "END"
 #define AGUEST  1         //お客様

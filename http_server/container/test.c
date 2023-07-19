@@ -1,13 +1,17 @@
 #include<stdio.h>
 #include<string.h>
 
-/* void func(int *a) {
-    *a = 10;
+/* void func_2(int *a){
+    *a = 10000;
+}
+
+void func_1(int *a) {
+    func_2(a);
 }
 
 int main() {
     int a;
-    func(&a);
+    func_1(&a);
     printf("%d\n", a);
     return 0;
 } */
@@ -40,13 +44,18 @@ int main() {
     printf("%s", a[1]);
 } */
 
-void func(char *pw) {
-    strcpy(pw, "AAA");
-}
 
-int main() {
-    char pw[20] = "qwerty";
-    func(pw);
-    printf("%s\n", pw);
-    return 0;
+int main(){
+    char text[] = "12 34";
+    int a[3][2] ={0};
+    int b, c;
+
+    sscanf(text, "%d %d", &b, &c);
+
+    a[1][0] = b;
+    a[1][1] = c;
+
+    printf("%d\n", a[1][0]);
+    printf("%d\n", a[1][1]);
+
 }

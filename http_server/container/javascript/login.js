@@ -1,7 +1,7 @@
 document.getElementById("btn").addEventListener("click", function(event) {
   
     //要素取得
-    let tel = encodeURIComponent(document.getElementById("tel").value);
+    let tel = document.getElementById("tel").value;
     let pw = document.getElementById("pw").value;
   
     //POST
