@@ -624,6 +624,16 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         }
         //クライアントから受信した店舗IDをchangestoreに代入
         sscanf(recvBuf, "%d", &changestore);
+        //changestoreが選べる店舗IDに含まれているかどうかをテーブル名region_tから確認
+        sprintf(sendBuf, "SELECT COUNT(*) FROM region_t WHERE region_id = %d AND store_id = %d;", u_store, changestore); //SQL文作成
+        res = PQexec(con, sendBuf); //SQL文実行
+        //1つも無ければエラーを返す
+        if(PQntuples(res) == 0){
+            sprintf(sendBuf, "選べない店舗IDです．%s%s", ENTER, DATA_END); //送信データ作成
+            sendLen = strlen(sendBuf); //送信データ長
+            send(soc, sendBuf, sendLen, 0); //送信
+            return -1;
+        }
         //情報を変更したい店舗IDが存在するかどうかをテーブル名store_tから確認
         sprintf(sendBuf, "SELECT COUNT(*) FROM store_t WHERE store_id = %d;", changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
