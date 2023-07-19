@@ -2,7 +2,7 @@
 
 int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
-    int newmid, newmprice, newmstar, newmstock, newmlimit, newmlevel, newmseason, fod; //新規登録する商品ID, 価格, 評価, 初期在庫数, メニューレベル、、店舗id、季節、フードかドリンクか
+    int newmid, newmprice, newmstar, newmstock, newmlimit, newmlevel, newmseason, newmchain, fod; //新規登録する商品ID, 価格, 評価, 初期在庫数, メニューレベル、、店舗id、季節、チェーン番号、フードかドリンクか
     int u_id, u_auth, u_store; //ユーザID, 権限, 所属
     int i; //ループカウンタ
     char newmname[BUFSIZE], newmrecipe[LONG_BUFSIZE]; //新規登録する商品名
@@ -275,7 +275,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力をnewmstarに格納
         sscanf(recvBuf, "%d", &newmstar);
         //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
-        if(newmstar != 0 && newmstar != 1){
+        if(newmstar != 0 || newmstar != 1){
             sendLen = sprintf(sendBuf, "押しメニューにするかどうかは１か０で入力してください。%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
             return -1;
@@ -293,9 +293,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sendLen = sprintf(sendBuf, "メニューレベルは1以上5以下で入力してください。%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
             return -1;
-        }
-        //newmlevelの値が3の場合は、どの店舗のメニューなのかを確認。
-        if(newmlevel == 3){
+        }if(newmlevel == 3){
             //どの店舗のメニューなのかを確認。
             sendLen = sprintf(sendBuf, "登録する店舗の店舗ID（2桁）を入力してください。%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
@@ -387,7 +385,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "INSERT INTO menu_charge_t VALUES(%d, %d);", newmid, u_id);
         res = PQexec(con, sendBuf);
         PQclear(res);
-        //テーブル名：menu_detail_tのmenuidにnewmidを、layerに3を、idにu_storeを、seasonに0を挿入
+        //テーブル名：menu_detail_tのmenuidにnewmidを、layerにnewmlevelを、idにu_storeを、seasonに0を挿入
         sprintf(sendBuf, "INSERT INTO menu_detail_t VALUES(%d, %d, %d, %d);", newmid, newmlevel, u_store, newmseason);
         res = PQexec(con, sendBuf);
         PQclear(res);
