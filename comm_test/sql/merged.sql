@@ -1,5 +1,10 @@
 BEGIN TRANSACTION;
 
+-- 本部: 0
+-- COR: 1~49
+-- チェーン: 50~59
+-- 店舗: 100~
+
 --
 -- 01 user_t
 --
@@ -51,12 +56,21 @@ CREATE TABLE region_t(
 );
 
 --
+-- チェーン対応関係!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+--
+CREATE TABLE chain_t(
+       chain_id             integer              NOT NULL,
+       store_id             integer              NOT NULL,
+       PRIMARY KEY (chain_id, store_id)
+);
+
+--
 -- store_tabel_t
 --
 CREATE TABLE store_table_t(
        store_id	       integer              NOT NULL,
-       desk_num		integer              NOT NULL,     -- 卓番号
-       desk_max		integer              NOT NULL,     -- 卓上限人数
+       desk_num		integer              NOT NULL,      -- 卓番号
+       desk_max		integer              NOT NULL,      -- 卓上限人数
        desk_use             integer              DEFAULT 0,     -- 卓使用フラグ
        PRIMARY KEY (store_id)
 );
@@ -98,6 +112,7 @@ CREATE TABLE recipe_t(
        menu_id              integer       NOT NULL,        -- 商品ID
        menu_name            varchar(50)   NOT NULL,	   -- 商品名
        recipe 	       text          NOT NULL,	   -- レシピ
+       fod               integer       NOT NULL,        -- フードかドリンクか
        PRIMARY KEY (menu_id)
 );
 
@@ -120,6 +135,17 @@ CREATE TABLE menu_charge_t(
 );
 
 --
+-- メニューチェーン，メニュー季節!!!!!!!!!!!!!!!!!!
+--
+CREATE TABLE menu_detail_t(
+       menu_id              integer       NOT NULL,
+       layer                integer       NOT NULL,         -- メニューレベル
+       id                   integer       NOT NULL,         -- store_id, region_t
+       season               integer       DEFAULT 0,        -- 0: 指定無し，1: 春，2: 夏，3: 秋，4: 冬
+       PRIMARY KEY(menu_id)
+);
+
+--
 -- 09 push_t
 --
 CREATE TABLE push_t(
@@ -127,7 +153,6 @@ CREATE TABLE push_t(
        push_hq              integer       NOT NULL,         -- 押しHQ
        push_cor             integer       NOT NULL,         -- 押しCOR
        push_mgr             integer       NOT NULL,         -- 押し店長
-       layer                integer       NOT NULL,         -- メニューレベル
        PRIMARY KEY (menu_id)
 );
 
@@ -139,6 +164,7 @@ CREATE TABLE menu_storage_t(
        store_id             integer       NOT NULL,    -- 店舗ID
        storage   	       integer       NOT NULL,    -- 在庫個数
        min_storage   	integer       NOT NULL,    -- 在庫下限
+       storage_flag 	       integer       NOT NULL,    -- 発注フラグ
        PRIMARY KEY (menu_id)
 );
 

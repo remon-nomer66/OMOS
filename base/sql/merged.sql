@@ -72,7 +72,7 @@ CREATE TABLE store_table_t(
        desk_num		integer              NOT NULL,      -- 卓番号
        desk_max		integer              NOT NULL,      -- 卓上限人数
        desk_use             integer              DEFAULT 0,     -- 卓使用フラグ
-       PRIMARY KEY (store_id)
+       PRIMARY KEY (store_id, desk_num)
 );
 
 --
@@ -191,11 +191,11 @@ SET search_path to public;
 -- 14 store_order_t(発注)
 --
 CREATE TABLE store_order_t(
-       store_id           integer,
-       menu_id            integer,
-       store_order_cnt    integer         NOT NULL,
-       store_order_date   date            NOT NULL,
-       store_order_time   time            NOT NULL,
+       store_id           integer,                    -- 店舗ID
+       menu_id            integer,                     -- 商品ID
+       store_order_cnt    integer         NOT NULL,     -- 発注個数
+       store_order_date   date            NOT NULL,     -- 発注日
+       store_order_time   time            NOT NULL,     -- 発注時間
        PRIMARY KEY (store_id, store_order_time)
 );
 

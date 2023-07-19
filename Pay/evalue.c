@@ -1,10 +1,9 @@
 #include "omos.h"
 
-int evalue(PGconn *__con, int __soc, int *__u_info){
+int evalue(PGconn *__con, int __soc, int *__u_info, pthread_t __selfId){
     //お客様の評価を良いか悪いかで聞く
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
-    pthread_t selfId = pthread_self();  //スレッドID
     int evalue; //評価
 
     //トランザクション開始
@@ -60,7 +59,7 @@ int evalue(PGconn *__con, int __soc, int *__u_info){
     }
 
     //user_point_tのポイント倍率(user_mag)をpoint_rateに更新、うまくいかなかった場合、ロールバックする
-    sprintf(sql, "UPDATE user_point_t SET user_mag = %f WHERE user_id = %d", point_rate, __u_info[0]);
+    sprintf(sql, "UPDATE user_point_t SET user_mag = %f WHERE user_id = %d", point_rate, u_info[0]);
     res = PQexec(__con, sql);
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("UPDATE failed: %s", PQerrorMessage(__con));

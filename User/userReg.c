@@ -1,9 +1,8 @@
-#include "OMOS.h"
+#include "omos.h"
 
-int userReg(PGconn *__con, int __soc){
+int userReg(pthread_t selfId, PGconn *__con, int __soc, int *__u_info){
     char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
     int recvLen, sendLen;   //送受信データ長
-    pthread_t selfId = pthread_self();  //スレッドID
     int phoneNum;  //電話番号
     char userPass;  //パスワード
     char userName;  //氏名
@@ -16,7 +15,6 @@ int userReg(PGconn *__con, int __soc){
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("BEGIN failed: %s", PQerrorMessage(__con));
         PQclear(res);
-        PQfinish(__con);
         sprintf(sendBuf, "error occured%s", ENTER);
         send(__soc, sendBuf, sendLen, 0);
     }
@@ -26,8 +24,10 @@ int userReg(PGconn *__con, int __soc){
         sprintf(sendBuf, "電話番号を入力してください(09024681234)。%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
         
         //入力が数字11桁の場合、電話番号として扱う
         if( strlen(recvBuf) == 11 && isdigit(recvBuf) ){
@@ -45,8 +45,10 @@ int userReg(PGconn *__con, int __soc){
         sprintf(sendBuf, "パスワードを入力してください。%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
         //入力が8文字以上16文字以下の場合、パスワードとして扱う
         if( 8 <= strlen(recvBuf) && strlen(recvBuf) <= 16 ){
@@ -64,8 +66,10 @@ int userReg(PGconn *__con, int __soc){
         sprintf(sendBuf, "氏名を入力してください。%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf);  //送信データ長
         send(__lsoc, sendBuf, sendLen, 0); //送信
+        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
+        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
 
         //入力が30文字以下の場合、氏名として扱う
         if( strlen(recvBuf) <= 30 ){
@@ -132,14 +136,15 @@ int userReg(PGconn *__con, int __soc){
     sprintf(sendBuf, "登録完了しました。%s", ENTER); //送信データ作成
     sendLen = strlen(sendBuf);  //送信データ長
     send(__lsoc, sendBuf, sendLen, 0); //送信
+    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
     sprintf(sendBuf, "userid:%c, phoneNum:%d, userPass:%s, userName:%s, point:%d, point_rate:%f, auth:%d%s", userid, phoneNum, userPass, userName, point, point_rate, auth, ENTER); //送信データ作成
     sendLen = strlen(sendBuf);  //送信データ長
     send(__lsoc, sendBuf, sendLen, 0); //送信
+    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
 
     //トランザクションの終了
     res = PQexec(__con, "COMMIT");
     PQclear(res);
-    PQfinish(__con);
 
     return 0;
 }

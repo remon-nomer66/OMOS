@@ -21,6 +21,7 @@
 #include <ctype.h>
 
 #define BUFSIZE 1024
+#define LONG_BUFSIZE 4096
 #define PORT 10000     //NETBANKサーバのポート番号
 #define ENTER "\n"     //<LF>
 #define DATA_END ".\n" //レスポンスデータの終端デリミタ
