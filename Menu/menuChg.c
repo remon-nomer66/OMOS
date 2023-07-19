@@ -640,8 +640,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0); //送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
-        //changestoreと同じ値のstore_idを持っているmenu_idをテーブル名：menu_storage_tから、そのmenu_idのmenu_nameをテーブル名：recipe_tから取得
-        sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changestore); //SQL文作成
+        //changestoreと同じ値のstore_idを持っているmenu_idをテーブル名：menu_storage_tから、そのmenu_idのmenu_nameをテーブル名：recipe_tから同時に取得
+        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = %d;", changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         //1つも無ければエラーを返す
         if(PQntuples(res) == 0){
