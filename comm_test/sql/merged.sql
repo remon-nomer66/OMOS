@@ -112,7 +112,7 @@ CREATE TABLE recipe_t(
        menu_id              integer       NOT NULL,        -- 商品ID
        menu_name            varchar(50)   NOT NULL,	   -- 商品名
        recipe 	       text          NOT NULL,	   -- レシピ
-       f_or_d               integer       NOT NULL,        -- フードかドリンクか
+       fod               integer       NOT NULL,        -- フードかドリンクか
        PRIMARY KEY (menu_id)
 );
 
@@ -164,6 +164,7 @@ CREATE TABLE menu_storage_t(
        store_id             integer       NOT NULL,    -- 店舗ID
        storage   	       integer       NOT NULL,    -- 在庫個数
        min_storage   	integer       NOT NULL,    -- 在庫下限
+       storage_flag 	       integer       NOT NULL,    -- 発注フラグ
        PRIMARY KEY (menu_id)
 );
 
