@@ -2,7 +2,7 @@
 
 int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
-    int newmid, newmprice, newmstar, newmstock, newmlimit, newmlevel, newmseason, newmchain, fod; //新規登録する商品ID, 価格, 評価, 初期在庫数, メニューレベル、、店舗id、季節、チェーン番号、フードかドリンクか
+    int newmid, newmprice, newmstar, newmstock, newmlimit, newmlevel, newmseason, newmregion, fod; //新規登録する商品ID, 価格, 評価, 初期在庫数, メニューレベル、、店舗id、季節、チェーン番号、フードかドリンクか
     int u_id, u_auth, u_store; //ユーザID, 権限, 所属
     int i; //ループカウンタ
     char newmname[BUFSIZE], newmrecipe[LONG_BUFSIZE]; //新規登録する商品名
@@ -50,6 +50,14 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
+        //数字以外が入力されていないかを確認
+        for(i = 0; i < recvLen-1; i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //入力をfodに格納
         sscanf(recvBuf, "%d", &fod);
         //fodが0か1であるかを確認。どちらでもない場合はエラーを返す。
@@ -222,6 +230,14 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0);
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);
         recvBuf[recvLen-1] = '\0';
+        //数字以外が入力されていないかを確認
+        for(i = 0; i < recvLen-1; i++){
+            if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                sendLen = sprintf(sendBuf, "数字を入力してください。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+        }
         //入力をfodに格納
         sscanf(recvBuf, "%d", &fod);
         //fodが0か1であるかを確認。どちらでもない場合はエラーを返す。
@@ -350,7 +366,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             newmregion = u_store;
         }else if(newmlevel == 4){
             //どの地域のメニューなのかを入力してくださいと聞く。打ち込むのは01～49の2桁の数字。
-            sendLen = sprintf(sendBuf, "登録する地域の地域ID（2桁：半角数字）を入力してください。%s%s", ENTER, DATA_END);
+            sendLen = sprintf(sendBuf, "登録する地域の地域ID（2桁：半角数字、01 ~ 49）を入力してください。%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
             //地域IDを受信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0);
@@ -371,7 +387,6 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
             }
-        }
         }else if(newmlevel == 5){ //newmlevelの値が5の場合はどのシーズンにするかを聞く。
             //どのシーズンにするかを確認。
             sendLen = sprintf(sendBuf, "どのシーズンにするかを入力してください。%s 選択肢は1：春、2：夏、3：秋、4：冬です。%s%s", ENTER, ENTER, DATA_END);
