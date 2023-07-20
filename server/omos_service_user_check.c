@@ -42,7 +42,7 @@ void service_user(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *s
                         u_info[1] = 1;  //権限: お客様
                         break;
                     }
-                }else if(strlen(tel) != TELLEN){
+                }else if(strlen() != TELLEN){
                     sprintf(sendBuf, "IDまたはコマンドを再度入力してください%s%s", ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
