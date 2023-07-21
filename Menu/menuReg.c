@@ -28,7 +28,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力された文字が数字以外ならエラーを返す。
         for(i = 0; i < strlen(recvBuf); i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                sendLen = sprintf(sendBuf, "商品IDは数字で入力してください。%s%s", ENTER, DATA_END);
+                sendLen = sprintf(sendBuf, "商品IDは半角数字で入力してください。%s%s", ENTER, DATA_END);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
             }
@@ -109,7 +109,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力された文字が数字以外ならエラーを返す。
         for(i = 0; i < recvLen-1; i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                sendLen = sprintf(sendBuf, "価格は数字で入力してください。%s%s", ENTER, DATA_END);
+                sendLen = sprintf(sendBuf, "価格は半角数字で入力してください。%s%s", ENTER, DATA_END);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
             }
@@ -208,7 +208,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力された文字が数字以外ならエラーを返す。
         for(i = 0; i < strlen(recvBuf); i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                sendLen = sprintf(sendBuf, "商品IDは数字で入力してください。%s%s", ENTER, DATA_END);
+                sendLen = sprintf(sendBuf, "商品IDは半角数字で入力してください。%s%s", ENTER, DATA_END);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
             }
@@ -289,7 +289,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力された文字が数字以外ならエラーを返す。
         for(i = 0; i < recvLen-1; i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                sendLen = sprintf(sendBuf, "価格は数字で入力してください。%s%s", ENTER, DATA_END);
+                sendLen = sprintf(sendBuf, "価格は半角数字で入力してください。%s%s", ENTER, DATA_END);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
             }
@@ -353,7 +353,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i = 0; i < 3; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sendLen = sprintf(sendBuf, "店舗IDは数字で入力してください。%s%s", ENTER, DATA_END);
+                    sendLen = sprintf(sendBuf, "店舗IDは半角数字で入力してください。%s%s", ENTER, DATA_END);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
                 }
