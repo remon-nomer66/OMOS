@@ -324,7 +324,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     send(soc, sendBuf, sendLen, 0); //送信
                     recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                     recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
-                }else if (!isdigit(recvBuf[0]) || !isdigit(recvBuf[1])){ //数字以外の文字が入っていたら、エラーを表示する。
+                }else if (!isdigit(recvBuf[0]) || !isdigit(recvBuf[1]) || !isdigit(recvBuf[2])){ //数字以外の文字が入っていたら、エラーを表示する。
                     sprintf(sendBuf, "数字以外の文字が入力されています。%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
@@ -353,6 +353,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                         check = 1;
+                    }
+                    //実行結果を表示
+                    for(int i = 0; i < PQntuples(res); i++){
+                        sprintf(sendBuf, "%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                        sendLen = strlen(sendBuf); //送信データ長
+                        send(soc, sendBuf , sendLen, 0); //送信
+                        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     }
                     PQclear(res); //resのメモリを解放
                     if(check != 1){
