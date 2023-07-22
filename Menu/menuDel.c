@@ -15,7 +15,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "あなたが削除できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
-        //テーブル名：menu_charge_tからaccount_idがu_idと一致し、かつテーブル名：push_tでlayerの値が4のもののmenu_idを取得し、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
+        //テーブル名：menu_charge_tからaccount_idがu_idと一致し、かつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを取得し、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
         sprintf(sendBuf, "SELECT menu_id, menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_charge_t WHERE account_id = %d) AND menu_id IN (SELECT menu_id FROM push_t WHERE layer = 4);", u_id); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         //実行結果を表示
@@ -24,6 +24,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
+        PQclear(res); //resのメモリを解放
         //削除したい商品IDを入力してください。と表示
         sprintf(sendBuf, "削除したい商品ID（4桁：半角数字）を入力してください．（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
@@ -48,11 +49,8 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         }
         //受信した値をdelidに代入
         sscanf(recvBuf, "%d", &delid);
-        //テーブル名：recipe_tからテーブル名：menu_charge_tからaccount_idがu_idと一致するmenu_idのmenu_nameを表示
-        sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_charge_t WHERE account_id = %d);", u_id); //SQL文作成
-        res = PQexec(con, sendBuf); //SQL文実行
-        //クライアントから受信したmenu_idがテーブル名：push_tに存在するか確認
-        sprintf(sendBuf, "SELECT menu_id FROM push_t WHERE menu_id = %d;", changeid); //SQL文作成
+        //テーブル名：menu_storage_tに存在するか確認。その際store_idの値はu_storeと一致するものを確認
+        sprintf(sendBuf, "SELECT menu_id FROM menu_storage_t WHERE menu_id = %d AND store_id = %d;", delid, u_store); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         if(PQntuples(res) == 0){ //menu_idが存在しない場合
             sprintf(sendBuf, "そのメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
@@ -60,6 +58,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
         }
+        PQclear(res); //resのメモリを解放
         //実行しようとしている商品名が正しいか確認
         sprintf(sendBuf, "本当に%sを削除しますか？(y/n)%s%s", PQgetvalue(res, delid, 0), ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
@@ -69,17 +68,18 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //受信した内容をresponseに入れる
         sscanf(recvBuf, "%s", response);
         if(strcmp(response, "y") == 0){ //削除する場合
-            //テーブル名：recipe_t, price_charge_t, push_t, menu_storage_t, menu_charge_tからテーブル名：menu_charge_tからaccount_idがu_idと一致するmenu_idのものを削除
-            sprintf(sendBuf, "DELETE FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_charge_t WHERE account_id = %d);", u_id); //SQL文作成
+            //テーブル名：menu_charge_tからuser_idがu_idと、menu_idがdelidと一致するものを削除
+            sprintf(sendBuf, "DELETE FROM menu_charge_t WHERE user_id = %d AND menu_id = %d;", u_id, delid); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
-            sprintf(sendBuf, "DELETE FROM price_charge_t WHERE menu_id IN (SELECT menu_id FROM menu_charge_t WHERE account_id = %d);", u_id); //SQL文作成
+            PQclear(res); //resのメモリを解放
+            //テーブル名：menu_detail_tからidがu_storeと、menu_idがdelidと一致するものを削除
+            sprintf(sendBuf, "DELETE FROM menu_detail_t WHERE id = %d AND menu_id = %d;", u_store, delid); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
-            sprintf(sendBuf, "DELETE FROM push_t WHERE menu_id IN (SELECT menu_id FROM menu_charge_t WHERE account_id = %d);", u_id); //SQL文作成
+            PQclear(res); //resのメモリを解放
+            //テーブル名：menu_storage_tからstore_idがu_storeと、menu_idがdelidと一致するものを削除
+            sprintf(sendBuf, "DELETE FROM menu_storage_t WHERE store_id = %d AND menu_id = %d;", u_store, delid); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
-            sprintf(sendBuf, "DELETE FROM menu_storage_t WHERE menu_id IN (SELECT menu_id FROM menu_charge_t WHERE account_id = %d);", u_id); //SQL文作成
-            res = PQexec(con, sendBuf); //SQL文実行
-            sprintf(sendBuf, "DELETE FROM menu_charge_t WHERE account_id = %d;", u_id); //SQL文作成
-            res = PQexec(con, sendBuf); //SQL文実行
+            PQclear(res); //resのメモリを解放
         }else if(strcmp(response, "n") == 0){ //削除しない場合
             sprintf(sendBuf, "削除を中止しました．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
@@ -100,21 +100,21 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //受信した内容をresponseに代入
         sscanf(recvBuf, "%s", response);
         if(strcmp(response, "yes") == 0){
-            //削除を実行したい店舗ID（2桁：半角数字）を聞く。
-            sprintf(sendBuf, "削除を実行したい店舗ID（2桁：半角数字）を入力してください。（例：01）%s%s", ENTER, DATA_END); //送信データ作成
+            //削除を実行したい店舗ID（3桁：半角数字）を聞く。
+            sprintf(sendBuf, "削除を実行したい店舗ID（3桁：半角数字）を入力してください。（例：001）%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';
             //2文字以外の場合はエラーを返す
-            if(strlen(recvBuf) !=2){
-                sprintf(sendBuf, "店舗IDは2桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+            if(strlen(recvBuf) !=3){
+                sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
             //入力された文字が数字以外ならエラーを返す。
-            for(i = 0; i < 2; i++){
+            for(i = 0; i < 3; i++){
                 if(isdigit(recvBuf[i]) == 0){
                     sprintf(sendBuf, "店舗IDは数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
@@ -134,10 +134,13 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
+            PQclear(res); //resのメモリを解放
             sprintf(sendBuf, "あなたが削除できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
-            //情報を変更したい店舗IDが存在する場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致するかつテーブル名：push_tでlayerの値が4のもののmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
+            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+            recvBuf[recvLen-1] = '\0';
+            //情報を変更したい店舗IDが存在する場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致するかつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを取得し、そのmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
             sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d) AND menu_id IN (SELECT menu_id FROM push_t WHERE layer = 4);", changestore); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             //実行したSQL文の結果を表示
@@ -146,7 +149,8 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
             }
-            sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
+            PQclear(res); //resのメモリを解放
+            sprintf(sendBuf, "どのメニューを削除しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -169,8 +173,8 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             }
             //クライアントから受信した値をdelidに代入
             sscanf(recvBuf, "%d", &delid);
-            //クライアントから受信したmenu_idがテーブル名：push_tに存在するか確認
-            sprintf(sendBuf, "SELECT menu_id FROM push_t WHERE menu_id = %d;", changeid); //SQL文作成
+            //テーブル名：menu_storage_tに存在するか確認。その際store_idの値はchangestoreと一致するものを確認
+            sprintf(sendBuf, "SELECT menu_id FROM menu_storage_t WHERE menu_id = %d AND store_id = %d;", delid, changestore); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             if(PQntuples(res) == 0){ //menu_idが存在しない場合
                 sprintf(sendBuf, "そのメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
@@ -178,6 +182,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
+            PQclear(res); //resのメモリを解放
             //実行しようとしている商品名が正しいか確認
             sprintf(sendBuf, "本当に%sを削除しますか？(y/n)%s%s", PQgetvalue(res, delid, 0), ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
@@ -187,17 +192,18 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //クライアントから受信した値をresponseに代入
             sscanf(recvBuf, "%s", response);
             if(strcmp(response, "y") == 0){ //削除する場合
-                //テーブル名：recipe_t, price_charge_t, push_t, menu_storage_t, menu_charge_tからテーブル名：menu_charge_tからaccount_idがu_idと一致するmenu_idのものを削除
-                sprintf(sendBuf, "DELETE FROM recipe_t WHERE menu_id = %d;", changeid); //SQL文作成
+                //テーブル名：menu_charge_tからuser_idがu_idと、menu_idがdelidと一致するものを削除
+                sprintf(sendBuf, "DELETE FROM menu_charge_t WHERE user_id = %d AND menu_id = %d;", u_id, delid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
-                sprintf(sendBuf, "DELETE FROM price_charge_t WHERE menu_id = %d;", changeid); //SQL文作成
+                PQclear(res); //resのメモリを解放
+                //テーブル名：menu_detail_tからidがu_storeと、menu_idがdelidと一致するものを削除
+                sprintf(sendBuf, "DELETE FROM menu_detail_t WHERE id = %d AND menu_id = %d;", u_store, delid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
-                sprintf(sendBuf, "DELETE FROM push_t WHERE menu_id = %d;", changeid); //SQL文作成
+                PQclear(res); //resのメモリを解放
+                //テーブル名：menu_storage_tからstore_idがu_storeと、menu_idがdelidと一致するものを削除
+                sprintf(sendBuf, "DELETE FROM menu_storage_t WHERE store_id = %d AND menu_id = %d;", u_store, delid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
-                sprintf(sendBuf, "DELETE FROM menu_storage_t WHERE menu_id = %d;", changeid); //SQL文作成
-                res = PQexec(con, sendBuf); //SQL文実行
-                sprintf(sendBuf, "DELETE FROM menu_charge_t WHERE menu_id = %d;", changeid); //SQL文作成
-                res = PQexec(con, sendBuf); //SQL文実行
+                PQclear(res); //resのメモリを解放
                 sprintf(sendBuf, "削除しました．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
@@ -212,9 +218,90 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 return -1;
             }
         }else if(strcmp(response, "no") == 0){
-            sprintf(sendBuf, "削除を中止しました．%s%s", ENTER, DATA_END); //送信データ作成
+            //選べるメニュー一覧を表示
+            sprintf(sendBuf, "あなたが削除できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
+            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+            recvBuf[recvLen-1] = '\0';
+            //テーブル名：menu_detail_tでlayerの値が1, 2, 4, 5のもののmenu_idを取得し、そのmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
+            sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer IN (1, 2, 4, 5)) AND menu_id IN (SELECT menu_id FROM push_t WHERE layer = 4);", u_store); //SQL文作成
+            res = PQexec(con, sendBuf); //SQL文実行
+            //実行したSQL文の結果を表示
+            for(int i = 0; i < PQntuples(res); i++){
+                sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                sendLen = strlen(sendBuf); //送信データ長
+                send(soc, sendBuf, sendLen, 0); //送信
+            }
+            PQclear(res); //resのメモリを解放
+            //削除したい商品IDを入力してください。と表示
+            sprintf(sendBuf, "削除したい商品ID（4桁：半角数字）を入力してください．（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
+            sendLen = strlen(sendBuf); //送信データ長
+            send(soc, sendBuf, sendLen, 0); //送信
+            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+            recvBuf[recvLen-1] = '\0';
+            //4文字以外の場合はエラーを返す
+            if(strlen(recvBuf) !=4){
+                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                sendLen = strlen(sendBuf); //送信データ長
+                send(soc, sendBuf, sendLen, 0); //送信
+                return -1;
+            }
+            //入力された文字が数字以外ならエラーを返す。
+            for(int i = 0; i < 4; i++){
+                if(recvBuf[i] < '0' || recvBuf[i] > '9'){
+                    sprintf(sendBuf, "商品IDは数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                    sendLen = strlen(sendBuf); //送信データ長
+                    send(soc, sendBuf, sendLen, 0); //送信
+                    return -1;
+                }
+            }
+            //受信した値をdelidに代入
+            sscanf(recvBuf, "%d", &delid);
+            //テーブル名：menu_detail_tに存在するか確認。その際layerの値は1, 2, 4, 5のものを確認
+            sprintf(sendBuf, "SELECT menu_id FROM menu_detail_t WHERE menu_id = %d AND layer IN (1, 2, 4, 5);", delid); //SQL文作成
+            res = PQexec(con, sendBuf); //SQL文実行
+            if(PQntuples(res) == 0){ //menu_idが存在しない場合
+                sprintf(sendBuf, "そのメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                sendLen = strlen(sendBuf); //送信データ長
+                send(soc, sendBuf, sendLen, 0); //送信
+                return -1;
+            }
+            PQclear(res); //resのメモリを解放
+            //実行しようとしている商品名が正しいか確認
+            sprintf(sendBuf, "本当に%sを削除しますか？(y/n)%s%s", PQgetvalue(res, delid, 0), ENTER, DATA_END); //送信データ作成
+            sendLen = strlen(sendBuf); //送信データ長
+            send(soc, sendBuf, sendLen, 0); //送信
+            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+            //受信した内容をresponseに入れる
+            sscanf(recvBuf, "%s", response);
+            if(strcmp(response, "y") == 0){ //削除する場合
+                //テーブル名：menu_charge_tからmenu_idがdelidと一致するものを削除
+                sprintf(sendBuf, "DELETE FROM menu_charge_t WHERE menu_id = %d;", delid); //SQL文作成
+                res = PQexec(con, sendBuf); //SQL文実行
+                PQclear(res); //resのメモリを解放
+                //テーブル名：menu_detail_tからmenu_idがdelidと一致するものを削除
+                sprintf(sendBuf, "DELETE FROM menu_detail_t WHERE menu_id = %d;", delid); //SQL文作成
+                res = PQexec(con, sendBuf); //SQL文実行
+                PQclear(res); //resのメモリを解放
+                //テーブル名：menu_storage_tからmenu_idがdelidと一致するものを削除
+                sprintf(sendBuf, "DELETE FROM menu_storage_t WHERE menu_id = %d;", delid); //SQL文作成
+                res = PQexec(con, sendBuf); //SQL文実行
+                PQclear(res); //resのメモリを解放
+                sprintf(sendBuf, "削除しました．%s", ENTER); //送信データ作成
+                sendLen = strlen(sendBuf); //送信データ長
+                send(soc, sendBuf, sendLen, 0); //送信
+            }else if(strcmp(response, "n") == 0){ //削除しない場合
+                sprintf(sendBuf, "削除を中止しました．%s%s", ENTER, DATA_END); //送信データ作成
+                sendLen = strlen(sendBuf); //送信データ長
+                send(soc, sendBuf, sendLen, 0); //送信
+            }else{
+                sprintf(sendBuf, "入力が不正です．%s%s", ENTER, DATA_END); //送信データ作成
+                sendLen = strlen(sendBuf); //送信データ長
+                send(soc, sendBuf, sendLen, 0); //送信
+                return -1;
+            }
         }else{
             sprintf(sendBuf, "入力が不正です．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
