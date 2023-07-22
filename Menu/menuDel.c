@@ -15,9 +15,17 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "あなたが削除できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
-        //テーブル名：menu_charge_tからaccount_idがu_idと一致し、かつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを取得し、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
-        sprintf(sendBuf, "SELECT menu_id, menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_charge_t WHERE account_id = %d) AND menu_id IN (SELECT menu_id FROM push_t WHERE layer = 4);", u_id); //SQL文作成
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+        recvBuf[recvLen-1] = '\0';
+        //テーブル名：menu_charge_tからuser_idがu_idと一致し、かつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを取得し表示、また、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
+        sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 3) AND recipe_t.menu_id IN (SELECT menu_id FROM menu_charge_t WHERE user_id = %d);", u_id); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
+        if(PQntuples(res) == 0){
+            sprintf(sendBuf, "変更できるメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+            sendLen = strlen(sendBuf); //送信データ長
+            send(soc, sendBuf, sendLen, 0); //送信
+            return -1;
+        }
         //実行結果を表示
         for(int i = 0; i < PQntuples(res); i++){
             sprintf(sendBuf, "%s: %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
@@ -232,6 +240,8 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
+                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                recvBuf[recvLen-1] = '\0';
             }
             PQclear(res); //resのメモリを解放
             //テーブル名：menu_detail_tでlayerの値が4, 5のもののmenu_idを取得し、そのmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
@@ -242,6 +252,8 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
+                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                recvBuf[recvLen-1] = '\0';
             }
             PQclear(res); //resのメモリを解放
             //削除したい商品IDを入力してください。と表示
