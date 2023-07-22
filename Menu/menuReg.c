@@ -468,7 +468,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "INSERT INTO menu_charge_t VALUES(%d, %d);", newmid, u_id);
         res = PQexec(con, sendBuf);
         PQclear(res);
-        //テーブル名：menu_detail_tのmenuidにnewmidを、layerにnewmlevelを、idにnewmregionを、seasonに0を挿入
+        //テーブル名：menu_detail_tのmenuidにnewmidを、layerにnewmlevelを、idにnewmregionを、seasonにnewmseasonを挿入
         sprintf(sendBuf, "INSERT INTO menu_detail_t VALUES(%d, %d, %d, %d);", newmid, newmlevel, newmregion, newmseason);
         res = PQexec(con, sendBuf);
         PQclear(res);
