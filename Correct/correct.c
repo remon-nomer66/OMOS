@@ -4,15 +4,16 @@
 int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
 {
   char recvBuf[BUFSIZE], sendBuf[BUFSIZE]; // 送受信用バッファ
-  char sql[BUFSIZE];
+  char sql[LONG_BUFSIZE];
   int recvLen, sendLen; // 送受信データ長
   char start[13];
   char end[13];
-  char start_target[6];
-  char end_target[6];
+  char start_target[9];
+  char end_target[9];
   char store_id[4];
-  char area_id[3];
+  char region_id[3];
   char product_id[5];
+  char chain_id[3];
   int sum = 0;
   int items_sum = 0;
   PGresult *res;
@@ -147,7 +148,10 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
         strncpy(start_target, recvBuf, 2);
         start_target[2] = ':';
         strncpy(start_target + 3, recvBuf + 2, 2);
-        start_target[5] = '\0';
+        start_target[5] = ':';
+        start_target[6] = '0';
+        start_target[7] = '0';
+        start_target[8] = '\0';
         printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
         break;
       }
@@ -190,7 +194,10 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
         strncpy(end_target, recvBuf, 2);
         end_target[2] = ':';
         strncpy(end_target + 3, recvBuf + 2, 2);
-        end_target[5] = '\0';
+        end_target[5] = ':';
+        end_target[6] = '0';
+        end_target[7] = '0';
+        end_target[8] = '\0';
         printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
         break;
       }
@@ -215,8 +222,132 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
     end_target[0] = '\0';
   }
 
+  //開始年月日と終了年月日が同じ時で対象終了時間が対象開始時間よりも早かった場合、関数から出ていく
+  if(strcmp(start, end) == 0 && strcmp(start_target, end_target) > 0){
+    sprintf(sendBuf, "対象の開始時間が対象の終了時間よりも大きいです。%s%s", ENTER, DATA_END); // 送信データ作成
+    sendLen = strlen(sendBuf);                                                         // 送信データ長
+    send(soc, sendBuf, sendLen, 0);                                                    // 送信
+    return -1;
+  }
+
+  if(u_info[1] == 2 || u_info[1] == 3){
+    // 地域を指定するかどうか
+    sprintf(sendBuf, "地域指定しますか？（はい：1、いいえ：0）%s%s", ENTER, DATA_END); // 送信データ作成
+    sendLen = strlen(sendBuf);                                                         // 送信データ長
+    send(soc, sendBuf, sendLen, 0);                                                    // 送信
+    recvLen = recv(soc, recvBuf, BUFSIZE, 0);                                          // 受信
+    recvBuf[recvLen] = '\0';                                                           // 受信データにNULLを追加
+
+    tmp = atoi(recvBuf);
+
+    // 地域指定する場合
+    if (tmp == 1)
+    {
+      while(1){
+        // 地域の指定
+        // １桁地域を入力させる
+        sprintf(sendBuf, "地域番号を入力してください（例：10）%s%s", ENTER, DATA_END); // 送信データ作成
+        sendLen = strlen(sendBuf);                                                     // 送信データ長
+        send(soc, sendBuf, sendLen, 0);                                                // 送信
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0);                                      // 受信
+        recvBuf[recvLen-1] = '\0';                                                       // 受信データにNULLを追加
+
+        int area_num = atoi(recvBuf);
+        printf("%d\n", area_num);
+
+        // sqlに入力された地域番号が存在するかどうか確認する
+        char sql[BUFSIZE];
+        sprintf(sql, "SELECT * FROM region_t WHERE region_id = %d", area_num);
+        res = PQexec(con, sql);
+        int resultRows = PQntuples(res);
+        printf("rr: %d\n", resultRows);
+
+        if (resultRows != 0)
+        {
+          // 入力された地域番号を格納
+          // char region_id[3];
+          strncpy(region_id, recvBuf, 1);
+          region_id[2] = '\0';
+          break;
+        }
+        // 入力された地域番号が存在しない場合
+        else
+        {
+          sprintf(sendBuf, "入力された地域番号は存在しません。%s", ENTER); // 送信データ作成
+          sendLen = strlen(sendBuf);                                       // 送信データ長
+          send(soc, sendBuf, sendLen, 0);                                  // 送信
+          //recvBufの中身を空にする
+          memset(recvBuf, '\0', sizeof(recvBuf));
+        }
+      }
+      }
+
+    // 地域指定しない場合
+    else
+    {
+      // 地域番号をNULLにする
+      region_id[0] = '\0';
+    }
+  }
+
+  if(u_info[1] == 4){
+    //チェーン指定するかどうか
+    sprintf(sendBuf, "チェーン指定しますか？（はい：1、いいえ：0）%s%s", ENTER, DATA_END); // 送信データ作成
+    sendLen = strlen(sendBuf);                                                         // 送信データ長
+    send(soc, sendBuf, sendLen, 0);                                                    // 送信
+    recvLen = recv(soc, recvBuf, BUFSIZE, 0);                                          // 受信
+    recvBuf[recvLen] = '\0';                                                           // 受信データにNULLを追加
+
+    tmp = atoi(recvBuf);
+
+    // チェーン指定する場合
+    if (tmp == 1)
+    {
+      while(1){
+        // チェーンの指定
+        // １桁チェーンを入力させる
+        sprintf(sendBuf, "チェーン番号を入力してください（例：1）%s%s", ENTER, DATA_END); // 送信データ作成
+        sendLen = strlen(sendBuf);                                                     // 送信データ長
+        send(soc, sendBuf, sendLen, 0);                                                // 送信
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0);                                      // 受信
+        recvBuf[recvLen-1] = '\0';                                                       // 受信データにNULLを追加
+
+        int chain_num = atoi(recvBuf);
+        printf("%d\n", chain_num);
+
+        // sqlに入力されたチェーン番号が存在するかどうか確認する
+        char sql[BUFSIZE];
+        sprintf(sql, "SELECT * FROM chain_t WHERE chain_id = %d", chain_num);
+        res = PQexec(con, sql);
+        int resultRows = PQntuples(res);
+
+        if (resultRows != 0)
+        {
+          // 入力されたチェーン番号を格納
+          // char chain_id[3];
+          strncpy(chain_id, recvBuf, 1);
+          chain_id[2] = '\0';
+          break;
+        }
+        // 入力されたチェーン番号が存在しない場合
+        else
+        {
+          sprintf(sendBuf, "入力されたチェーン番号は存在しません。%s", ENTER); // 送信データ作成
+          sendLen = strlen(sendBuf);                                       // 送信データ長
+          send(soc, sendBuf, sendLen, 0);                                  // 送信
+          //recvBufの中身を空にする
+          memset(recvBuf, '\0', sizeof(recvBuf));
+        }
+      }
+    }
+    else {
+      // チェーン番号をNULLにする
+      chain_id[0] = '\0';
+    }
+  }
+
   // 店舗指定するかどうか
-  sprintf(sendBuf, "店舗指定しますか？地域指定をしたい場合はいいえを選択してください（はい：1、いいえ：0）%s%s", ENTER, DATA_END); // 送信データ作成
+  sprintf(sendBuf, "店舗指定しますか？（はい：1、いいえ：0）%s%s", ENTER, DATA_END); // 送信データ作成
   sendLen = strlen(sendBuf);                                                                                                       // 送信データ長
   send(soc, sendBuf, sendLen, 0);                                                                                                  // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
@@ -275,64 +406,6 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   {
     // 店舗番号をNULLにする
     store_id[0] = '\0';
-  }
-
-  // 地域を指定するかどうか
-  sprintf(sendBuf, "地域指定しますか？（はい：1、いいえ：0）%s%s", ENTER, DATA_END); // 送信データ作成
-  sendLen = strlen(sendBuf);                                                         // 送信データ長
-  send(soc, sendBuf, sendLen, 0);                                                    // 送信
-  recvLen = recv(soc, recvBuf, BUFSIZE, 0);                                          // 受信
-  recvBuf[recvLen] = '\0';                                                           // 受信データにNULLを追加
-
-  tmp = atoi(recvBuf);
-
-  // 地域指定する場合
-  if (tmp == 1)
-  {
-    while(1){
-      // 地域の指定
-      // １桁地域を入力させる
-      sprintf(sendBuf, "地域番号を入力してください（例：10）%s%s", ENTER, DATA_END); // 送信データ作成
-      sendLen = strlen(sendBuf);                                                     // 送信データ長
-      send(soc, sendBuf, sendLen, 0);                                                // 送信
-      recvLen = recv(soc, recvBuf, BUFSIZE, 0);                                      // 受信
-      recvBuf[recvLen-1] = '\0';                                                       // 受信データにNULLを追加
-
-      int area_num = atoi(recvBuf);
-      printf("%d\n", area_num);
-
-      // sqlに入力された地域番号が存在するかどうか確認する
-      char sql[BUFSIZE];
-      sprintf(sql, "SELECT * FROM region_t WHERE region_id = %d", area_num);
-      res = PQexec(con, sql);
-      int resultRows = PQntuples(res);
-      printf("rr: %d\n", resultRows);
-
-      if (resultRows != 0)
-      {
-        // 入力された地域番号を格納
-        // char area_id[3];
-        strncpy(area_id, recvBuf, 1);
-        area_id[2] = '\0';
-        break;
-      }
-      // 入力された地域番号が存在しない場合
-      else
-      {
-        sprintf(sendBuf, "入力された地域番号は存在しません。%s", ENTER); // 送信データ作成
-        sendLen = strlen(sendBuf);                                       // 送信データ長
-        send(soc, sendBuf, sendLen, 0);                                  // 送信
-        //recvBufの中身を空にする
-        memset(recvBuf, '\0', sizeof(recvBuf));
-      }
-    }
-    }
-
-  // 地域指定しない場合
-  else
-  {
-    // 地域番号をNULLにする
-    area_id[0] = '\0';
   }
 
   // 商品指定するかどうか
@@ -411,15 +484,20 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   send(soc, sendBuf, sendLen, 0);                             // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
+  sprintf(sendBuf, "地域番号：%s%s", region_id, ENTER); // 送信データ作成
+  sendLen = strlen(sendBuf);                 // 送信データ長
+  send(soc, sendBuf, sendLen, 0);            // 送信
+  printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
+
+  sprintf(sendBuf, "チェーン番号：%s%s", chain_id, ENTER); // 送信データ作成
+  sendLen = strlen(sendBuf);                 // 送信データ長
+  send(soc, sendBuf, sendLen, 0);            // 送信
+  printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
+
   // 入力された値（店舗番号、地域番号、商品番号）を一度に表示
   sprintf(sendBuf, "店舗番号：%s%s", store_id, ENTER); // 送信データ作成
   sendLen = strlen(sendBuf);                  // 送信データ長
   send(soc, sendBuf, sendLen, 0);             // 送信
-  printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
-
-  sprintf(sendBuf, "地域番号：%s%s", area_id, ENTER); // 送信データ作成
-  sendLen = strlen(sendBuf);                 // 送信データ長
-  send(soc, sendBuf, sendLen, 0);            // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
   sprintf(sendBuf, "商品番号：%s%s%s", product_id, ENTER, DATA_END); // 送信データ作成
@@ -427,58 +505,57 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   send(soc, sendBuf, sendLen, 0);               // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
+  char searchArray[BUFSIZE];
+
+  // 時間指定、地域指定、店舗指定、商品指定がない場合
+  if (strlen(start_target) == 0 && strlen(end_target) == 0 && strlen(region_id) == 0 && strlen(store_id) == 0 && strlen(product_id) == 0 && strlen(chain_id) == 0){
+    searchArray[0] = '\0';
+  }
+
+  if (strlen(start_target) != 0 && strlen(end_target) != 0){
+    sprintf(searchArray, "%s AND summary_t.order_date BETWEEN '%s' AND '%s'", searchArray, start_target, end_target);
+  }
+
+  if (strlen(region_id) != 0){
+    sprintf(searchArray + strlen(searchArray), "%s AND region.region_id = %s", searchArray, region_id);
+  }
+
+  if (strlen(chain_id) != 0)
+  {
+    sprintf(searchArray + strlen(searchArray), "%s AND chain.chain_id = %s", searchArray, chain_id);
+  }
+
+  if (strlen(store_id) != 0){
+    sprintf(searchArray + strlen(searchArray), "%s AND summary.store_id = %s", searchArray, store_id);
+  }
+
+  if (strlen(product_id) != 0){
+    sprintf(searchArray + strlen(searchArray), "%s AND summary.menu_id = %s", searchArray, product_id);
+  }
+
   //データベース結合
-  
-
-  sprintf(sql, "SELECT * FROM summary_t WHERE %s", sql);
-
-  // 時間指定がある場合、テーブルを条件によって絞り込む
-  if (start_target != NULL)
-  {
-    sprintf(sql, "summary_t.order_time >= %s AND summary_t.order_time <= %s", start_target, end_target);
+  sprintf(sql, "SELECT summary.menu_id, SUM(summary.order_cnt * menu.price) AS item_calc FROM summary_t AS summary INNER JOIN menu_price_t AS menu ON summary.menu_id = menu.menu_id INNER JOIN region_t AS region ON summary.store_id = region.store_id INNER JOIN chain_t AS chain ON summary.store_id = chain.store_id WHERE summary.order_date BETWEEN '%s' AND '%s' %s GROUP BY summary.menu_id ORDER BY item_calc DESC", start, end, searchArray);
+  // printf("%s\n", sql);
+  res = PQexec(con, sql);
+  if(PQresultStatus(res) != PGRES_TUPLES_OK){
+      printf("No data retrieved\n");
+      printf("%s\n", PQerrorMessage(con));
+      PQclear(res);
+      return -1;
   }
 
-  // 店舗指定がある場合、テーブルを条件によって絞り込む
-  if (store_id != NULL)
-  {
-    sprintf(sql, "summary_t.store_id = %s", store_id);
+  //商品番号の指定がなかった場合
+  if(strlen(product_id) == 0){
+    sprintf(sql, "SELECT SUM(summary.order_cnt * menu.price) AS total_calc FROM summary_t AS summary INNER JOIN menu_price_t AS menu ON summary.menu_id = menu.menu_id INNER JOIN region_t AS region ON summary.store_id = region.store_id INNER JOIN chain_t AS chain ON summary.store_id = chain.store_id WHERE summary.order_date BETWEEN '%s' AND '%s' %s", start, end, searchArray);
+    //printf("%s\n", sql);
+    res = PQexec(con, sql);
+    if(PQresultStatus(res) != PGRES_TUPLES_OK){
+        printf("No data retrieved\n");
+        printf("%s\n", PQerrorMessage(con));
+        PQclear(res);
+        return -1;
+    }
   }
 
-  // 地域指定がある場合、テーブルを条件によって絞り込む
-  if (area_id != NULL)
-  {
-    sprintf(sql, "summary_t.area_id = %s", area_id);
-  }
-
-  // 商品指定がある場合、テーブルを条件によって絞り込む
-  if (product_id != NULL)
-  {
-    sprintf(sql, "summary_t.product_id = %s", product_id);
-  }
-
-  // 絞り込んだ内容で、商品の個数（order_cnt）と金額（price）を取得してこれらの値を掛け算し、全て足し算
-  // int sum = 0;
-  for (int i = 0; i < PQntuples(res); i++)
-  {
-    sum += atoi(PQgetvalue(res, i, 3)) * atoi(PQgetvalue(res, i, 4));
-  }
-
-  // 絞り込んだ内容から期間指定の範囲内でOrder_Cntの値を取得し、全て足し算
-  // int items_sum = 0;
-  for (int i = 0; i < PQntuples(res); i++)
-  {
-    items_sum += atoi(PQgetvalue(res, i, 3));
-  }
-
-  // 個数の表示
-  sprintf(sendBuf, "個数：%d個%s%s", items_sum, ENTER, DATA_END); // 送信データ作成
-  sendLen = strlen(sendBuf);                          // 送信データ長
-  send(soc, sendBuf, sendLen, 0);
-
-  // 金額の表示
-  sprintf(sendBuf, "金額：%d円%s%s", sum, ENTER, DATA_END); // 送信データ作成
-  sendLen = strlen(sendBuf);                    // 送信データ長
-  send(soc, sendBuf, sendLen, 0);
+  return 0;
 }
-
-// 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
