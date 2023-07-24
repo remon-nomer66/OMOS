@@ -11,27 +11,23 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
     u_store = u_info[2]; //ユーザの所属
 
     if(u_auth == AMGR){
-        sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
+        sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
-        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-        recvBuf[recvLen-1] = '\0';
-        //テーブル名：menu_charge_tからuser_idがu_idと一致し、かつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを取得し表示、また、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
-        sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 3) AND recipe_t.menu_id IN (SELECT menu_id FROM menu_charge_t WHERE user_id = %d);", u_id); //SQL文作成
+        //テーブル名：menu_storage_tからstore_idがu_storeと一致し、かつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを取得し表示、また、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
+        sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 3) AND recipe_t.menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", u_store); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         if(PQntuples(res) == 0){
-            sprintf(sendBuf, "変更できるメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "変更できるメニューは存在しません．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
         }
         //実行したSQL文の結果を表示
         for(int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf , sendLen, 0); //送信
-            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
         PQclear(res); //resの中身をクリア
         sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
@@ -41,7 +37,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvBuf[recvLen-1] = '\0';
         //4文字以外の場合はエラーを返す
         if(strlen(recvBuf) !=4){
-            sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -49,7 +45,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力された文字が数字以外ならエラーを返す。
         for(int i = 0; i < 4; i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                sprintf(sendBuf, "商品IDは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "商品IDは半角数字で入力してください．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -61,7 +57,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "SELECT menu_id FROM menu_storage_t WHERE menu_id = %d AND store_id = %d;", changeid, u_store); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         if(PQntuples(res) == 0){ //menu_idが存在しない場合
-            sprintf(sendBuf, "そのメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "そのメニューは存在しません．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -94,21 +90,17 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             PQclear(res); //resの中身をクリア
         }else if(strcmp(changeitem, "price") == 0){
             //現在の価格は以下の通りです。と表示
-            sprintf(sendBuf, "現在の価格は以下の通りです。%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "現在の価格は以下の通りです。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
-            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //テーブル名：menu_storage_tのstore_idとu_storeが一致し、テーブル名：menu_price_tからmenu_idがchangeidのもののpriceを表示
             sprintf(sendBuf, "SELECT price FROM menu_price_t WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             //実行結果をクライアントに送信
             for(int i = 0; i < PQntuples(res); i++){
-                sprintf(sendBuf, "%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "%s%s", PQgetvalue(res, i, 0), ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
-                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             }
             PQclear(res); //resの中身をクリア
             //変更内容がpriceの場合、どう変更するかを聞く。
@@ -120,7 +112,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字列に数字以外が含まれるならエラーを返す。
             for(i = 0; i < recvLen-1; i++){
                 if(!isdigit(recvBuf[i])){
-                    sprintf(sendBuf, "値段は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "値段は半角数字で入力してください．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -137,19 +129,16 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             res = PQexec(con, sendBuf); //SQL文実行
             PQclear(res); //resの中身をクリア
         }else if(strcmp(changeitem, "star") == 0){
-            sprintf(sendBuf, "あなたが押し情報を変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "あなたが押し情報を変更できるメニュー一覧です．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
-            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             //テーブル名：menu_storage_tからstore_idがu_storeと一致する商品のmenu_id, menu_nameを表示する。menu_nameはテーブル名：recipe_tからmenu_idが一致するものを表示。
             sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d;", u_store); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             for(int i = 0; i < PQntuples(res); i++){
-                sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf , sendLen, 0); //送信
-                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             }
             PQclear(res); //resの中身をクリア
             sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
@@ -159,7 +148,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0';
             //4文字以外の場合はエラーを返す
             if(strlen(recvBuf) !=4){
-                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -167,7 +156,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(int i = 0; i < 4; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sprintf(sendBuf, "商品IDは半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "商品IDは半角数字で入力してください。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -179,7 +168,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sprintf(sendBuf, "SELECT menu_id FROM menu_storage_t WHERE menu_id = %d AND store_id = %d;", changeid, u_store); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             if(PQntuples(res) == 0){ //menu_idが存在しない場合
-                sprintf(sendBuf, "そのメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "そのメニューは存在しません．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                send(soc, sendBuf, sendLen, 0); //送信
                return -1;
@@ -209,12 +198,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     PQclear(res); //resの中身をクリア
                 }else if(strcmp(changestar, "no") == 0){
                     //何も変更しませんでしたと返す。
-                    sprintf(sendBuf, "何も変更しませんでした。%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "何も変更しませんでした。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                 }else{
                     //使用不可のコマンドと返す。
-                    sprintf(sendBuf, "使用不可のコマンドです。%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "使用不可のコマンドです。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -239,12 +228,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     PQclear(res); //resの中身をクリア
                 }else if(strcmp(changestar, "no") == 0){
                     //何も変更しませんでしたと返す。
-                    sprintf(sendBuf, "何も変更しませんでした。%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "何も変更しませんでした。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                 }else{
                     //使用不可のコマンドと返す。
-                    sprintf(sendBuf, "使用不可のコマンドです。%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "使用不可のコマンドです。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -252,7 +241,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             }
         }else{
             //打ち込まれたコマンドが使えないことを表示
-            sprintf(sendBuf, "そのコマンドは使えません．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "そのコマンドは使えません．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -277,7 +266,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0';
             //3文字以外の場合はエラーを返す
             if(strlen(recvBuf) !=3){
-                sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -285,7 +274,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i = 0; i < recvLen-1; i++){
                 if(isdigit(recvBuf[i]) == 0){
-                    sprintf(sendBuf, "店舗IDは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "店舗IDは半角数字で入力してください。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -298,33 +287,29 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             res = PQexec(con, sendBuf); //SQL文実行
             //テーブル名store_tから取得した値が0の場合、店舗IDが存在しないことを表示
             if(strcmp(PQgetvalue(res, 0, 0), "0") == 0){
-                sprintf(sendBuf, "その店舗IDは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "その店舗IDは存在しません．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
             PQclear(res); //resの中身をクリア
-            sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
-            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen-1] = '\0';
             //情報を変更したい店舗IDが存在する場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致する, かつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを取得し表示、また、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
             sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 3) AND recipe_t.menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changestore);
             res = PQexec(con, sendBuf); //SQL文実行
             if(PQntuples(res) == 0){
-                sprintf(sendBuf, "変更できるメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "変更できるメニューは存在しません．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
             //実行したSQL文の結果を表示
             for(int i = 0; i < PQntuples(res); i++){
-                sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf , sendLen, 0); //送信
-                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             }
             PQclear(res); //resの中身をクリア
             sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
@@ -334,7 +319,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0';
             //4文字以外の場合はエラーを返す
             if(strlen(recvBuf) !=4){
-                sprintf(sendBuf, "商品IDは4文字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "商品IDは4文字で入力してください．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -342,7 +327,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i = 0; i < recvLen-1; i++){
                 if(!isdigit(recvBuf[i])){
-                    sprintf(sendBuf, "商品IDは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "商品IDは半角数字で入力してください．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -354,7 +339,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sprintf(sendBuf, "SELECT menu_id FROM push_t WHERE menu_id = %d;", changeid); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             if(PQntuples(res) == 0){ //menu_idが存在しない場合
-                sprintf(sendBuf, "そのメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "そのメニューは存在しません．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -385,21 +370,17 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 PQclear(res); //resの中身をクリア
             }else if(strcmp(changeitem, "price") == 0){
                 //現在の価格は以下の通りです。と表示
-                sprintf(sendBuf, "現在の価格は以下の通りです。%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "現在の価格は以下の通りです。%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
-                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 //テーブル名：menu_storage_tのstore_idとu_storeが一致し、テーブル名：menu_price_tからmenu_idがchangeidのもののpriceを表示
                 sprintf(sendBuf, "SELECT price FROM menu_price_t WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 //実行結果をクライアントに送信
                 for(int i = 0; i < PQntuples(res); i++){
-                    sprintf(sendBuf, "%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "%s%s", PQgetvalue(res, i, 0), ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
-                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 }
                 PQclear(res); //resの中身をクリア
                 sprintf(sendBuf, "どんな値段にしますか？%s%s", ENTER, DATA_END); //送信データ作成
@@ -410,7 +391,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //入力された文字が数字以外ならエラーを返す。
                 for(i = 0; i < recvLen-1; i++){
                     if(!isdigit(recvBuf[i])){
-                        sprintf(sendBuf, "値段は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "値段は半角数字で入力してください．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -436,7 +417,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //入力された文字が数字以外ならエラーを返す。
                 for(i = 0; i < recvLen-1; i++){
                     if(!isdigit(recvBuf[i])){
-                        sprintf(sendBuf, "メニューレベルは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "メニューレベルは半角数字で入力してください．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -446,7 +427,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sscanf(recvBuf, "%d", &changelevel);
                 //changelevelの値が1, 2, 3, 4, 5以外の場合、エラーを返す。
                 if(changelevel != 1 && changelevel != 2 && changelevel != 3 && changelevel != 4 && changelevel != 5){
-                    sprintf(sendBuf, "そのメニューレベルは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "そのメニューレベルは存在しません．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -461,7 +442,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     //入力された文字が数字以外ならエラーを返す。
                     for(i = 0; i < recvLen-1; i++){
                         if(!isdigit(recvBuf[i])){
-                            sprintf(sendBuf, "季節は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "季節は半角数字で入力してください．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -471,7 +452,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     sscanf(recvBuf, "%d", &changeseason);
                     //changeseasonの値が1, 2, 3, 4以外の場合、エラーを返す。
                     if(changeseason != 1 && changeseason != 2 && changeseason != 3 && changeseason != 4){
-                        sprintf(sendBuf, "その季節は存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "その季節は存在しません．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -489,7 +470,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     //3文字以外の場合はエラーを返す
                     if(strlen(recvBuf) !=3){
-                        sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -497,7 +478,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     //入力された文字が数字以外ならエラーを返す。
                     for(i = 0; i < recvLen-1; i++){
                         if(isdigit(recvBuf[i]) == 0){
-                            sprintf(sendBuf, "店舗IDは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "店舗IDは半角数字で入力してください．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -548,12 +529,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         PQclear(res); //resの中身をクリア
                     }else if(strcmp(changestar, "no") == 0){
                         //何も変更しませんでしたと返す。
-                        sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "何も変更しませんでした．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                     }else{
                         //使用不可のコマンドと返す。
-                        sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -579,12 +560,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         PQclear(res); //resの中身をクリア
                     }else if(strcmp(changestar, "no") == 0){
                         //何も変更しませんでしたと返す。
-                        sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "何も変更しませんでした．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                     }else{
                         //使用不可のコマンドと返す。
-                        sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -601,28 +582,24 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //受信した内容をresponseに代入
             sscanf(recvBuf, "%s", response);
             if(strcmp(response, "yes") == 0){
-                sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
-                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                recvBuf[recvLen-1] = '\0';
                 //テーブル名：menu_detail_tでlayerの値が5のもののmenu_idを取得し表示、また、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
                 sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 5);"); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 //実行結果がなければ、変更できるメニューは存在しないことを表示
                 if(PQntuples(res) == 0){
-                    sprintf(sendBuf, "変更できるメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "変更できるメニューは存在しません．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
                 }
                 //実行結果を表示
                 for(int i = 0; i < PQntuples(res); i++){
-                    sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf , sendLen, 0); //送信
-                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                    recvBuf[recvLen-1] = '\0';
                 }
                 PQclear(res); //resの中身をクリア
                 sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
@@ -632,14 +609,14 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 recvBuf[recvLen-1] = '\0';
                 //4文字以外の場合はエラーを返す
                 if(strlen(recvBuf) != 4){
-                    sendLen = sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END);
+                    sendLen = sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s", ENTER);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
                 }
                 //入力された文字が数字以外ならエラーを返す。
                 for(int i = 0; i < recvLen-1; i++){
                     if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                        sprintf(sendBuf, "商品IDは半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "商品IDは半角数字で入力してください。%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -651,7 +628,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "SELECT menu_id FROM push_t WHERE menu_id = %d;", changeid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 if(PQntuples(res) == 0){ //menu_idが存在しない場合
-                    sprintf(sendBuf, "そのメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "そのメニューは存在しません．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -682,21 +659,17 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     PQclear(res); //resの中身をクリア
                 }else if(strcmp(changeitem, "price") == 0){
                     //現在の価格は以下の通りです。と表示
-                    sprintf(sendBuf, "現在の価格は以下の通りです。%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "現在の価格は以下の通りです。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
-                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     //テーブル名：menu_storage_tのstore_idとu_storeが一致し、テーブル名：menu_price_tからmenu_idがchangeidのもののpriceを表示
                     sprintf(sendBuf, "SELECT price FROM menu_price_t WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
                     //実行結果をクライアントに送信
                     for(int i = 0; i < PQntuples(res); i++){
-                        sprintf(sendBuf, "%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "%s%s", PQgetvalue(res, i, 0), ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
-                        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     }
                     PQclear(res); //resの中身をクリア
                     sprintf(sendBuf, "どんな値段にしますか？%s%s", ENTER, DATA_END); //送信データ作成
@@ -707,7 +680,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     //入力された文字が数字以外ならエラーを返す。
                     for(i = 0; i < recvLen-1; i++){
                         if(!isdigit(recvBuf[i])){
-                            sprintf(sendBuf, "値段は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "値段は半角数字で入力してください．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -725,7 +698,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     PQclear(res); //resの中身をクリア
                 }else if(strcmp(changeitem, "level") == 0){
                     //どのメニューレベルにするかを聞く。選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューであることも伝える。
-                    sprintf(sendBuf, "どのメニューレベルにしますか？%s 選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューです．%s", ENTER, ENTER); //送信データ作成
+                    sprintf(sendBuf, "どのメニューレベルにしますか？%s 選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューです．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -733,7 +706,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     //入力された文字が数字以外ならエラーを返す。
                     for(i = 0; i < recvLen-1; i++){
                         if(!isdigit(recvBuf[i])){
-                            sprintf(sendBuf, "メニューレベルは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "メニューレベルは半角数字で入力してください．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -743,7 +716,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     sscanf(recvBuf, "%d", &changelevel);
                     //changelevelの値が1, 2, 3, 4, 5以外の場合、エラーを返す。
                     if(changelevel != 1 && changelevel != 2 && changelevel != 3 && changelevel != 4 && changelevel != 5){
-                        sprintf(sendBuf, "そのメニューレベルは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "そのメニューレベルは存在しません．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -758,7 +731,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         //入力された文字が数字以外ならエラーを返す。
                         for(i = 0; i < recvLen-1; i++){
                             if(!isdigit(recvBuf[i])){
-                                sprintf(sendBuf, "季節は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                                sprintf(sendBuf, "季節は半角数字で入力してください．%s", ENTER); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 return -1;
@@ -768,7 +741,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         sscanf(recvBuf, "%d", &changeseason);
                         //changeseasonの値が1, 2, 3, 4以外の場合、エラーを返す。
                         if(changeseason != 1 && changeseason != 2 && changeseason != 3 && changeseason != 4){
-                            sprintf(sendBuf, "その季節は存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "その季節は存在しません．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -786,7 +759,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                         //3文字以外の場合はエラーを返す
                         if(strlen(recvBuf) !=3){
-                            sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -794,7 +767,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         //入力された文字が数字以外ならエラーを返す。
                         for(i = 0; i < recvLen-1; i++){
                             if(isdigit(recvBuf[i]) == 0){
-                                sprintf(sendBuf, "店舗IDは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                                sprintf(sendBuf, "店舗IDは半角数字で入力してください．%s", ENTER); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 return -1;
@@ -845,12 +818,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                             PQclear(res); //resの中身をクリア
                         }else if(strcmp(changestar, "no") == 0){
                             //何も変更しませんでしたと返す。
-                            sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "何も変更しませんでした．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                         }else{
                             //使用不可のコマンドと返す。
-                            sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -876,12 +849,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                             PQclear(res); //resの中身をクリア
                         }else if(strcmp(changestar, "no") == 0){
                             //何も変更しませんでしたと返す。
-                            sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "何も変更しませんでした．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                         }else{
                             //使用不可のコマンドと返す。
-                            sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -896,7 +869,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     //入力された文字が数字以外ならエラーを返す。
                     for(i = 0; i < recvLen-1; i++){
                         if(!isdigit(recvBuf[i])){
-                            sprintf(sendBuf, "季節は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "季節は半角数字で入力してください．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -906,7 +879,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     sscanf(recvBuf, "%d", &changeseason);
                     //changeseasonの値が1, 2, 3, 4以外の場合、エラーを返す。
                     if(changeseason != 1 && changeseason != 2 && changeseason != 3 && changeseason != 4){
-                        sprintf(sendBuf, "その季節は存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "その季節は存在しません．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -917,27 +890,23 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     PQclear(res); //resの中身をクリア
                 }
             }else if(strcmp(response, "no") == 0){
-                sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
-                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 //テーブル名：menu_detail_tでlayerの値が1, 2, 4のもののmenu_idとそのmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
                 sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 1 OR layer = 2 OR layer = 4);"); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 if(PQntuples(res) == 0){
-                    sprintf(sendBuf, "変更できるメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "変更できるメニューは存在しません．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
                 }
                 //実行結果を表示
                 for(int i = 0; i < PQntuples(res); i++){
-                    sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf , sendLen, 0); //送信
-                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                 }
                 PQclear(res); //resの中身をクリア
                 sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
@@ -947,7 +916,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 recvBuf[recvLen-1] = '\0';
                 //4文字以外の場合はエラーを返す
                 if(strlen(recvBuf) !=4){
-                    sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -955,7 +924,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //入力された文字が数字以外ならエラーを返す。
                 for(int i = 0; i < recvLen-1; i++){
                     if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                        sprintf(sendBuf, "商品IDは半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "商品IDは半角数字で入力してください。%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -967,7 +936,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "SELECT menu_id FROM push_t WHERE menu_id = %d;", changeid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 if(PQntuples(res) == 0){ //menu_idが存在しない場合
-                    sprintf(sendBuf, "そのメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "そのメニューは存在しません．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -997,21 +966,17 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     PQclear(res); //resの中身をクリア
                 }else if(strcmp(changeitem, "price") == 0){
                     //現在の価格は以下の通りです。と表示
-                    sprintf(sendBuf, "現在の価格は以下の通りです。%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "現在の価格は以下の通りです。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
-                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     //テーブル名：menu_storage_tのstore_idとu_storeが一致し、テーブル名：menu_price_tからmenu_idがchangeidのもののpriceを表示
                     sprintf(sendBuf, "SELECT price FROM menu_price_t WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
                     //実行結果をクライアントに送信
                     for(int i = 0; i < PQntuples(res); i++){
-                        sprintf(sendBuf, "%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "%s%s", PQgetvalue(res, i, 0), ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
-                        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     }
                     PQclear(res); //resの中身をクリア
                     sprintf(sendBuf, "どんな値段にしますか？%s%s", ENTER, DATA_END); //送信データ作成
@@ -1022,7 +987,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     //入力された文字が数字以外ならエラーを返す。
                     for(int i = 0; i < recvLen; i++){
                         if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                            sprintf(sendBuf, "値段は半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "値段は半角数字で入力してください。%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -1040,7 +1005,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     PQclear(res); //resの中身をクリア
                 }else if(strcmp(changeitem, "level") == 0){
                     //どのメニューレベルにするかを聞く。選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューであることも伝える。
-                    sprintf(sendBuf, "どのメニューレベルにしますか？%s 選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、    4：リージョンメニュー、5：シーズンメニューです．%s", ENTER, ENTER); //送信データ作成
+                    sprintf(sendBuf, "どのメニューレベルにしますか？%s 選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューです．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -1048,7 +1013,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     //入力された文字が数字以外ならエラーを返す。
                     for(i = 0; i < recvLen-1; i++){
                         if(!isdigit(recvBuf[i])){
-                            sprintf(sendBuf, "メニューレベルは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "メニューレベルは半角数字で入力してください．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -1058,7 +1023,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     sscanf(recvBuf, "%d", &changelevel);
                     //changelevelの値が1, 2, 3, 4, 5以外の場合、エラーを返す。
                     if(changelevel != 1 && changelevel != 2 && changelevel != 3 && changelevel != 4 && changelevel != 5){
-                        sprintf(sendBuf, "そのメニューレベルは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "そのメニューレベルは存在しません．%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         return -1;
@@ -1073,7 +1038,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         //入力された文字が数字以外ならエラーを返す。
                         for(i = 0; i < recvLen-1; i++){
                             if(!isdigit(recvBuf[i])){
-                                sprintf(sendBuf, "季節は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                                sprintf(sendBuf, "季節は半角数字で入力してください．%s", ENTER); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 return -1;
@@ -1083,7 +1048,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         sscanf(recvBuf, "%d", &changeseason);
                         //changeseasonの値が1, 2, 3, 4以外の場合、エラーを返す。
                         if(changeseason != 1 && changeseason != 2 && changeseason != 3 && changeseason != 4){
-                            sprintf(sendBuf, "その季節は存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "その季節は存在しません．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -1101,7 +1066,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                         //3文字以外の場合はエラーを返す
                         if(strlen(recvBuf) !=3){
-                            sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -1109,7 +1074,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         //入力された文字が数字以外ならエラーを返す。
                         for(i = 0; i < recvLen-1; i++){
                             if(isdigit(recvBuf[i]) == 0){
-                                sprintf(sendBuf, "店舗IDは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                                sprintf(sendBuf, "店舗IDは半角数字で入力してください．%s", ENTER); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 return -1;
@@ -1159,12 +1124,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                             PQclear(res); //resの中身をクリア
                         }else if(strcmp(changestar, "no") == 0){
                             //何も変更しませんでしたと返す。
-                            sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "何も変更しませんでした．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                         }else{
                             //使用不可のコマンドですと返す。
-                            sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -1188,12 +1153,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                             PQclear(res); //resの中身をクリア
                         }else if(strcmp(changestar, "no") == 0){
                             //何も変更しませんでしたと返す。
-                                sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
+                                sprintf(sendBuf, "何も変更しませんでした．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                         }else{
                             //使用不可のコマンドですと返す。
-                            sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -1201,36 +1166,34 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     }
                 }else{
                     //使用不可のコマンドですと返す。
-                    sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
                 }
             }else{
                 //使用不可のコマンドですと返す。
-                sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
         }else{
-            sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
         }
     }else if(u_auth == ACOR){
-        sprintf(sendBuf, "選べる店舗IDです．%s%s", ENTER, DATA_END); //送信データ作成
+        sprintf(sendBuf, "選べる店舗IDです．%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
-        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         //テーブル名：region_tからu_storeと同じregion_idを持つstore_idを取得
         sprintf(sendBuf, "SELECT store_id FROM region_t WHERE region_id = %d;", u_store); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         //1つも無ければエラーを返す
         if(PQntuples(res) == 0){
-            sprintf(sendBuf, "あなたが選べる店舗IDがありません．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "あなたが選べる店舗IDがありません．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -1250,7 +1213,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvBuf[recvLen-1] = '\0';
         //3文字以外の場合はエラーを返す
         if(strlen(recvBuf) !=3){
-            sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -1258,7 +1221,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力された文字が数字以外ならエラーを返す。
         for(int i = 0; i < recvLen-1; i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                sprintf(sendBuf, "店舗IDは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "店舗IDは半角数字で入力してください．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -1271,30 +1234,28 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         res = PQexec(con, sendBuf); //SQL文実行
         //1行も無ければエラーを返す
         if(PQntuples(res) == 0){
-            sprintf(sendBuf, "あなたが選べる店舗IDではありません．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "あなたが選べる店舗IDではありません．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
         }
         PQclear(res); //メモリ解放
-        sprintf(sendBuf, "メニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
+        sprintf(sendBuf, "メニュー一覧です．%s", ENTER); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
-        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         //changestoreと同じ値のstore_idを持っているmenu_idを表示、またテーブル名：menu_storage_tから、そのmenu_idのmenu_nameをテーブル名：recipe_tから取得
         sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = %d;", changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         //1つも無ければエラーを返す
         if(PQntuples(res) == 0){
-            sprintf(sendBuf, "この店舗には選べるメニューがありません．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "この店舗には選べるメニューがありません．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
         }
         //実行結果（menuidとmenuname）を表示
         for(int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "menu_id:%s%smenu_name:%s%s", PQgetvalue(res, i, 0), ENTER, PQgetvalue(res, i, 1), ENTER); //送信データ作成
+            sprintf(sendBuf, "menu_id:%s menu_name:%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
@@ -1306,7 +1267,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvBuf[recvLen-1] = '\0';
         //入力が4文字以外の場合は商品IDを4桁：半角数字で入力するようにエラーを返す
         if(strlen(recvBuf) !=4){
-            sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -1314,7 +1275,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力された文字が数字以外ならエラーを返す。
         for(int i = 0; i < recvLen-1; i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                sprintf(sendBuf, "商品IDは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "商品IDは半角数字で入力してください．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -1327,7 +1288,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         res = PQexec(con, sendBuf); //SQL文実行
         //1つも無ければエラーを返す
         if(PQgetvalue(res, 0, 0) == 0){
-            sprintf(sendBuf, "選べない商品IDです．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "選べない商品IDです．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -1353,14 +1314,12 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 PQclear(res); //メモリ解放
             }else if(strcmp(changestar, "no") == 0){
                 //何も変更しませんでしたと表示
-                sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "何も変更しませんでした．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
-                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             }else{
                 //使用不可のコマンドですと表示
-                sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -1382,19 +1341,20 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 PQclear(res); //メモリ解放
             }else if(strcmp(changestar, "no") == 0){
                 //何も変更しませんでしたと表示
-                sprintf(sendBuf, "何も変更しませんでした．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "何も変更しませんでした．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
-                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
-                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             }else{
                 //使用不可のコマンドですと表示
-                sprintf(sendBuf, "使用不可のコマンドです．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "使用不可のコマンドです．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
         }
     }
+    sprintf(sendBuf, "操作を終了します．%s%s", ENTER, DATA_END); //送信データ作成
+    sendLen = strlen(sendBuf); //送信データ長
+    send(soc, sendBuf, sendLen, 0); //送信
     return 0;
 }
