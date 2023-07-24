@@ -1,4 +1,5 @@
 #include "OMOS.h"
+#include "history.h"
 
 int history(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info){
     int recvLen, sendLen;   //送受信データ長
@@ -9,7 +10,7 @@ int history(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("BEGIN failed: %s", PQerrorMessage(con));
         PQclear(res);
-        sprintf(sendBuf, "error occured%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
     }
@@ -24,6 +25,9 @@ int history(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
     printf("%s\n", sql);
     res = PQexec(con, sql);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2202, ENTER, DATA_END); // 送信データ作成
+        sendLen = strlen(sendBuf);                                       // 送信データ長
+        send(soc, sendBuf, sendLen, 0); 
         printf("No data retrieved\n");
         printf("%s\n", PQerrorMessage(con));
         PQclear(res);
@@ -53,6 +57,9 @@ int history(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
     sprintf(sql, "SELECT order_cnt, price, kitchen_flag FROM order_t INNER JOIN menu_price_t ON order_t.menu_id = menu_price_t.menu_id WHERE order_t.store_id = %d AND order_t.desk_num = %d;", s_info[0], s_info[1]);
     res = PQexec(con, sql);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2202, ENTER, DATA_END); // 送信データ作成
+        sendLen = strlen(sendBuf);                                       // 送信データ長
+        send(soc, sendBuf, sendLen, 0); 
         printf("No data retrieved\n");
         PQclear(res);
         exit(1);
