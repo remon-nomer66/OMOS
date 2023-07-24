@@ -1,5 +1,6 @@
 #include "omos.h"
 #include "test.h"
+#include "correct.h"
 
 int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
 {
@@ -54,7 +55,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       // recvBufに数字以外が含まれていた場合
       else
       {
-        sprintf(sendBuf, "入力された値が不正です。%s", ENTER); // 送信データ作成
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2101, ENTER); // 送信データ作成
         sendLen = strlen(sendBuf);                                         // 送信データ長
         send(soc, sendBuf, sendLen, 0);                                    // 送信
         printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
@@ -92,7 +93,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
     // recvBufに数字以外が含まれていた場合
     else
     {
-      sprintf(sendBuf, "入力された値が不正です。%s", ENTER); // 送信データ作成
+      sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2102, ENTER); // 送信データ作成
       sendLen = strlen(sendBuf);                                         // 送信データ長
       send(soc, sendBuf, sendLen, 0);                                    // 送信
       //recvBufの中身を空にする
@@ -101,7 +102,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   }
 
   if(strcmp(start, end) > 0){
-    sprintf(sendBuf, "開始年月日が終了年月日よりも大きいです。%s%s", ENTER, DATA_END); // 送信データ作成
+    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2103, ENTER); // 送信データ作成
     sendLen = strlen(sendBuf);                                                         // 送信データ長
     send(soc, sendBuf, sendLen, 0);                                                    // 送信
     return -1;
@@ -134,7 +135,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       // recvBufが４文字ではない場合
       if (strlen(recvBuf) != 4)
       {
-        sprintf(sendBuf, "入力された値が不正です。%s", ENTER); // 送信データ作成
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2104, ENTER); // 送信データ作成
         sendLen = strlen(sendBuf);                                         // 送信データ長
         send(soc, sendBuf, sendLen, 0);                                    // 送信
         //recvBufの中身を空にする
@@ -159,7 +160,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       // recvBufに無効な範囲の数字以外が含まれていた場合
       else
       {
-        sprintf(sendBuf, "入力された値が不正です。%s", ENTER); // 送信データ作成
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2105, ENTER); // 送信データ作成
         sendLen = strlen(sendBuf);                                         // 送信データ長
         send(soc, sendBuf, sendLen, 0);                                    // 送信
         //recvBufの中身を空にする
@@ -180,7 +181,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       // recvBufが４文字ではない場合
       if (strlen(recvBuf) != 4)
       {
-        sprintf(sendBuf, "入力された値が不正です。%s", ENTER); // 送信データ作成
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2106, ENTER); // 送信データ作成
         sendLen = strlen(sendBuf);                                         // 送信データ長
         send(soc, sendBuf, sendLen, 0);                                    // 送信
         //recvBufの中身を空にする
@@ -205,7 +206,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       // recvBufに無効な範囲の数字以外が含まれていた場合
       else
       {
-        sprintf(sendBuf, "入力された値が不正です。%s", ENTER); // 送信データ作成
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2107, ENTER); // 送信データ作成
         sendLen = strlen(sendBuf);                                         // 送信データ長
         send(soc, sendBuf, sendLen, 0);                                    // 送信
         //recvBufの中身を空にする
@@ -224,7 +225,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
 
   //開始年月日と終了年月日が同じ時で対象終了時間が対象開始時間よりも早かった場合、関数から出ていく
   if(strcmp(start, end) == 0 && strcmp(start_target, end_target) > 0){
-    sprintf(sendBuf, "対象の開始時間が対象の終了時間よりも大きいです。%s%s", ENTER, DATA_END); // 送信データ作成
+    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2108, ENTER); // 送信データ作成
     sendLen = strlen(sendBuf);                                                         // 送信データ長
     send(soc, sendBuf, sendLen, 0);                                                    // 送信
     return -1;
@@ -260,7 +261,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
         sprintf(sql, "SELECT * FROM region_t WHERE region_id = %d", area_num);
         res = PQexec(con, sql);
         int resultRows = PQntuples(res);
-        printf("rr: %d\n", resultRows);
+        //printf("rr: %d\n", resultRows);
 
         if (resultRows != 0)
         {
@@ -273,7 +274,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
         // 入力された地域番号が存在しない場合
         else
         {
-          sprintf(sendBuf, "入力された地域番号は存在しません。%s", ENTER); // 送信データ作成
+          sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2109, ENTER); // 送信データ作成
           sendLen = strlen(sendBuf);                                       // 送信データ長
           send(soc, sendBuf, sendLen, 0);                                  // 送信
           //recvBufの中身を空にする
@@ -332,7 +333,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
         // 入力されたチェーン番号が存在しない場合
         else
         {
-          sprintf(sendBuf, "入力されたチェーン番号は存在しません。%s", ENTER); // 送信データ作成
+          sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2110, ENTER); // 送信データ作成
           sendLen = strlen(sendBuf);                                       // 送信データ長
           send(soc, sendBuf, sendLen, 0);                                  // 送信
           //recvBufの中身を空にする
@@ -378,7 +379,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       sprintf(sql, "SELECT * FROM summary_t WHERE store_id = %d", store_num);
       res = PQexec(con, sql);
       int resultRows = PQntuples(res);
-      printf("rr: %d\n", resultRows);
+      //printf("rr: %d\n", resultRows);
       // PGresult *res = PQexec(con, sql);
       if (resultRows != 0)
       {
@@ -392,7 +393,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       // 入力された店舗番号が存在しない場合
       else
       {
-        sprintf(sendBuf, "入力された店舗番号は存在しません。%s", ENTER); // 送信データ作成
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2111, ENTER); // 送信データ作成
         sendLen = strlen(sendBuf);                                                   // 送信データ長
         send(soc, sendBuf, sendLen, 0);                                              // 送信
         //recvBufの中身を空にする
@@ -436,7 +437,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       sprintf(sql, "SELECT * FROM summary_t WHERE menu_id = %d", product_num);
       res = PQexec(con, sql);
         int resultRows = PQntuples(res);
-        printf("rr: %d\n", resultRows);
+        //printf("rr: %d\n", resultRows);
 
       // PGresult *res = PQexec(con, sql);
       if (resultRows != 0)
@@ -450,11 +451,11 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       // 入力された商品番号が存在しない場合
       else
       {
-        sprintf(sendBuf, "入力された商品番号は存在しません。%s", ENTER); // 送信データ作成
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2112, ENTER); // 送信データ作成
         sendLen = strlen(sendBuf);                                       // 送信データ長
         send(soc, sendBuf, sendLen, 0);                                  // 送信
         //recvBufの中身を空にする
-          memset(recvBuf, '\0', sizeof(recvBuf));
+        memset(recvBuf, '\0', sizeof(recvBuf));
       }
     }
     
@@ -538,6 +539,9 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   printf("%s\n", sql);
   res = PQexec(con, sql);
   if(PQresultStatus(res) != PGRES_TUPLES_OK){
+      sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2113, ENTER, DATA_END); // 送信データ作成
+      sendLen = strlen(sendBuf);                                       // 送信データ長
+      send(soc, sendBuf, sendLen, 0);                                  // 送信
       printf("No data retrieved\n");
       printf("%s\n", PQerrorMessage(con));
       PQclear(res);
@@ -561,6 +565,9 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
     printf("%s\n", sql);
     res = PQexec(con, sql);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){
+      sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2113, ENTER, DATA_END); // 送信データ作成
+        sendLen = strlen(sendBuf);                                       // 送信データ長
+        send(soc, sendBuf, sendLen, 0);                                  // 送信
         printf("No data retrieved\n");
         printf("%s\n", PQerrorMessage(con));
         PQclear(res);
