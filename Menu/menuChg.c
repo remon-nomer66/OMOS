@@ -2,7 +2,7 @@
 
 int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
-    int changeid, changestore, changestore2, changeprice, changelevel,, changeseason, u_id, u_auth, u_store, i; //変更する商品ID, 変更を加えたい部分の店舗ID, 変更後の値段, 押しかどうか、ユーザID、ユーザの持つ権限、ユーザの所属, ループ用変数
+    int changeid, changestore, changestore2, changeprice, changelevel, changeseason, u_id, u_auth, u_store, i; //変更する商品ID, 変更を加えたい部分の店舗ID, 変更後の値段, 押しかどうか、ユーザID、ユーザの持つ権限、ユーザの所属, ループ用変数
     char response[BUFSIZE], changeitem[BUFSIZE], changename[BUFSIZE], changestar[BUFSIZE];
     PGresult *res; //PGresult型の変数resを宣言
 
@@ -14,14 +14,22 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
         send(soc, sendBuf, sendLen, 0); //送信
-        //テーブル名：menu_charge_tからaccount_idがu_idと一致し、かつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを取得し、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
-        sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_charge_t WHERE account_id = %d) AND menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 3);", u_id); //SQL文作成
+        //テーブル名：menu_charge_tからuser_idがu_idと一致し、かつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを取得し表示、また、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
+        sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 3) AND recipe_t.menu_id IN (SELECT menu_id FROM menu_charge_t WHERE user_id = %d);", u_id); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
-        //クライアントに実行結果を表示
-        for(int i = 0; i < PQntuples(res); i++){
-            sprintf(sendBuf, "%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+        if(PQntuples(res) == 0){
+            sprintf(sendBuf, "変更できるメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
+            return -1;
+        }
+        //実行したSQL文の結果を表示
+        for(int i = 0; i < PQntuples(res); i++){
+            sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
+            sendLen = strlen(sendBuf); //送信データ長
+            send(soc, sendBuf , sendLen, 0); //送信
+            recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+            recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
         }
         PQclear(res); //resの中身をクリア
         sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
@@ -122,7 +130,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name FROM menu_storage_t, recipe_t WHERE menu_storage_t.menu_id = recipe_t.menu_id AND menu_storage_t.store_id = %d;", u_store); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             for(int i = 0; i < PQntuples(res); i++){
-                sprintf(sendBuf, "%s %s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1)); //送信データ作成
+                sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf , sendLen, 0); //送信
             }
@@ -240,7 +248,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';
-            //2文字以外の場合はエラーを返す
+            //3文字以外の場合はエラーを返す
             if(strlen(recvBuf) !=3){
                 sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
@@ -274,14 +282,20 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';
-            //情報を変更したい店舗IDが存在する場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致するかつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
-            sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d) AND menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 3);", changestore); //SQL文作成
+            //情報を変更したい店舗IDが存在する場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致する, かつテーブル名：menu_detail_tでlayerの値が3のもののmenu_idを取得し表示、また、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
+            sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 3) AND recipe_t.menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changestore)
             res = PQexec(con, sendBuf); //SQL文実行
-            //実行したSQL文の結果を表示
-            for(int i = 0; i < PQntuples(res); i++){
-                sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+            if(PQntuples(res) == 0){
+                sprintf(sendBuf, "変更できるメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
+                return -1;
+            }
+            //実行したSQL文の結果を表示
+            for(int i = 0; i < PQntuples(res); i++){
+                sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
+                sendLen = strlen(sendBuf); //送信データ長
+                send(soc, sendBuf , sendLen, 0); //送信
             }
             PQclear(res); //resの中身をクリア
             sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
@@ -536,8 +550,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
-                //テーブル名：menu_detail_tでlayerの値が5のもののmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
-                sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 5);"); //SQL文作成
+                //テーブル名：menu_detail_tでlayerの値が5のもののmenu_idを取得し表示、また、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
+                sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 5));", u_id); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 //実行結果がなければ、変更できるメニューは存在しないことを表示
                 if(PQntuples(res) == 0){
@@ -548,9 +562,9 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 }
                 //実行結果を表示
                 for(int i = 0; i < PQntuples(res); i++){
-                    sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
-                    send(soc, sendBuf, sendLen, 0); //送信
+                    send(soc, sendBuf , sendLen, 0); //送信
                 }
                 PQclear(res); //resの中身をクリア
                 sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
@@ -796,14 +810,20 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
-                //テーブル名：menu_detail_tでlayerの値が1, 2, 4のもののmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
-                sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 1 OR layer = 2 OR layer = 4);"); //SQL文作成
+                //テーブル名：menu_detail_tでlayerの値が1, 2, 4のもののmenu_idとそのmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
+                sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 1 OR layer = 2 OR layer = 4);"); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
-                //実行結果を表示
-                for(int i = 0; i < PQntuples(res); i++){
-                    sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                if(PQntuples(res) == 0){
+                    sprintf(sendBuf, "変更できるメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
+                    return -1;
+                }
+                //実行結果を表示
+                for(int i = 0; i < PQntuples(res); i++){
+                    sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
+                    sendLen = strlen(sendBuf); //送信データ長
+                    send(soc, sendBuf , sendLen, 0); //送信
                 }
                 PQclear(res); //resの中身をクリア
                 sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
@@ -1113,7 +1133,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         send(soc, sendBuf, sendLen, 0); //送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
-        //changestoreと同じ値のstore_idを持っているmenu_idをテーブル名：menu_storage_tから、そのmenu_idのmenu_nameをテーブル名：recipe_tから同時に取得
+        //changestoreと同じ値のstore_idを持っているmenu_idを表示、またテーブル名：menu_storage_tから、そのmenu_idのmenu_nameをテーブル名：recipe_tから取得
         sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = %d;", changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         //1つも無ければエラーを返す

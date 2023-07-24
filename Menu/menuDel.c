@@ -224,8 +224,18 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';
-            //テーブル名：menu_detail_tでlayerの値が1, 2, 4, 5のもののmenu_idを取得し、そのmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
-            sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer IN (1, 2, 4, 5)) AND menu_id IN (SELECT menu_id FROM push_t WHERE layer = 4);", u_store); //SQL文作成
+            //テーブル名：menu_detail_tでlayerの値が1, 2のもののmenu_idを取得し、そのmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
+            sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer IN (1, 2));");
+            res = PQexec(con, sendBuf); //SQL文実行
+            //実行したSQL文の結果を表示
+            for(int i = 0; i < PQntuples(res); i++){
+                sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                sendLen = strlen(sendBuf); //送信データ長
+                send(soc, sendBuf, sendLen, 0); //送信
+            }
+            PQclear(res); //resのメモリを解放
+            //テーブル名：menu_detail_tでlayerの値が4, 5のもののmenu_idを取得し、そのmenu_idを持つmenu_nameをテーブル名：recipe_tから取得して表示
+            sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer IN (4, 5));"); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             //実行したSQL文の結果を表示
             for(int i = 0; i < PQntuples(res); i++){

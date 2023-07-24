@@ -92,10 +92,9 @@ VALUES (
 );
 
 INSERT INTO push_t (
-    menu_id, push_hq, push_cor, push_mgr, layer
-)
+    menu_id, push_hq, push_cor, push_mgr)
 VALUES (
-    1234, 1, 0, 1, 3
+    1234, 1, 0, 1
 );
 
 INSERT INTO menu_storage_t (
