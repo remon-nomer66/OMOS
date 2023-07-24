@@ -7,9 +7,8 @@ int kitchenFlag(PGconn *__con, int __soc, int __tableNum)
     pthread_t selfId = pthread_self();       // 自スレッドID
     char comm[BUFSIZE];                      // SQLコマンド
     int resultRows;
-    int i;
+    int i, flag;
     char sql[BUFSIZE], buf[BUFSIZE];
-    // recipe = recipe_infomation(__soc, menu_id, selfid);
     while (1)
     {
         recvLen = receive_message(__soc, recvBuf, BUFSIZE); // 受信
@@ -24,7 +23,11 @@ int kitchenFlag(PGconn *__con, int __soc, int __tableNum)
                 res = PQexec(__con, sql);
                 if (PQresultStatus(res) != PGRES_TUPLES_OK)
                 {
-                    printf("%s", PQresultErrorMessage(res));
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1504, ENTER, DATA_END); // 送信データ作成
+                    sendLen = strlen(sendBuf);                                            // 送信データ長
+                    send(soc, sendBuf, sendLen, 0);                                       // 送信
+                    recvLen = recv(soc, recvBuf, BUFSIZE, 0);                             // 受信
+                    recvBuf[recvLen - 1] = '\0';                                          // 受信データにNULLを追加;
                     return -1;
                 }
             }

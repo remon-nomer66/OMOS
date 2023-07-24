@@ -41,7 +41,7 @@ int kitchen(PGconn *__con, int __soc, int __storeid)
             resultRows = PQntuples(res);
             if (resultRows == 0)
             {
-              sprintf(sendBuf, "注文されたメニューはありません%s%s", ENTER, DATA_END); // 注文されたメニューを表示
+              sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1501, ENTER, DATA_END); // 注文されたメニューを表示
             }
             else
             {
@@ -75,7 +75,7 @@ int kitchen(PGconn *__con, int __soc, int __storeid)
             resultRows = PQntuples(res);
             if (resultRows >= 1)
             {
-              sprintf(sendBuf, "キッチンは削除できません%s%s", ENTER, DATA_END);
+              sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1502, ENTER, DATA_END);
               sendLen = strlen(sendBuf);                             // 送信データ長
               send(__soc, sendBuf, sendLen, 0);                      // 送信
               printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データ表示
