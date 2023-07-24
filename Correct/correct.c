@@ -566,12 +566,12 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
     res = PQexec(con, sql);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){
       sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2113, ENTER, DATA_END); // 送信データ作成
-        sendLen = strlen(sendBuf);                                       // 送信データ長
-        send(soc, sendBuf, sendLen, 0);                                  // 送信
-        printf("No data retrieved\n");
-        printf("%s\n", PQerrorMessage(con));
-        PQclear(res);
-        return -1;
+      sendLen = strlen(sendBuf);                                       // 送信データ長
+      send(soc, sendBuf, sendLen, 0);                                  // 送信
+      printf("No data retrieved\n");
+      printf("%s\n", PQerrorMessage(con));
+      PQclear(res);
+      return -1;
     }
   }
 
