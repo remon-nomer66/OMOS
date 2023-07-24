@@ -40,7 +40,7 @@ int kitchenView(PGconn *__con, int __soc, int __menu)
 		  resultRows = PQntuples(res);
 		  if (resultRows == 0)
 		    {
-		      sprintf(sendBuf, "商品IDが存在しません %s%s", ENTER, DATA_END);
+		      sprintf(sendBuf, "%s %d%s%s",ER_STAT, E_CODE_1503, ENTER, DATA_END);
 		    }
 		  else
 		    {
