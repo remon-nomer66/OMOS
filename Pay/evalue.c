@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "pay.h"
 
 int evalue(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf){
     //お客様の評価を良いか悪いかで聞く
@@ -11,7 +12,7 @@ int evalue(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, c
     if(PQresultStatus(res)){
         printf("BEGIN failed: %s", PQerrorMessage(con));
         PQclear(res);
-        sprintf(sendBuf, "error occured%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
         send(soc, sendBuf, sendLen, 0);
     }
 
@@ -32,7 +33,7 @@ int evalue(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, c
             evalue = 0;
             break;
         }else{
-            sprintf(sendBuf, "yかnで入力してください。%s", ENTER);
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2307, ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);  //送信
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -47,7 +48,7 @@ int evalue(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, c
         //ロールバック
         res = PQexec(con, "ROLLBACK");
         PQclear(res);
-        sprintf(sendBuf, "error occured%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2302, ENTER);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
     }
@@ -82,7 +83,7 @@ int evalue(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, c
         //ロールバック
         res = PQexec(con, "ROLLBACK");
         PQclear(res);
-        sprintf(sendBuf, "error occured%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2312, ENTER);
         send(soc, sendBuf, sendLen, 0);
     }
 
