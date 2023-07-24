@@ -10,8 +10,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("BEGIN failed: %s", PQerrorMessage(con));
         PQclear(res);
-        PQfinish(con);
-        sprintf(sendBuf, "error occured%s", ENTER);
+        sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_1801, ENTER);
         send(soc, sendBuf, sendLen, 0);
     }
 
@@ -28,7 +27,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         //検索結果が0件の場合、発注中の商品はありませんと返す
         if(PQntuples(res) == 0){
-            sprintf(sendBuf, "発注中の商品はありません。%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d %s%s", ER_STAT, E_CODE_1802, ENTER, DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -67,7 +66,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
                 } else if(strcmp(comm, "1") == 0){
                     break;
                 }else{
-                    sprintf(sendBuf, "入力が不正です。%s", ENTER);
+                    sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_1803, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -107,7 +106,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                     break;
                 }else{
-                    sprintf(sendBuf, "入力された商品番号は発注されておりません%s", ENTER);
+                    sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_1804, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -131,8 +130,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
             if(PQresultStatus(res) != PGRES_COMMAND_OK){
                 printf("UPDATE failed: %s", PQerrorMessage(con));
                 PQclear(res);
-                PQfinish(con);
-                sprintf(sendBuf, "error occured%s", ENTER);
+                sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_1805, ENTER);
                 send(soc, sendBuf, sendLen, 0);
             }
 
@@ -144,8 +142,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
             if(PQresultStatus(res) != PGRES_COMMAND_OK){
                 printf("DELETE failed: %s", PQerrorMessage(con));
                 PQclear(res);
-                PQfinish(con);
-                sprintf(sendBuf, "error occured%s", ENTER);
+                sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_1806, ENTER);
                 send(soc, sendBuf, sendLen, 0);
             }
         }
@@ -167,7 +164,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
             printf("SELECT failed: %s", PQerrorMessage(con));
             PQclear(res);
             PQfinish(con);
-            sprintf(sendBuf, "error occured%s", ENTER);
+            sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_100, ENTER);
             send(soc, sendBuf, sendLen, 0);
         }
 
@@ -263,8 +260,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
             if(PQresultStatus(res) != PGRES_TUPLES_OK){
                 printf("SELECT failed: %s", PQerrorMessage(con));
                 PQclear(res);
-                PQfinish(con);
-                sprintf(sendBuf, "error occured%s", ENTER);
+                sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_100, ENTER);
                 send(soc, sendBuf, sendLen, 0);
             }
 
@@ -292,8 +288,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
             if(PQresultStatus(res) != PGRES_COMMAND_OK){
                 printf("UPDATE failed: %s", PQerrorMessage(con));
                 PQclear(res);
-                PQfinish(con);
-                sprintf(sendBuf, "error occured%s", ENTER);
+                sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_1807, ENTER);
                 send(soc, sendBuf, sendLen, 0);
             }
             return 0;
@@ -305,8 +300,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("COMMIT failed: %s", PQerrorMessage(con));
         PQclear(res);
-        PQfinish(con);
-        sprintf(sendBuf, "error occured%s", ENTER);
+        sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_1801, ENTER);
         send(soc, sendBuf, sendLen, 0);
     }
 
