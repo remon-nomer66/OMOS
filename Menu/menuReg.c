@@ -360,6 +360,16 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             }
             //入力をu_storeに格納
             sscanf(recvBuf, "%d", &u_store);
+            //テーブル名：store_tのstore_idにu_storeがあるかを確認。
+            sprintf(sendBuf, "SELECT * FROM store_t WHERE store_id = %d;", u_store);
+            res = PQexec(con, sendBuf);
+            //存在していない場合はエラーを返す。
+            if(PQntuples(res) == 0){
+                sendLen = sprintf(sendBuf, "存在しない店舗IDです。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+            PQclear(res);
             //newmseasonの値を0にする。
             newmseason = 0;
             //newmregionの値をu_storeにする。
@@ -387,6 +397,16 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
             }
+            //テーブル名：region_tのregion_idにnewmregionがあるかを確認。
+            sprintf(sendBuf, "SELECT * FROM region_t WHERE region_id = %d;", newmregion);
+            res = PQexec(con, sendBuf);
+            //存在していない場合はエラーを返す。
+            if(PQntuples(res) == 0){
+                sendLen = sprintf(sendBuf, "存在しない地域IDです。%s%s", ENTER, DATA_END);
+                send(soc, sendBuf, sendLen, 0);
+                return -1;
+            }
+            PQclear(res);
         }else if(newmlevel == 5){ //newmlevelの値が5の場合はどのシーズンにするかを聞く。
             //どのシーズンにするかを確認。
             sendLen = sprintf(sendBuf, "どのシーズンにするかを入力してください。%s 選択肢は1：春、2：夏、3：秋、4：冬です。%s%s", ENTER, ENTER, DATA_END);
