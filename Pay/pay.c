@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "pay.h"
 
 \* お会計処理 *\
 int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
@@ -15,7 +16,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
         printf("config(1)\n");
         printf("BEGIN failed: %s", PQerrorMessage(con));
         PQclear(res);
-        sprintf(sendBuf, "error occured%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
         send(soc, sendBuf, sendLen, 0);
     }
 
@@ -48,11 +49,11 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
         {
             printf("ROLLBACK failed: %s", PQerrorMessage(con));
             PQclear(res);
-            sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2301, ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
         }
         PQclear(res);
-        sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2302, ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         return -1;
@@ -61,7 +62,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
     // テーブル番号が存在しない場合
     if (PQntuples(res) == 0)
     {
-        sprintf(sendBuf, "テーブル番号が存在しません。%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2303, ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -82,11 +83,11 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
         {
             printf("ROLLBACK failed: %s", PQerrorMessage(con));
             PQclear(res);
-            sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2301, ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
         }
         PQclear(res);
-        sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2302, ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         return 0;
@@ -95,7 +96,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
     // 注文が存在しない場合
     if (PQntuples(res) == 0)
     {
-        sprintf(sendBuf, "注文が存在しません。%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "。%s %d%s%s", ER_STAT, E_CODE_2304, ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -116,11 +117,11 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
         {
             printf("ROLLBACK failed: %s", PQerrorMessage(con));
             PQclear(res);
-            sprintf(sendBuf, "error occured%s", ENTER);
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2301, ENTER);
             send(soc, sendBuf, sendLen, 0);
         }
         PQclear(res);
-        sprintf(sendBuf, "error occured%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2302, ENTER);
         send(soc, sendBuf, sendLen, 0);
         return 0;
     }
@@ -128,7 +129,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
     // kitchen_flagが0の注文が存在する場合
     if (PQntuples(res) != 0)
     {
-        sprintf(sendBuf, "まだ提供していない料理がございます。%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2305, ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -148,12 +149,12 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
         {
             printf("ROLLBACK failed: %s", PQerrorMessage(con));
             PQclear(res);
-            sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2301, ENTER, DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
         }
         PQclear(res);
-        sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2302, ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         return 0;
@@ -209,7 +210,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
             // 割り勘する人数が0以下の場合、もう一度入力してもらう
             while (num <= 0)
             {
-                sprintf(sendBuf, "入力値が不正です。割り勘する人数を入力してください。%s%s", ENTER,DATA_END );
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2307, ENTER,DATA_END );
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -239,7 +240,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
         }
 
         else{
-            sprintf(sendBuf, "入力値が不正です。%s", ENTER);
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2307, ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -258,12 +259,12 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
         {
             printf("ROLLBACK failed: %s", PQerrorMessage(con));
             PQclear(res);
-            sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2301, ENTER, DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
         }
         PQclear(res);
-        sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2302 ENTER, DATA_END);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         return 0;
@@ -307,7 +308,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
     }
 
     else{
-        sprintf(sendBuf, "入力値が不正です。%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2307, ENTER);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -357,7 +358,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
         money = atoi(recvBuf);
         //If money exceeds 10000000, issue an amount error.
         if(money > 10000000){
-            sprintf(sendBuf, "金額が大きすぎます。%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2308, ENTER, DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -368,7 +369,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
         else if(money < sum)
         {
             // お客様から頂戴した金額が合計金額よりも少ないことを伝える
-            sprintf(sendBuf, "お客様から頂戴した金額が合計金額よりも少ないです。%s%s", ENTER,DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2309, ENTER,DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -409,7 +410,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
 
             //If money exceeds 10000000, issue an amount error.
             if(money > 10000000){
-                sprintf(sendBuf, "金額が大きすぎます。%s%s", ENTER, DATA_END);
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2308, ENTER, DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -420,7 +421,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
             while (money < sum)
             {
                 // お客様から頂戴した金額が合計金額よりも少ないことを伝える
-                sprintf(sendBuf, "お客様から頂戴した金額が合計金額よりも少ないです。もう一度入力してください。%s%s", ENTER,DATA_END);
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2309, ENTER,DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -470,7 +471,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
             money = atoi(recvBuf);
             //If money exceeds 10000000, issue an amount error.
             if(money > 10000000){
-                sprintf(sendBuf, "金額が大きすぎます。%s%s", ENTER, DATA_END);
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2308, ENTER, DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -481,7 +482,7 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
             while (money < sum)
             {
                 // お客様から頂戴した金額が合計金額よりも少ないことを伝える
-                sprintf(sendBuf, "お客様から頂戴した金額が合計金額よりも少ないです。もう一度入力してください。%s%s", ENTER,DATA_END);
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2309, ENTER,DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -534,6 +535,9 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
         PQclear(res);
         res = PQexec(con, "ROLLBACK");
         PQclear(res);
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2310, ENTER, DATA_END);
+        sendLen = strlen(sendBuf);
+        send(soc, sendBuf, sendLen, 0);
         return 1;
     }
     PQclear(res);
@@ -558,20 +562,10 @@ int pay(PGconn *con, int soc, int *u_info, pthread_t selfId)
     int flag = 0;
     printf("user_id = %d\n", user_id);
 
-    // flagが1の場合、エラーが発生したことを伝える
-    if (flag == 1)
-    {
-        sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
-        sendLen = strlen(sendBuf);
-        send(soc, sendBuf, sendLen, 0);
-    }
-    // flagが0の場合、正常に評価が行われたことを伝える
-    else
-    {
-        sprintf(sendBuf, "評価ありがとうございました。%s%s", ENTER, DATA_END);
-        sendLen = strlen(sendBuf);
-        send(soc, sendBuf, sendLen, 0);
-    }
+
+    sprintf(sendBuf, "評価ありがとうございました。%s%s", ENTER, DATA_END);
+    sendLen = strlen(sendBuf);
+    send(soc, sendBuf, sendLen, 0);
 
     // トランザクションの終了
     res = PQexec(con, "COMMIT");
