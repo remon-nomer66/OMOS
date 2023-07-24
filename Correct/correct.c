@@ -514,7 +514,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   }
 
   if (strlen(start_target) != 0 && strlen(end_target) != 0){
-    sprintf(searchArray, "%s AND summary_t.order_date BETWEEN '%s' AND '%s'", searchArray, start_target, end_target);
+    sprintf(searchArray, "%s AND CAST(summary.order_time AS time) BETWEEN '%s' AND '%s'", searchArray, start_target, end_target);
   }
 
   if (strlen(region_id) != 0){
