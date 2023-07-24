@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "pay.h"
 
 int pointCheck(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf){
     int recvLen, sendLen;   //送受信データ長
@@ -11,7 +12,7 @@ int pointCheck(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
         printf("BEGIN failed: %s", PQerrorMessage(con));
         PQclear(res);
         PQfinish(con);
-        sprintf(sendBuf, "error occured%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
         send(soc, sendBuf, sendLen, 0);
     }
 
@@ -25,11 +26,11 @@ int pointCheck(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
         if(PQresultStatus(res) != PGRES_COMMAND_OK){
             printf("ROLLBACK failed: %s", PQerrorMessage(con));
             PQclear(res);
-            sprintf(sendBuf, "error occured%s", ENTER);
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2301, ENTER);
             send(soc, sendBuf, sendLen, 0);
         }
         PQclear(res);
-        sprintf(sendBuf, "error occured%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2302, ENTER);
         send(soc, sendBuf, sendLen, 0);
     }
     //ポイントをpointに格納する

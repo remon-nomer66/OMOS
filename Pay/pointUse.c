@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "pay.h"
 
 int pointUse(pthread_t selfId, PGconn *con, int soc, int totalPrice, int *u_info, char *recvBuf, char *sendBuf){
     int recvLen, sendLen;   //送受信データ長
@@ -21,7 +22,7 @@ int pointUse(pthread_t selfId, PGconn *con, int soc, int totalPrice, int *u_info
         printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
         usePoint = atoi(recvBuf);   //使用するポイント数
         if(usePoint > point){   //現在のポイント数が使用したいポイントを超えていた場合、エラーを返し際入力を行う
-            sendLen = sprintf(sendBuf, "使用したいポイントが現在のポイント数を超えています。%s", ENTER);    //送信
+            sendLen = sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2311, ENTER);    //送信
             send(soc, sendBuf, sendLen, 0);  //送信
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         }else{
