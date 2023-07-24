@@ -120,6 +120,20 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
+                            //テーブル名：recipe_tのfodが1のものを抽出し、menu_idがrecvBufと一致するならばドリンクであるとエラーを返す
+                            sprintf(sendBuf, "SELECT menu_id FROM recipe_t WHERE fod = 1 AND menu_id = %s", recvBuf); //送信データ作成
+                            res = PQexec(con, sendBuf); //実行
+                            //見つかったならばドリンクであるとエラーを返す。
+                            if (PQresultStatus(res) == PGRES_TUPLES_OK){
+                                if (PQntuples(res) != 0){
+                                    sprintf(sendBuf, "選択した商品IDはドリンクです。%s%s", ENTER, DATA_END); //送信データ作成
+                                    sendLen = strlen(sendBuf); //送信データ長
+                                    send(soc, sendBuf, sendLen, 0); //送信
+                                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                                    check = 1;
+                                }
+                            }
                             if (check != 1){
                                 //入力されている商品IDの値をOD1に代入
                                 sscanf(recvBuf, "%d", &OD1);
@@ -172,7 +186,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                     //入力されている個数の値をOD2に代入
                                     sscanf(recvBuf, "%d", &OD2);
                                     //テーブル名：store_order_tのstore_idにu_storeを挿入、menu_idにOD1を挿入、store_order_cntにOD2を挿入、store_order_dateに現在の日付を挿入、store_order_timeに現在の時刻を挿入             
-                                    sprintf(sendBuf, "INSERT INTO store_order_t (store_id, menu_id, store_order_cnt, store_order_date, store_order_time) VALUES (%d, %d, %d, current_date, current_time)", OD1, OD2, u_store); //SQL文作成                                    
+                                    sprintf(sendBuf, "INSERT INTO store_order_t (store_id, menu_id, store_order_cnt, store_order_date, store_order_time) VALUES (%d, %d, %d, current_date, current_time)", u_store, OD1, OD2); //SQL文作成                                    
                                     res = PQexec(con, sendBuf); //実行
                                     //失敗した場合はエラーを表示する
                                     if (PQresultStatus(res) != PGRES_COMMAND_OK){
@@ -221,6 +235,20 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                 check = 1;
                             }
+                            //テーブル名：recipe_tのfodが0のものを抽出し、menu_idがrecvBufと一致するならばフードであるとエラーを返す
+                            sprintf(sendBuf, "SELECT menu_id FROM recipe_t WHERE fod = 0 AND menu_id = %s", recvBuf); //送信データ作成
+                            res = PQexec(con, sendBuf); //実行
+                            //見つかったならばドリンクであるとエラーを返す。
+                            if (PQresultStatus(res) == PGRES_TUPLES_OK){
+                                if (PQntuples(res) != 0){
+                                    sprintf(sendBuf, "選択した商品IDはフードです。%s%s", ENTER, DATA_END); //送信データ作成
+                                    sendLen = strlen(sendBuf); //送信データ長
+                                    send(soc, sendBuf, sendLen, 0); //送信
+                                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                                    check = 1;
+                                }
+                            }
                             if (check != 1){
                                 //入力されている商品IDの値をOD1に代入
                                 sscanf(recvBuf, "%d", &OD1);
@@ -273,7 +301,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                     //入力されている個数の値をOD2に代入
                                     sscanf(recvBuf, "%d", &OD2);
                                     //テーブル名：store_order_tのstore_idにu_storeを挿入、menu_idにOD1を挿入、store_order_cntにOD2を挿入、store_order_dateに現在の日付を挿入、store_order_timeに現在の時刻を挿入             
-                                    sprintf(sendBuf, "INSERT INTO store_order_t (store_id, menu_id, store_order_cnt, store_order_date, store_order_time) VALUES (%d, %d, %d, current_date, current_time)", OD1, OD2, u_store); //SQL文作成                                    
+                                    sprintf(sendBuf, "INSERT INTO store_order_t (store_id, menu_id, store_order_cnt, store_order_date, store_order_time) VALUES (%d, %d, %d, current_date, current_time)", u_store, OD1, OD2); //SQL文作成                                    
                                     res = PQexec(con, sendBuf); //実行
                                     //失敗した場合はエラーを表示する
                                     if (PQresultStatus(res) != PGRES_COMMAND_OK){
