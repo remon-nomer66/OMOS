@@ -60,7 +60,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
         send(soc, sendBuf, sendLen, 0);                                    // 送信
         printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
         //recvBufの中身を空にする
-        memset(recvBuf, '\0', sizeof(recvBuf));
+        memset(recvBuf, '\0', sizeof(recvBuf)); 
       }
     }
     
@@ -475,33 +475,33 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
   // 入力された値（開始年月日時刻、終了年月日時刻）を一度に表示
-  sprintf(sendBuf, "開始年月日時刻：%s %s%s", start, start_target, ENTER); // 送信データ作成
+  sprintf(sendBuf, "%s 開始年月日時刻：%s %s%s", OK_STAT, start, start_target, ENTER); // 送信データ作成
   sendLen = strlen(sendBuf);                                      // 送信データ長
   send(soc, sendBuf, sendLen, 0);                                 // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
-  sprintf(sendBuf, "終了年月日時刻：%s %s%s", end, end_target, ENTER); // 送信データ作成
+  sprintf(sendBuf, "%s 終了年月日時刻：%s %s%s", OK_STAT, end, end_target, ENTER); // 送信データ作成
   sendLen = strlen(sendBuf);                                  // 送信データ長
   send(soc, sendBuf, sendLen, 0);                             // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
-  sprintf(sendBuf, "地域番号：%s%s", region_id, ENTER); // 送信データ作成
+  sprintf(sendBuf, "%s 地域番号：%s%s", OK_STAT, region_id, ENTER); // 送信データ作成
   sendLen = strlen(sendBuf);                 // 送信データ長
   send(soc, sendBuf, sendLen, 0);            // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
-  sprintf(sendBuf, "チェーン番号：%s%s", chain_id, ENTER); // 送信データ作成
+  sprintf(sendBuf, "%s チェーン番号：%s%s", OK_STAT, chain_id, ENTER); // 送信データ作成
   sendLen = strlen(sendBuf);                 // 送信データ長
   send(soc, sendBuf, sendLen, 0);            // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
   // 入力された値（店舗番号、地域番号、商品番号）を一度に表示
-  sprintf(sendBuf, "店舗番号：%s%s", store_id, ENTER); // 送信データ作成
+  sprintf(sendBuf, "%s 店舗番号：%s%s", OK_STAT, store_id, ENTER); // 送信データ作成
   sendLen = strlen(sendBuf);                  // 送信データ長
   send(soc, sendBuf, sendLen, 0);             // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
-  sprintf(sendBuf, "商品番号：%s%s%s", product_id, ENTER, DATA_END); // 送信データ作成
+  sprintf(sendBuf, "%s 商品番号：%s%s%s", OK_STAT, product_id, ENTER, DATA_END); // 送信データ作成
   sendLen = strlen(sendBuf);                    // 送信データ長
   send(soc, sendBuf, sendLen, 0);               // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
@@ -514,7 +514,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   }
 
   if (strlen(start_target) != 0 && strlen(end_target) != 0){
-    sprintf(searchArray, "%s AND summary_t.order_date BETWEEN '%s' AND '%s'", searchArray, start_target, end_target);
+    sprintf(searchArray, "%s AND CAST(summary.order_time AS time) BETWEEN '%s' AND '%s'", searchArray, start_target, end_target);
   }
 
   if (strlen(region_id) != 0){
@@ -553,7 +553,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   cnt = PQntuples(res);
   for (int i = 0; i < cnt; i++)
   {
-    sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); // 送信データ作成
+    sprintf(sendBuf, "%s %s %s%s", OK_STAT PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); // 送信データ作成
     sendLen = strlen(sendBuf);                                        // 送信データ長
     send(soc, sendBuf, sendLen, 0);                                   // 送信
     printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
@@ -579,7 +579,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   cnt = PQntuples(res);
   for (int i = 0; i < cnt; i++)
   {
-    sprintf(sendBuf, "合計金額：%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); // 送信データ作成
+    sprintf(sendBuf, "%s 合計金額：%s%s%s", OK_STAT, PQgetvalue(res, i, 0), ENTER, DATA_END); // 送信データ作成
     sendLen = strlen(sendBuf);                                        // 送信データ長
     send(soc, sendBuf, sendLen, 0);                                   // 送信
     printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
