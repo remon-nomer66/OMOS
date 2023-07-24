@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "user.h"
 
 int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf){
     int recvLen, sendLen;   //送受信データ長
@@ -14,7 +15,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("BEGIN failed: %s", PQerrorMessage(con));
         PQclear(res);
-        sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
         send(soc, sendBuf, sendLen, 0);
     }
 
@@ -41,7 +42,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
             strcpy(phoneNum, recvBuf);
             break;
         }else{
-            sprintf(sendBuf, "電話番号が不正です。%s", ENTER); //送信データ作成
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1101, ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
@@ -65,7 +66,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
             printf("userPass: %s\n", userPass);
             break;
         }else{
-            sprintf(sendBuf, "パスワードが不正です。%s", ENTER); //送信データ作成
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1102, ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
@@ -88,7 +89,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
             printf("userName: %s\n", userName);
             break;
         }else{
-            sprintf(sendBuf, "氏名は30文字を超えないようにしてください。%s", ENTER); //送信データ作成
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1103, ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
@@ -125,7 +126,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
         printf("SELECT failed: %s", PQerrorMessage(con));
         PQclear(res);
         PQfinish(con);
-        sprintf(sendBuf, "error occured%s%s", ENTER,DATA_END);
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1104, ENTER,DATA_END);
         send(soc, sendBuf, sendLen, 0);
     }
     char  *user_id_str = PQgetvalue(res, 0, 0);
@@ -143,7 +144,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
         res = PQexec(con, "ROLLBACK");
         PQclear(res);
         PQfinish(con);
-        sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1105, ENTER, DATA_END);
         send(soc, sendBuf, sendLen, 0);
     }
 
@@ -156,7 +157,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
             res = PQexec(con, "ROLLBACK");
             PQclear(res);
             PQfinish(con);
-            sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1106, ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
         }
     }else{
@@ -168,7 +169,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
             res = PQexec(con, "ROLLBACK");
             PQclear(res);
             PQfinish(con);
-            sprintf(sendBuf, "error occured%s", ENTER);
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1106, ENTER);
             send(soc, sendBuf, sendLen, 0);
         }
     }
