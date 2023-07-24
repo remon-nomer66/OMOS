@@ -57,10 +57,10 @@ VALUES (
 );
 
 INSERT INTO recipe_t (
-    menu_id, menu_name, recipe
+    menu_id, menu_name, recipe, fod
 )
 VALUES (
-    1234, 'たこわさ', 'たこを切って，わさびを和えます'
+    1234, 'たこわさ', 'たこを切って，わさびを和えます', 0
 );
 
 INSERT INTO menu_price_t (

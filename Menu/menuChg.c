@@ -258,6 +258,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             return -1;
         };
     }else if(u_auth == AHQ){
+        //changesotre2に0を代入
+        changestore2 = 0;
         //情報を変更したいものがショップメニューかどうかを聞く。
         sprintf(sendBuf, "情報を変更したいものはショップメニューですか？%s yes または no%s%s", ENTER, ENTER, DATA_END); //送信データ作成
         sendLen = strlen(sendBuf); //送信データ長
@@ -268,7 +270,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sscanf(recvBuf, "%s", response);
         if(strcmp(response, "yes") == 0){
             //情報を変更したい店舗ID（3桁：半角数字）を聞く。
-            sprintf(sendBuf, "情報を変更したい店舗ID（3桁：半角数字）を入力してください。（例：01）%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "情報を変更したい店舗ID（3桁：半角数字）を入力してください。（例：001）%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -281,7 +283,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 return -1;
             }
             //入力された文字が数字以外ならエラーを返す。
-            for(i = 0; i < 3; i++){
+            for(i = 0; i < recvLen-1; i++){
                 if(isdigit(recvBuf[i]) == 0){
                     sprintf(sendBuf, "店舗IDは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
@@ -382,6 +384,24 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 res = PQexec(con, sendBuf); //SQL文実行
                 PQclear(res); //resの中身をクリア
             }else if(strcmp(changeitem, "price") == 0){
+                //現在の価格は以下の通りです。と表示
+                sprintf(sendBuf, "現在の価格は以下の通りです。%s%s", ENTER, DATA_END); //送信データ作成
+                sendLen = strlen(sendBuf); //送信データ長
+                send(soc, sendBuf, sendLen, 0); //送信
+                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                //テーブル名：menu_storage_tのstore_idとu_storeが一致し、テーブル名：menu_price_tからmenu_idがchangeidのもののpriceを表示
+                sprintf(sendBuf, "SELECT price FROM menu_price_t WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store); //SQL文作成
+                res = PQexec(con, sendBuf); //SQL文実行
+                //実行結果をクライアントに送信
+                for(int i = 0; i < PQntuples(res); i++){
+                    sprintf(sendBuf, "%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                    sendLen = strlen(sendBuf); //送信データ長
+                    send(soc, sendBuf, sendLen, 0); //送信
+                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                }
+                PQclear(res); //resの中身をクリア
                 sprintf(sendBuf, "どんな値段にしますか？%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
@@ -396,14 +416,10 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         return -1;
                     }
                 }
-                //クライアントから受信した値をchangepriceに代入
+                //クライアントから受信した変更内容をchangepriceに代入
                 sscanf(recvBuf, "%d", &changeprice);
-                //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：recipe_tのpriceの内容をchangepriceに変更
-                sprintf(sendBuf, "UPDATE recipe_t SET price = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeprice, changeid, changestore); //SQL文作成
-                res = PQexec(con, sendBuf); //SQL文実行
-                PQclear(res); //resの中身をクリア
-                //テーブル名：menu_charge_tのuser_idにu_idを格納する。
-                sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = %d WHERE menu_id = %d;", u_id, changeid); //SQL文作成
+                //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：menu_price_tのpriceの内容をchangepriceに変更
+                sprintf(sendBuf, "UPDATE menu_price_t SET price = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeprice, changeid, changestore); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 PQclear(res); //resの中身をクリア
                 //テーブル名：menu_charge_tのuser_idにu_idを格納する。
@@ -412,7 +428,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 PQclear(res); //resの中身をクリア
             }else if(strcmp(changeitem, "level") == 0){
                 //どのメニューレベルにするかを聞く。選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューであることも伝える。
-                sprintf(sendBuf, "どのメニューレベルにしますか？%s 選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューです．%s", ENTER, ENTER); //送信データ作成
+                sprintf(sendBuf, "どのメニューレベルにしますか？%s 選択肢は1：コモンメニュー、2：ブランドメニュー、3：ショップメニュー、4：リージョンメニュー、5：シーズンメニューです．%s%s", ENTER, ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
@@ -445,7 +461,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     //入力された文字が数字以外ならエラーを返す。
                     for(i = 0; i < recvLen-1; i++){
                         if(!isdigit(recvBuf[i])){
-                            sprintf(sendBuf, "季節メニューは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                            sprintf(sendBuf, "季節は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
                             sendLen = strlen(sendBuf); //送信データ長
                             send(soc, sendBuf, sendLen, 0); //送信
                             return -1;
@@ -489,13 +505,20 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     }
                     //テーブル名：menu_storage_tのstore_idの内容をchangestore2に変更
                     sscanf(recvBuf, "%d", &changestore2);
-                    sprintf(sendBuf, "UPDATE menu_storage_t SET store_id = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changestore2, changeid, changestore); //SQL文作成
-                    changestore = changestore2;
+                    sprintf(sendBuf, "UPDATE menu_storage_t SET store_id = %d WHERE menu_id = %d;", changestore2, changeid); //SQL文作成
+                    res = PQexec(con, sendBuf);
+                    PQclear(res);
                 }
-                //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：menu_detail_tのlayerの内容をchangelevelに変更
-                sprintf(sendBuf, "UPDATE menu_detail_t SET layer = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changelevel, changeid, changestore); //SQL文作成
+                //テーブル名：menu_detail_tのlayerの内容をchangelevelに変更する。このとき、menu_idがchangeidであるもののみ変更する。
+                sprintf(sendBuf, "UPDATE menu_detail_t SET layer = %d WHERE menu_id = %d;", changelevel, changeid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 PQclear(res); //resの中身をクリア
+                //changestore2の値が100以上ならばテーブル名：menu_detail_tのidをchangestore2に変更する。
+                if(changestore2 >= 100){
+                    sprintf(sendBuf, "UPDATE menu_detail_t SET id = %d WHERE menu_id = %d;", changestore2, changeid); //SQL文作成
+                    res = PQexec(con, sendBuf); //SQL文実行
+                    PQclear(res); //resの中身をクリア
+                }
                 //テーブル名：menu_charge_tのuser_idにu_idを格納する。
                 sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = %d WHERE menu_id = %d;", u_id, changeid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
@@ -581,8 +604,10 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
+                recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                recvBuf[recvLen-1] = '\0';
                 //テーブル名：menu_detail_tでlayerの値が5のもののmenu_idを取得し表示、また、テーブル名：recipe_tからそのmenu_idのmenu_nameを表示
-                sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 5));"); //SQL文作成
+                sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 5);"); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 //実行結果がなければ、変更できるメニューは存在しないことを表示
                 if(PQntuples(res) == 0){
@@ -596,6 +621,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     sprintf(sendBuf, "%s %s%s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf , sendLen, 0); //送信
+                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                    recvBuf[recvLen-1] = '\0';
                 }
                 PQclear(res); //resの中身をクリア
                 sprintf(sendBuf, "どのメニューを変更しますか？商品ID（4桁：半角数字）を打ち込んでください。（例：0001）%s%s", ENTER, DATA_END); //送信データ作成
@@ -604,10 +631,9 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
                 recvBuf[recvLen-1] = '\0';
                 //4文字以外の場合はエラーを返す
-                if(strlen(recvBuf) !=4){
-                    sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END); //送信データ作成
-                    sendLen = strlen(sendBuf); //送信データ長
-                    send(soc, sendBuf, sendLen, 0); //送信
+                if(strlen(recvBuf) != 4){
+                    sendLen = sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s%s", ENTER, DATA_END);
+                    send(soc, sendBuf, sendLen, 0);
                     return -1;
                 }
                 //入力された文字が数字以外ならエラーを返す。
@@ -646,8 +672,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                     //クライアントから受信した変更内容をchangenameに代入
                     sscanf(recvBuf, "%s", changename);
-                    //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：recipe_tのmenu_nameの内容をchangenameに変更する。
-                    sprintf(sendBuf, "UPDATE recipe_t SET menu_name = '%s' WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changename, changeid, changestore); //SQL文作成
+                    //テーブル名：menu_storage_tのchangeidと同じmenu_idを持つ、テーブル名：recipe_tのmenu_nameの内容をchangenameに変更する。
+                    sprintf(sendBuf, "UPDATE recipe_t SET menu_name = '%s' WHERE menu_id = %d;", changename, changeid); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
                     PQclear(res); //resの中身をクリア
                     //テーブル名：menu_charge_tのuser_idにu_idを格納する。
@@ -655,6 +681,24 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     res = PQexec(con, sendBuf); //SQL文実行
                     PQclear(res); //resの中身をクリア
                 }else if(strcmp(changeitem, "price") == 0){
+                    //現在の価格は以下の通りです。と表示
+                    sprintf(sendBuf, "現在の価格は以下の通りです。%s%s", ENTER, DATA_END); //送信データ作成
+                    sendLen = strlen(sendBuf); //送信データ長
+                    send(soc, sendBuf, sendLen, 0); //送信
+                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                    //テーブル名：menu_storage_tのstore_idとu_storeが一致し、テーブル名：menu_price_tからmenu_idがchangeidのもののpriceを表示
+                    sprintf(sendBuf, "SELECT price FROM menu_price_t WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store); //SQL文作成
+                    res = PQexec(con, sendBuf); //SQL文実行
+                    //実行結果をクライアントに送信
+                    for(int i = 0; i < PQntuples(res); i++){
+                        sprintf(sendBuf, "%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                        sendLen = strlen(sendBuf); //送信データ長
+                        send(soc, sendBuf, sendLen, 0); //送信
+                        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                    }
+                    PQclear(res); //resの中身をクリア
                     sprintf(sendBuf, "どんな値段にしますか？%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
@@ -671,8 +715,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     }
                     //クライアントから受信した値をchangepriceに代入
                     sscanf(recvBuf, "%d", &changeprice);
-                    //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：menu_price_tのpriceの内容をchangepriceに変更
-                    sprintf(sendBuf, "UPDATE menu_price_t SET price = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeprice, changeid, changestore); //SQL文作成
+                    //テーブル名：menu_storage_tのchangeidと同じmenu_idを持つ、テーブル名：menu_price_tのpriceの内容をchangepriceに変更
+                    sprintf(sendBuf, "UPDATE menu_price_t SET price = %d WHERE menu_id = %d;", changeprice, changeid); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
                     PQclear(res); //resの中身をクリア
                     //テーブル名：menu_charge_tのuser_idにu_idを格納する。
@@ -714,7 +758,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         //入力された文字が数字以外ならエラーを返す。
                         for(i = 0; i < recvLen-1; i++){
                             if(!isdigit(recvBuf[i])){
-                                sprintf(sendBuf, "季節メニューは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                                sprintf(sendBuf, "季節は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 return -1;
@@ -730,7 +774,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                             return -1;
                         }
                         //テーブル名：menu_detail_tのseasonの内容をchangeseasonに変更
-                        sprintf(sendBuf, "UPDATE menu_detail_t SET season = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeseason, changeid, changestore); //SQL文作成
+                        sprintf(sendBuf, "UPDATE menu_detail_t SET season = %d WHERE menu_id = %d;", changeseason, changeid); //SQL文作成
                         res = PQexec(con, sendBuf); //SQL文実行
                         PQclear(res); //resの中身をクリア
                     }else if(changelevel == 3){
@@ -758,20 +802,27 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         }
                         //テーブル名：menu_storage_tのstore_idの内容をchangestore2に変更
                         sscanf(recvBuf, "%d", &changestore2);
-                        sprintf(sendBuf, "UPDATE menu_storage_t SET store_id = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changestore2, changeid, changestore); //SQL文作成
-                        changestore = changestore2;
+                        sprintf(sendBuf, "UPDATE menu_storage_t SET store_id = %d WHERE menu_id = %d;", changestore2, changeid); //SQL文作成
+                        res = PQexec(con, sendBuf);
+                        PQclear(res);
                     }
-                    //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：menu_detail_tのlayerの内容をchangelevelに変更
-                    sprintf(sendBuf, "UPDATE menu_detail_t SET layer = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changelevel, changeid, changestore); //SQL文作成
+                    //テーブル名：menu_detail_tのlayerの内容をchangelevelに変更する。このとき、menu_idがchangeidであるもののみ変更する。
+                    sprintf(sendBuf, "UPDATE menu_detail_t SET layer = %d WHERE menu_id = %d;", changelevel, changeid); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
                     PQclear(res); //resの中身をクリア
+                    //changestore2の値が100以上ならばテーブル名：menu_detail_tのidをchangestore2に変更する。
+                    if(changestore2 >= 100){
+                        sprintf(sendBuf, "UPDATE menu_detail_t SET id = %d WHERE menu_id = %d;", changestore2, changeid); //SQL文作成
+                        res = PQexec(con, sendBuf); //SQL文実行
+                        PQclear(res); //resの中身をクリア
+                    }
                     //テーブル名：menu_charge_tのuser_idにu_idを格納する。
                     sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = %d WHERE menu_id = %d;", u_id, changeid); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
                     PQclear(res); //resの中身をクリア
                 }else if(strcmp(changeitem, "star") == 0){
-                    //menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：push_tのpush_hqの値を確認する。
-                    sprintf(sendBuf, "SELECT push_hq FROM push_t WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore); //SQL文作成
+                    //menu_storage_tのchangeidと同じmenu_idを持つ、テーブル名：push_tのpush_hqの値を確認する。
+                    sprintf(sendBuf, "SELECT push_hq FROM push_t WHERE menu_id = %d;", changeid); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
                     //push_hqの値が0の場合、押しメニューにしますか？と聞く。
                     if(strcmp(PQgetvalue(res, 0, 0), "0") == 0){
@@ -783,9 +834,9 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                         //クライアントから受信した変更内容をchangestarに代入
                         sscanf(recvBuf, "%s", changestar);
-                        //changestarがyesの場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：push_tのpush_hqの内容を1に変更
+                        //changestarがyesの場合、テーブル名：menu_storage_tのchangeidと同じmenu_idを持つ、テーブル名：push_tのpush_hqの内容を1に変更
                         if(strcmp(changestar, "yes") == 0){
-                            sprintf(sendBuf, "UPDATE push_t SET push_hq = 1 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore); //SQL文作成
+                            sprintf(sendBuf, "UPDATE push_t SET push_hq = 1 WHERE menu_id = %d;", changeid); //SQL文作成
                             res = PQexec(con, sendBuf); //SQL文実行
                             PQclear(res); //resの中身をクリア
                             //テーブル名：menu_charge_tのuser_idにu_idを格納する。
@@ -814,9 +865,9 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                         //クライアントから受信した変更内容をchangestarに代入
                         sscanf(recvBuf, "%s", changestar);
-                        //changestarがyesの場合、テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：push_tのpush_hqの内容を0に変更
+                        //changestarがyesの場合、テーブル名：menu_storage_tのchangeidと同じmenu_idを持つ、テーブル名：push_tのpush_hqの内容を0に変更
                         if(strcmp(changestar, "yes") == 0){
-                            sprintf(sendBuf, "UPDATE push_t SET push_hq = 0 WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, changestore); //SQL文作成
+                            sprintf(sendBuf, "UPDATE push_t SET push_hq = 0 WHERE menu_id = %d;", changeid); //SQL文作成
                             res = PQexec(con, sendBuf); //SQL文実行
                             PQclear(res); //resの中身をクリア
                             //テーブル名：menu_charge_tのuser_idにu_idを格納する。
@@ -836,6 +887,34 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                             return -1;
                         }
                     }
+                }else if(strcmp(changeitem, "season") == 0){
+                    sprintf(sendBuf, "どの季節のメニューにしますか？%s 1：春メニュー、2：夏メニュー、3：秋メニュー、4：冬メニューです。%s%s", ENTER, ENTER, DATA_END); //送信データ作成
+                    sendLen = strlen(sendBuf); //送信データ長
+                    send(soc, sendBuf, sendLen, 0); //送信
+                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                    //入力された文字が数字以外ならエラーを返す。
+                    for(i = 0; i < recvLen-1; i++){
+                        if(!isdigit(recvBuf[i])){
+                            sprintf(sendBuf, "季節は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                            sendLen = strlen(sendBuf); //送信データ長
+                            send(soc, sendBuf, sendLen, 0); //送信
+                            return -1;
+                        }
+                    }
+                    //クライアントから受信した値をchangeseasonに代入
+                    sscanf(recvBuf, "%d", &changeseason);
+                    //changeseasonの値が1, 2, 3, 4以外の場合、エラーを返す。
+                    if(changeseason != 1 && changeseason != 2 && changeseason != 3 && changeseason != 4){
+                        sprintf(sendBuf, "その季節は存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                        sendLen = strlen(sendBuf); //送信データ長
+                        send(soc, sendBuf, sendLen, 0); //送信
+                        return -1;
+                    }
+                    //テーブル名：menu_detail_tのseasonの内容をchangeseasonに変更
+                    sprintf(sendBuf, "UPDATE menu_detail_t SET season = %d WHERE menu_id = %d;", changeseason, changeid); //SQL文作成
+                    res = PQexec(con, sendBuf); //SQL文実行
+                    PQclear(res); //resの中身をクリア
                 }
             }else if(strcmp(response, "no") == 0){
                 sprintf(sendBuf, "あなたが情報変更できるメニュー一覧です．%s%s", ENTER, DATA_END); //送信データ作成
@@ -917,6 +996,24 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     res = PQexec(con, sendBuf); //SQL文実行
                     PQclear(res); //resの中身をクリア
                 }else if(strcmp(changeitem, "price") == 0){
+                    //現在の価格は以下の通りです。と表示
+                    sprintf(sendBuf, "現在の価格は以下の通りです。%s%s", ENTER, DATA_END); //送信データ作成
+                    sendLen = strlen(sendBuf); //送信データ長
+                    send(soc, sendBuf, sendLen, 0); //送信
+                    recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                    recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                    //テーブル名：menu_storage_tのstore_idとu_storeが一致し、テーブル名：menu_price_tからmenu_idがchangeidのもののpriceを表示
+                    sprintf(sendBuf, "SELECT price FROM menu_price_t WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeid, u_store); //SQL文作成
+                    res = PQexec(con, sendBuf); //SQL文実行
+                    //実行結果をクライアントに送信
+                    for(int i = 0; i < PQntuples(res); i++){
+                        sprintf(sendBuf, "%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); //送信データ作成
+                        sendLen = strlen(sendBuf); //送信データ長
+                        send(soc, sendBuf, sendLen, 0); //送信
+                        recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
+                        recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
+                    }
+                    PQclear(res); //resの中身をクリア
                     sprintf(sendBuf, "どんな値段にしますか？%s%s", ENTER, DATA_END); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
@@ -976,7 +1073,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         //入力された文字が数字以外ならエラーを返す。
                         for(i = 0; i < recvLen-1; i++){
                             if(!isdigit(recvBuf[i])){
-                                sprintf(sendBuf, "季節メニューは半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                                sprintf(sendBuf, "季節は半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 return -1;
@@ -992,7 +1089,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                             return -1;
                         }
                         //テーブル名：menu_detail_tのseasonの内容をchangeseasonに変更
-                        sprintf(sendBuf, "UPDATE menu_detail_t SET season = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changeseason, changeid, changestore); //SQL文作成
+                        sprintf(sendBuf, "UPDATE menu_detail_t SET season = %d WHERE menu_id = %d;", changeseason, changeid); //SQL文作成
                         res = PQexec(con, sendBuf); //SQL文実行
                         PQclear(res); //resの中身をクリア
                     }else if(changelevel == 3){
@@ -1021,12 +1118,19 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                         //テーブル名：menu_storage_tのstore_idの内容をchangestore2に変更
                         sscanf(recvBuf, "%d", &changestore2);
                         sprintf(sendBuf, "UPDATE menu_storage_t SET store_id = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM    menu_storage_t WHERE store_id = %d);", changestore2, changeid, changestore); //SQL文作成
-                        changestore = changestore2;
+                        res = PQexec(con, sendBuf);
+                        PQclear(res);
                     }
-                    //テーブル名：menu_storage_tのstore_idとchangestoreが一致し、changeidと同じmenu_idを持つ、テーブル名：menu_detail_tのlayerの内容をchangelevelに変更
-                    sprintf(sendBuf, "UPDATE menu_detail_t SET layer = %d WHERE menu_id = %d AND menu_id IN (SELECT menu_id FROM menu_storage_t WHERE store_id = %d);", changelevel, changeid, changestore); //SQL文作成
+                    //テーブル名：menu_detail_tのlayerの内容をchangelevelに変更する。このとき、menu_idがchangeidであるもののみ変更する。
+                    sprintf(sendBuf, "UPDATE menu_detail_t SET layer = %d WHERE menu_id = %d;", changelevel, changeid); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
                     PQclear(res); //resの中身をクリア
+                    //changestore2の値が100以上ならばテーブル名：menu_detail_tのidをchangestore2に変更する。
+                    if(changestore2 >= 100){
+                        sprintf(sendBuf, "UPDATE menu_detail_t SET id = %d WHERE menu_id = %d;", changestore2, changeid); //SQL文作成
+                        res = PQexec(con, sendBuf); //SQL文実行
+                        PQclear(res); //resの中身をクリア
+                    }
                     //テーブル名：menu_charge_tのuser_idにu_idを格納する。
                     sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = %d WHERE menu_id = %d;", u_id, changeid); //SQL文作成
                     res = PQexec(con, sendBuf); //SQL文実行
@@ -1222,7 +1326,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "SELECT COUNT(*) FROM menu_storage_t WHERE menu_id = %d AND store_id = %d;", changeid, changestore); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         //1つも無ければエラーを返す
-        if(PQntuples(res) == 0){
+        if(PQgetvalue(res, 0, 0) == 0){
             sprintf(sendBuf, "選べない商品IDです．%s%s", ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
