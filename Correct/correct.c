@@ -307,7 +307,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       while(1){
         // チェーンの指定
         // １桁チェーンを入力させる
-        sprintf(sendBuf, "チェーン番号を入力してください（例：1）%s%s", ENTER, DATA_END); // 送信データ作成
+        sprintf(sendBuf, "チェーン番号を入力してください（例：60*60~69）%s%s", ENTER, DATA_END); // 送信データ作成
         sendLen = strlen(sendBuf);                                                     // 送信データ長
         send(soc, sendBuf, sendLen, 0);                                                // 送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);                                      // 受信
