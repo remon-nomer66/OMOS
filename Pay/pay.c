@@ -17,7 +17,7 @@ int test_func(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
         printf("config(1)\n");
         printf("BEGIN failed: %s", PQerrorMessage(con));
         PQclear(res);
-        sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_100, ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
         send(soc, sendBuf, sendLen, 0);
     }
 
@@ -48,6 +48,7 @@ int test_func(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
         printf("SELECT failed: %s", PQerrorMessage(con));
         // ロールバック
         res = PQexec(con, "ROLLBACK");
+
         PQclear(res);
         sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_100, ENTER);
         sendLen = strlen(sendBuf);
@@ -101,6 +102,7 @@ int test_func(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
         printf("SELECT failed: %s", PQerrorMessage(con));
         // ロールバック
         res = PQexec(con, "ROLLBACK");
+
         PQclear(res);
         sprintf(sendBuf, "%s%d %s", ER_STAT, E_CODE_100, ENTER);
         send(soc, sendBuf, sendLen, 0);
@@ -126,6 +128,7 @@ int test_func(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
         printf("SELECT failed: %s", PQerrorMessage(con));
         // ロールバック
         res = PQexec(con, "ROLLBACK");
+
         PQclear(res);
         sprintf(sendBuf, "%s%d%s", ER_STAT, E_CODE_100, ENTER);
         sendLen = strlen(sendBuf);
@@ -332,6 +335,7 @@ int test_func(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
     }
 
     else{
+
         sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_2304, ENTER);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
@@ -446,7 +450,7 @@ int test_func(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
             while (money < sum)
             {
                 // お客様から頂戴した金額が合計金額よりも少ないことを伝える
-                sprintf(sendBuf, "お客様から頂戴した金額が合計金額よりも少ないです。もう一度入力してください。%s%s", ENTER,DATA_END);
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2309, ENTER,DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -507,6 +511,7 @@ int test_func(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
             while (money < sum)
             {
                 // お客様から頂戴した金額が合計金額よりも少ないことを伝える
+
                 sprintf(sendBuf, "%s %d お客様から頂戴した金額が合計金額よりも少ないです。もう一度入力してください。%s%s", ER_STAT, E_CODE_2307, ENTER,DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
@@ -555,6 +560,7 @@ int test_func(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
         sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_100, ENTER);
         PQclear(res);
         return -1;
+
     }
     PQclear(res);
 
