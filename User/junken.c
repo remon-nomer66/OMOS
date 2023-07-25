@@ -1,5 +1,6 @@
 #include "omos.h"
-int junken(pthread_t selfId,int soc,char *recvBuf,char *sendBuf){
+
+int janken(pthread_t selfId,int soc,char *recvBuf,char *sendBuf){
 
   int computerhand, playerhand;
   int recvLen, sendLen;                    // 送受信データ長
@@ -86,7 +87,7 @@ int junken(pthread_t selfId,int soc,char *recvBuf,char *sendBuf){
 
   if (playerhand == computerhand) // あいこの場合
     {
-      sprintf(sendBuf, "あいこだったの,500ポイント付与します%s%s", ENTER,DATA_END);
+      sprintf(sendBuf, "あいこだったの,500ポイント付与します%s", ENTER);
       sendLen = strlen(sendBuf);         // 送信データ長
       send(soc, sendBuf, sendLen, 0); // 送信
       printf("[C_THREAD %ld]SEND=>%s",selfId,sendBuf);
@@ -95,7 +96,7 @@ int junken(pthread_t selfId,int soc,char *recvBuf,char *sendBuf){
   else if (playerhand == 0 && computerhand == 1 || playerhand == 1 && computerhand == 2 || playerhand == 2 && computerhand == 0)
     { // 勝ちの場合
 
-      sprintf(sendBuf, "勝ちだったので,1000ポイント付与します%s%s", ENTER,DATA_END);
+      sprintf(sendBuf, "勝ちだったので,1000ポイント付与します%s", ENTER);
       sendLen = strlen(sendBuf);         // 送信データ長
       send(soc, sendBuf, sendLen, 0); // 送信
       printf("[C_THREAD %ld]SEND=>%s",selfId,sendBuf);
@@ -103,7 +104,7 @@ int junken(pthread_t selfId,int soc,char *recvBuf,char *sendBuf){
     }
   else
     {//負けの場合
-      sprintf(sendBuf, "負けだったので,300ポイント付与します%s%s", ENTER,DATA_END);
+      sprintf(sendBuf, "負けだったので,300ポイント付与します%s", ENTER);
       sendLen = strlen(sendBuf);         // 送信データ長
       send(soc, sendBuf, sendLen, 0); // 送信
       printf("[C_THREAD %ld]SEND=>%s",selfId,sendBuf);
