@@ -579,7 +579,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   cnt = PQntuples(res);
   for (int i = 0; i < cnt; i++)
   {
-    sprintf(sendBuf, "%s 合計金額：%s%s%s", OK_STAT, PQgetvalue(res, i, 0), ENTER, DATA_END); // 送信データ作成
+    sprintf(sendBuf, "%s 合計金額：%s%s", OK_STAT, PQgetvalue(res, i, 0), ENTER); // 送信データ作成
     sendLen = strlen(sendBuf);                                        // 送信データ長
     send(soc, sendBuf, sendLen, 0);                                   // 送信
     printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
