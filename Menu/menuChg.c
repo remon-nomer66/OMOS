@@ -561,10 +561,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     //user_idをu_idに格納
                     sscanf(PQgetvalue(res, 0, 0), "%d", &u_id);
                     PQclear(res);
-                    //テーブル名：menu_charge_tのmenuidにchangeidを、user_idにu_idを挿入
-                    sprintf(sendBuf, "INSERT INTO menu_charge_t VALUES(%d, %d);", changeid, u_id);
-                    res = PQexec(con, sendBuf);
-                    PQclear(res);
+                    //テーブル名：menu_charge_tのmenuidがchangeidものを見つけ、user_idをu_idに変更
+                    sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = %d WHERE menu_id = %d;", u_id, changeid); //SQL文作成
                 }else{
                     //テーブル名：menu_charge_tのuser_idに0を格納する。
                     sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = 0 WHERE menu_id = %d;", changeid); //SQL文作成
@@ -907,15 +905,13 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     PQclear(res); //resの中身をクリア
                     if(changelevel == 3){
                         //テーブル名：user_authority_tのstore_idとchangestore2が一致する行のuser_idを取得
-                        sprintf(sendBuf, "SELECT user_id FROM user_authority_t WHERE store_id = %d;", changestore2);
-                        res = PQexec(con, sendBuf);
-                        //user_idをu_idに格納
-                        sscanf(PQgetvalue(res, 0, 0), "%d", &u_id);
-                        PQclear(res);
-                        //テーブル名：menu_charge_tのmenuidにchangeidを、user_idにu_idを挿入
-                        sprintf(sendBuf, "INSERT INTO menu_charge_t VALUES(%d, %d);", changeid, u_id);
-                        res = PQexec(con, sendBuf);
-                        PQclear(res);
+                    sprintf(sendBuf, "SELECT user_id FROM user_authority_t WHERE store_id = %d;", changestore2);
+                    res = PQexec(con, sendBuf);
+                    //user_idをu_idに格納
+                    sscanf(PQgetvalue(res, 0, 0), "%d", &u_id);
+                    PQclear(res);
+                    //テーブル名：menu_charge_tのmenuidがchangeidものを見つけ、user_idをu_idに変更
+                    sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = %d WHERE menu_id = %d;", u_id, changeid); //SQL文作成
                     }else{
                         //テーブル名：menu_charge_tのuser_idに0を格納する。
                         sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = 0 WHERE menu_id = %d;", changeid); //SQL文作成
@@ -1291,10 +1287,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                             //user_idをu_idに格納
                             sscanf(PQgetvalue(res, 0, 0), "%d", &u_id);
                             PQclear(res);
-                            //テーブル名：menu_charge_tのmenuidにchangeidを、user_idにu_idを挿入
-                            sprintf(sendBuf, "INSERT INTO menu_charge_t VALUES(%d, %d);", changeid, u_id);
-                            res = PQexec(con, sendBuf);
-                            PQclear(res);
+                            //テーブル名：menu_charge_tのmenuidがchangeidものを見つけ、user_idをu_idに変更
+                            sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = %d WHERE menu_id = %d;", u_id, changeid); //SQL文作成
                         }else{
                             //テーブル名：menu_charge_tのuser_idに0を格納する。
                             sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = 0 WHERE menu_id = %d;", changeid); //SQL文作成
@@ -1663,10 +1657,8 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                             //user_idをu_idに格納
                             sscanf(PQgetvalue(res, 0, 0), "%d", &u_id);
                             PQclear(res);
-                            //テーブル名：menu_charge_tのmenuidにchangeidを、user_idにu_idを挿入
-                            sprintf(sendBuf, "INSERT INTO menu_charge_t VALUES(%d, %d);", changeid, u_id);
-                            res = PQexec(con, sendBuf);
-                            PQclear(res);
+                            //テーブル名：menu_charge_tのmenuidがchangeidものを見つけ、user_idをu_idに変更
+                            sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = %d WHERE menu_id = %d;", u_id, changeid); //SQL文作成
                         }else{
                             //テーブル名：menu_charge_tのuser_idに0を格納する。
                             sprintf(sendBuf, "UPDATE menu_charge_t SET user_id = 0 WHERE menu_id = %d;", changeid); //SQL文作成
