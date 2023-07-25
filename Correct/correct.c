@@ -553,7 +553,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   cnt = PQntuples(res);
   for (int i = 0; i < cnt; i++)
   {
-    sprintf(sendBuf, "%s %s %s%s", OK_STAT PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); // 送信データ作成
+    sprintf(sendBuf, "%s %s %s%s", OK_STAT, PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); // 送信データ作成
     sendLen = strlen(sendBuf);                                        // 送信データ長
     send(soc, sendBuf, sendLen, 0);                                   // 送信
     printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
