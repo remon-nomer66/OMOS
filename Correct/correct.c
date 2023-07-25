@@ -326,7 +326,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
         {
           // 入力されたチェーン番号を格納
           // char chain_id[3];
-          strncpy(chain_id, recvBuf, 1);
+          strncpy(chain_id, recvBuf, 2);
           chain_id[2] = '\0';
           break;
         }
