@@ -1,6 +1,7 @@
 #include "omos.h"
+#include "demand.h"
 
-int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf){
+int demand(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf){
     char comm[BUFSIZE];
     int recvLen, sendLen;
     int store_id;
@@ -27,7 +28,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         //検索結果が0件の場合、発注中の商品はありませんと返す
         if(PQntuples(res) == 0){
-            sprintf(sendBuf, "%s %d %s%s", ER_STAT, E_CODE_1802, ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_1802, ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -76,7 +77,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
 
         //入力してもらった値が"0"の場合、処理を終了する
         if(strcmp(comm, "0") == 0){
-            sprintf(sendBuf, "処理を終了します。%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "処理を終了します。%s", ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -170,7 +171,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
 
         //検索結果が0件の場合、発注中の商品はありませんと返す
         if(PQntuples(res) == 0){
-            sprintf(sendBuf, "発注中の商品はありません。%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "発注中の商品はありません。%s", ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -207,7 +208,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
 
         //入力してもらった値が"n"の場合、処理を終了する
         if(strcmp(comm, "n") == 0){
-            sprintf(sendBuf, "処理を終了します。%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "処理を終了します。%s", ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -241,7 +242,10 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
             FILE *file = fopen("order.txt", "w");
             if (file == NULL) {
                 printf("Could not open file\n");
-                return 1;
+                sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_1801, ENTER);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                return -1;
             }
             char header[] = "--------------------発注表--------------------";
             int responsible = u_info[0];
@@ -253,7 +257,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
             fprintf(file, "%s\n\n", user_name);
 
             fprintf(file, "|店舗ID(store_id)|商品ID(menu_id)|商品名(menu_name)|個数(store_order_cnt)|\n");
-            sprintf(sendBuf, "SELECT store_order_t.store_id, store_order_t.menu_id, menu_name, store_order_cnt FROM store_order_t INNER JOIN recipe_t ON store_order_t.menu_id = recipe_t.menu_id INNER JOIN menu_storage_t ON store_order_t = menu_storage_t WHERE storage_flag = 1 AND fod = 1;");
+            sprintf(sendBuf, "SELECT s.store_id, s.menu_id, r.menu_name, s.store_order_cnt FROM store_order_t s JOIN menu_storage_t m ON s.menu_id = m.menu_id JOIN recipe_t r ON m.menu_id = r.menu_id WHERE m.storage_flag = 1 AND r.fod = 1;");
             res = PQexec(con, sendBuf);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             //Error処理
@@ -266,16 +270,20 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
 
             for(int i = 0; i < PQntuples(res); i++){
                 store_id = atoi(PQgetvalue(res, i, 0));
+                printf("%d\n", store_id);
                 menu_id = atoi(PQgetvalue(res, i, 1));
+                printf("%d\n", menu_id);
                 strcpy(menu_name, PQgetvalue(res, i, 2));
+                printf("%s\n", menu_name);
                 store_order_cnt = atoi(PQgetvalue(res, i, 3));
+                printf("%d\n", store_order_cnt);
 
                 fprintf(file, "|%d|%d|%s|%d|\n", store_id, menu_id, menu_name, store_order_cnt);
             }
 
             fclose(file);
 
-            sprintf(sendBuf, "発注表を作成しました。%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "発注表を作成しました。%s", ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -291,7 +299,6 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
                 sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_1807, ENTER);
                 send(soc, sendBuf, sendLen, 0);
             }
-            return 0;
         }
     }
 
@@ -305,7 +312,7 @@ int demandReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf
     }
 
     // "処理が完了しました。"と送信する
-    sprintf(sendBuf, "処理が完了しました。%s%s", ENTER, DATA_END);
+    sprintf(sendBuf, "処理が完了しました。%s", ENTER);
     sendLen = strlen(sendBuf);
     send(soc, sendBuf, sendLen, 0);
     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
