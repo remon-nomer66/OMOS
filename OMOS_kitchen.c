@@ -82,8 +82,7 @@ int kitchen(PGconn *__con, int __soc, int __storeid)
             }
             else
             {
-              sprintf(sendBuf, "キッチンを削除します%s%s", ENTER, DATA_END);
-              sendLen = strlen(sendBuf);                             // 送信データ長
+              sendLen = sprintf(sendBuf, "%s %d%s",OK_STAT, resultRows, ENTER);
               send(__soc, sendBuf, sendLen, 0);                      // 送信
               printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データ表示
               return 0;
