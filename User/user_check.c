@@ -44,7 +44,7 @@ void service_user(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *s
 			            u_info[2] = 0;
                         return;
                     }else if(strlen(comm) != TELLEN){
-                        sprintf(sendBuf, "IDまたはコマンドを再度入力してください%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
