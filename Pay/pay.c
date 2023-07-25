@@ -1,7 +1,7 @@
 #include "omos.h"
 #include "pay.h"
 
-int test_func(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf)
+int pay(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf)
 {
     int recvLen, sendLen;                    // 送受信データ長
     int i=0, num, money,change;
