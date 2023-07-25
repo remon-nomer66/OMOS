@@ -1925,7 +1925,7 @@ int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             }
         }
     }
-    sprintf(sendBuf, "操作を終了します．%s%s", ENTER, DATA_END); //送信データ作成
+    sprintf(sendBuf, "操作を終了します．%s", ENTER); //送信データ作成
     sendLen = strlen(sendBuf); //送信データ長
     send(soc, sendBuf, sendLen, 0); //送信
     return 0;
