@@ -102,11 +102,11 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "DELETE FROM menu_storage_t WHERE menu_id = %d;", delid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 PQclear(res); //resのメモリを解放
-                sprintf(sendBuf, "削除しました．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "削除しました．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
         }else if(strcmp(response, "n") == 0){ //削除しない場合
-            sprintf(sendBuf, "削除を中止しました．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "削除を中止しました．%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }else{
@@ -180,7 +180,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0';
             //4文字以外の場合はエラーを返す
             if(strlen(recvBuf) !=4){
-                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -188,7 +188,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i = 0; i < 4; i++){
                 if(isdigit(recvBuf[i]) == 0){
-                    sprintf(sendBuf, "商品IDは数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "商品IDは数字で入力してください．%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -243,11 +243,11 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "DELETE FROM menu_storage_t WHERE menu_id = %d;", delid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 PQclear(res); //resのメモリを解放
-                sprintf(sendBuf, "削除しました．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "削除しました．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
             }else if(strcmp(response, "n") == 0){ //削除しない場合
-                sprintf(sendBuf, "削除を中止しました．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "削除を中止しました．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
             }else{
@@ -348,11 +348,11 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sprintf(sendBuf, "DELETE FROM menu_storage_t WHERE menu_id = %d;", delid); //SQL文作成
                 res = PQexec(con, sendBuf); //SQL文実行
                 PQclear(res); //resのメモリを解放
-                sprintf(sendBuf, "削除しました．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "削除しました．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
             }else if(strcmp(response, "n") == 0){ //削除しない場合
-                sprintf(sendBuf, "削除を中止しました．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "削除を中止しました．%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
             }else{
