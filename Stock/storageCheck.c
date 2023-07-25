@@ -121,8 +121,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             if (check != 1){
                                 //入力されている商品IDの値をOD1に代入
                                 sscanf(recvBuf, "%d", &OD1);
-                                //テーブル名：recipe_tからOD1と同じmenu_idを持つ行があるかを確認
-                                sprintf(sendBuf, "SELECT menu_id FROM recipe_t WHERE menu_id = %d", OD1); //送信データ作成
+                                //テーブル名：menu_storage_tからOD1と同じmenu_id、u_storeと同じstore_idを持つ行があるかを確認
+                                sprintf(sendBuf, "SELECT menu_id FROM menu_storage_t WHERE menu_id = %d AND store_id = %d", OD1, u_store); //送信データ作成
                                 res = PQexec(con, sendBuf); //実行
                                 // もしうまくいかなければエラーを表示する
                                 if (PQresultStatus(res) != PGRES_TUPLES_OK){
@@ -172,8 +172,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                         check = 1;
                                     }
                                     PQclear(res); //resのメモリを解放
-                                    //テーブル名：menu_storage_tのstorage_flagに1を挿入
-                                    sprintf(sendBuf, "UPDATE menu_storage_t SET storage_flag = 1 WHERE menu_id = %d", OD1); //SQL文作成
+                                    //テーブル名：menu_storage_tのstorage_flagに1を挿入、このときstore_idの値はu_store、menu_idの値はOD1のものを選ぶ
+                                    sprintf(sendBuf, "UPDATE menu_storage_t SET storage_flag = 1 WHERE store_id = %d AND menu_id = %d", u_store, OD1); //SQL文作成
                                     res = PQexec(con, sendBuf); //実行
                                     PQclear(res); //resのメモリを解放
                                 }
@@ -220,8 +220,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             if (check != 1){
                                 //入力されている商品IDの値をOD1に代入
                                 sscanf(recvBuf, "%d", &OD1);
-                                //テーブル名：recipe_tからOD1と同じmenu_idを持つ行があるかを確認
-                                sprintf(sendBuf, "SELECT menu_id FROM recipe_t WHERE menu_id = %d", OD1); //送信データ作成
+                                //テーブル名：menu_storage_tからOD1と同じmenu_id、u_storeと同じstore_idを持つ行があるかを確認
+                                sprintf(sendBuf, "SELECT menu_id FROM menu_storage_t WHERE menu_id = %d AND store_id = %d", OD1, u_store); //送信データ作成
                                 res = PQexec(con, sendBuf); //実行
                                 // もしうまくいかなければエラーを表示する
                                 if (PQresultStatus(res) != PGRES_TUPLES_OK){
@@ -271,8 +271,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                         check = 1;
                                     }
                                     PQclear(res); //resのメモリを解放
-                                    //テーブル名：menu_storage_tのstorage_flagに1を挿入
-                                    sprintf(sendBuf, "UPDATE menu_storage_t SET storage_flag = 1 WHERE menu_id = %d", OD1); //SQL文作成
+                                    //テーブル名：menu_storage_tのstorage_flagに1を挿入、このときstore_idの値はu_store、menu_idの値はOD1のものを選ぶ
+                                    sprintf(sendBuf, "UPDATE menu_storage_t SET storage_flag = 1 WHERE store_id = %d AND menu_id = %d", u_store, OD1); //SQL文作成
                                     res = PQexec(con, sendBuf); //実行
                                     PQclear(res); //resのメモリを解放
                                 }
@@ -356,7 +356,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     }
                     //resに対してPQntuplesで行数を取得し、1行もなければエラーを表示する
                     if (PQntuples(res) == 0){
-                        sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s", ENTER); //送信データ作成
+                        sprintf(sendBuf, "選択した店舗IDに商品が登録されていません。%s", ENTER); //送信データ作成
                         sendLen = strlen(sendBuf); //送信データ長
                         send(soc, sendBuf, sendLen, 0); //送信
                         check = 1;
@@ -429,8 +429,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         // 在庫一斉表示
-        //テーブル名：menu_storage_tからstore_idが0のものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するものを抽出し、menu_nameを表示
-        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = 0"); //SQL文作成
+        //テーブル名：menu_charge_tのuser_idが0のものを抽出し、menu_idを取得。そのmenu_idをもつmenu_nameをrecipe_tから、menu_idをもつstore_idとstorageをmenu_storage_tから取得してこの順に表示
+        sprintf(sendBuf, "SELECT recipe_t.menu_name, menu_storage_t.store_id, menu_storage_t.storage FROM menu_charge_t INNER JOIN recipe_t ON menu_charge_t.menu_id = recipe_t.menu_id INNER JOIN menu_storage_t ON menu_charge_t.menu_id = menu_storage_t.menu_id WHERE menu_charge_t.user_id = 0"); //SQL文作成
         res = PQexec(con, sendBuf); //実行
         //実行結果を表示
         for (int i = 0; i < PQntuples(res); i++){
@@ -448,8 +448,8 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         sprintf(sendBuf, "在庫切れが近い商品です（発注済を除く）。%s", ENTER);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
-        // テーブル名：menu_storage_tからstore_idが0のもので、かつstorageの値がmin_storageよりも小さいものを抽出し、menu_id, storageを表示。また、menu_idとrecipe_tのmenu_idが一致するかつテーブル名：menu_storage_tのstorage_flagが0ものを抽出し、menu_nameを表示
-        sprintf(sendBuf, "SELECT menu_storage_t.menu_id, recipe_t.menu_name, menu_storage_t.storage FROM menu_storage_t INNER JOIN recipe_t ON menu_storage_t.menu_id = recipe_t.menu_id WHERE menu_storage_t.store_id = 0 AND menu_storage_t.storage < menu_storage_t.min_storage AND menu_storage_t.storage_flag = 0"); //SQL文作成
+        //テーブル名：menu_charge_tのuser_idが0のものかつstorageの値がmin_storageよりも小さいものを抽出し、menu_idを取得。そのmenu_idをもつmenu_nameをrecipe_tから、menu_idをもつstore_idとstorageをmenu_storage_tから取得してこの順に表示
+        sprintf(sendBuf, "SELECT recipe_t.menu_name, menu_storage_t.store_id, menu_storage_t.storage FROM menu_charge_t INNER JOIN recipe_t ON menu_charge_t.menu_id = recipe_t.menu_id INNER JOIN menu_storage_t ON menu_charge_t.menu_id = menu_storage_t.menu_id WHERE menu_charge_t.user_id = 0 AND menu_storage_t.storage < menu_storage_t.min_storage"); //SQL文作成
         res = PQexec(con, sendBuf); //実行
         //実行結果を表示
         for (int i = 0; i < PQntuples(res); i++){
