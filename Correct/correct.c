@@ -60,7 +60,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
         send(soc, sendBuf, sendLen, 0);                                    // 送信
         printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
         //recvBufの中身を空にする
-        memset(recvBuf, '\0', sizeof(recvBuf));
+        memset(recvBuf, '\0', sizeof(recvBuf)); 
       }
     }
     
@@ -307,7 +307,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
       while(1){
         // チェーンの指定
         // １桁チェーンを入力させる
-        sprintf(sendBuf, "チェーン番号を入力してください（例：1）%s%s", ENTER, DATA_END); // 送信データ作成
+        sprintf(sendBuf, "チェーン番号を入力してください（例：60*60~69）%s%s", ENTER, DATA_END); // 送信データ作成
         sendLen = strlen(sendBuf);                                                     // 送信データ長
         send(soc, sendBuf, sendLen, 0);                                                // 送信
         recvLen = recv(soc, recvBuf, BUFSIZE, 0);                                      // 受信
@@ -326,7 +326,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
         {
           // 入力されたチェーン番号を格納
           // char chain_id[3];
-          strncpy(chain_id, recvBuf, 1);
+          strncpy(chain_id, recvBuf, 2);
           chain_id[2] = '\0';
           break;
         }
@@ -501,7 +501,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   send(soc, sendBuf, sendLen, 0);             // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
-  sprintf(sendBuf, "商品番号：%s%s%s", product_id, ENTER, DATA_END); // 送信データ作成
+  sprintf(sendBuf, "商品番号：%s%s", product_id, ENTER); // 送信データ作成
   sendLen = strlen(sendBuf);                    // 送信データ長
   send(soc, sendBuf, sendLen, 0);               // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
@@ -514,7 +514,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   }
 
   if (strlen(start_target) != 0 && strlen(end_target) != 0){
-    sprintf(searchArray, "%s AND summary_t.order_date BETWEEN '%s' AND '%s'", searchArray, start_target, end_target);
+    sprintf(searchArray, "%s AND CAST(summary.order_time AS time) BETWEEN '%s' AND '%s'", searchArray, start_target, end_target);
   }
 
   if (strlen(region_id) != 0){
@@ -553,7 +553,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   cnt = PQntuples(res);
   for (int i = 0; i < cnt; i++)
   {
-    sprintf(sendBuf, "%s %s%s", PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); // 送信データ作成
+    sprintf(sendBuf, "%s %s%s",PQgetvalue(res, i, 0), PQgetvalue(res, i, 1), ENTER); // 送信データ作成
     sendLen = strlen(sendBuf);                                        // 送信データ長
     send(soc, sendBuf, sendLen, 0);                                   // 送信
     printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
@@ -579,7 +579,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   cnt = PQntuples(res);
   for (int i = 0; i < cnt; i++)
   {
-    sprintf(sendBuf, "合計金額：%s%s%s", PQgetvalue(res, i, 0), ENTER, DATA_END); // 送信データ作成
+    sprintf(sendBuf, "%s 合計金額：%s%s", OK_STAT, PQgetvalue(res, i, 0), ENTER); // 送信データ作成
     sendLen = strlen(sendBuf);                                        // 送信データ長
     send(soc, sendBuf, sendLen, 0);                                   // 送信
     printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
