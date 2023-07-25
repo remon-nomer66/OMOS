@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "reserve.h"
 
 int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen;   //送受信データ長
@@ -13,7 +14,6 @@ int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
     int reserve_no = 0;     //ダミーデータ
     char comm[BUFSIZE];
 
-
     while(1){
         //予約可能な回数を超えているかチェック
 	    sprintf(sql, "SET search_path to reserve");
@@ -22,7 +22,7 @@ int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
 	    res = PQexec(con, sql);
         if(PQresultStatus(res) != PGRES_TUPLES_OK){
             printf("%s", PQresultErrorMessage(res));
-            sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -33,7 +33,7 @@ int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
         }
         resultRows = PQntuples(res);
         if(resultRows >= RSRVMAX){
-            sprintf(sendBuf, "予約可能な数を超えています%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1202, ENTER, DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -60,7 +60,7 @@ int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
 
 	        sscanf(recvBuf, "%s", comm);
 	        if(strcmp(comm, END) == 0){
-                sprintf(sendBuf, "ユーザ画面に戻ります%s%s", ENTER, DATA_END);
+                sprintf(sendBuf, "ユーザ画面に戻ります%s", ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);

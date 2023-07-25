@@ -1,5 +1,4 @@
 #include "omos.h"
-#include "user.h"
 
 int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf){
     int recvLen, sendLen;   //送受信データ長
@@ -15,7 +14,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("BEGIN failed: %s", PQerrorMessage(con));
         PQclear(res);
-        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
+        sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
         send(soc, sendBuf, sendLen, 0);
     }
 
@@ -42,7 +41,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
             strcpy(phoneNum, recvBuf);
             break;
         }else{
-            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1101, ENTER); //送信データ作成
+            sprintf(sendBuf, "電話番号が不正です。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
@@ -66,7 +65,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
             printf("userPass: %s\n", userPass);
             break;
         }else{
-            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1102, ENTER); //送信データ作成
+            sprintf(sendBuf, "パスワードが不正です。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
@@ -89,15 +88,14 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
             printf("userName: %s\n", userName);
             break;
         }else{
-            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1103, ENTER); //送信データ作成
+            sprintf(sendBuf, "氏名は30文字を超えないようにしてください。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
     }
 
     //じゃんけんを行い、勝ったら1000pt,あいこは500pt,負けは300ptを付与する
-    //point = janken(selfId, soc, recvBuf, sendBuf);
-    point = 1000;
+    point = janken(selfId, soc, recvBuf, sendBuf);
     point_rate = 1.0;
 
     //権限情報authを1にする
@@ -106,7 +104,6 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
     //user_tにuserid,phoneNum,userName,userPassを登録する。うまくいかなかった場合、ロールバックする。
     sprintf(sendBuf, "INSERT INTO user_t(user_id, user_phone, user_name, user_pass) VALUES(nextval('user_seq'), '%s', '%s', '%s')", phoneNum, userName, userPass); //送信データ作成
     res = PQexec(con, sendBuf);
-    printf("sendBuf: %s\n", sendBuf);
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("dame:");
         printf("INSERT failed: %s", PQerrorMessage(con));
@@ -126,7 +123,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
         printf("SELECT failed: %s", PQerrorMessage(con));
         PQclear(res);
         PQfinish(con);
-        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1104, ENTER,DATA_END);
+        sprintf(sendBuf, "error occured%s%s", ENTER,DATA_END);
         send(soc, sendBuf, sendLen, 0);
     }
     char  *user_id_str = PQgetvalue(res, 0, 0);
@@ -144,7 +141,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
         res = PQexec(con, "ROLLBACK");
         PQclear(res);
         PQfinish(con);
-        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1105, ENTER, DATA_END);
+        sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
         send(soc, sendBuf, sendLen, 0);
     }
 
@@ -157,7 +154,7 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
             res = PQexec(con, "ROLLBACK");
             PQclear(res);
             PQfinish(con);
-            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1106, ENTER, DATA_END);
+            sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
         }
     }else{
@@ -169,17 +166,13 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
             res = PQexec(con, "ROLLBACK");
             PQclear(res);
             PQfinish(con);
-            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1106, ENTER);
+            sprintf(sendBuf, "error occured%s", ENTER);
             send(soc, sendBuf, sendLen, 0);
         }
     }
 
     //登録完了を通知し、ユーザ情報を一度に表示する
-    sprintf(sendBuf, "登録完了しました。%s%s", ENTER, DATA_END); //送信データ作成
-    sendLen = strlen(sendBuf);  //送信データ長
-    send(soc, sendBuf, sendLen, 0); //送信
-    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-    sprintf(sendBuf, "userid:%d, phoneNum:%s, userPass:%s, userName:%s, point:%d, point_rate:%f, auth:%d%s%s", user_id, phoneNum, userPass, userName, point, point_rate, auth, ENTER, DATA_END); //送信データ作成
+    sprintf(sendBuf, "登録完了しました。%s", ENTER); //送信データ作成
     sendLen = strlen(sendBuf);  //送信データ長
     send(soc, sendBuf, sendLen, 0); //送信
     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -191,4 +184,3 @@ int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, 
     return 0;
 
 }
-

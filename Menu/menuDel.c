@@ -292,6 +292,9 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             send(soc, sendBuf, sendLen, 0); //送信
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';
+
+            printf("flag01\n");
+
             //4文字以外の場合はエラーを返す
             if(strlen(recvBuf) !=4){
                 sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
@@ -308,6 +311,9 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                     return -1;
                 }
             }
+
+            printf("flag02\n");
+
             //受信した値をdelidに代入
             sscanf(recvBuf, "%d", &delid);
             //テーブル名：menu_detail_tに存在するか確認。その際layerの値は1, 2, 4, 5のものを確認
@@ -319,12 +325,15 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
+
+            printf("flag03\n");
+
             PQclear(res); //resのメモリを解放
             //テーブル名：recipe_tからmenu_idがdelidと一致するもののmenu_nameを取得して表示
             sprintf(sendBuf, "SELECT menu_name FROM recipe_t WHERE menu_id = %d;", delid); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             //実行結果をdelnameに格納
-            sscanf(PQgetvalue(res, i, 0), "%s", delname);
+            sscanf(PQgetvalue(res, 0, 0), "%s", delname);
             //実行しようとしている商品名が正しいか確認
             sprintf(sendBuf, "本当に%sを削除しますか？(y/n)%s%s", delname, ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
@@ -333,6 +342,9 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //受信した内容をresponseに入れる
             sscanf(recvBuf, "%s", response);
+
+            printf("flag04\n");
+
             if(strcmp(response, "y") == 0){ //削除する場合
                 //テーブル名：menu_charge_tからmenu_idがdelidと一致するものを削除
                 sprintf(sendBuf, "DELETE FROM menu_charge_t WHERE menu_id = %d;", delid); //SQL文作成

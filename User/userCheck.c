@@ -1,108 +1,135 @@
 #include "omos.h"
 
-int userCheck(PGconn *__con, int __soc){
-    char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
-    int recvLen, sendLen;   //送受信データ長
-    pthread_t selfId = pthread_self();  //スレッドID
-    int phoneNum;  //電話番号
-    char userPass;  //パスワード
-    char userName;  //氏名
+#define REWIND 1
 
-    //トランザクション開始
-    PGresult *res = PQexec(__con, "BEGIN");
-    if(PQresultStatus(res) != PGRES_COMMAND_OK){
-        printf("BEGIN failed: %s", PQerrorMessage(__con));
-        PQclear(res);
-        PQfinish(__con);
-        sprintf(sendBuf, "error occured%s", ENTER);
-        send(__soc, sendBuf, sendLen, 0);
-    }
-
+//ユーザー認証
+void userCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
+    char tel[BUFSIZE];    //電話番号
+    char comm[BUFSIZE];  //コマンド
+    int recvLen, sendLen;
+    int cnt, p_count, flag, a_flag;
+    char buf[BUFSIZE];
+    int i;
+    int init = 0;
+    
+    a_flag = 0;
+    
     while(1){
-        //電話番号を入力してもらう
-        sprintf(sendBuf, "電話番号を入力してください(09024681234)。%s", ENTER); //送信データ作成
-        sendLen = strlen(sendBuf);  //送信データ長
-        send(__lsoc, sendBuf, sendLen, 0); //送信
-        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-        recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
-        recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
-        printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-        
-        //入力が数字11桁の場合、電話番号として扱う
-        if( strlen(recvBuf) == 11 && isdigit(recvBuf) ){
-            phoneNum = atoi(recvBuf);  //文字列を数値に変換
-            break;
-        }else{
-            sprintf(sendBuf, "電話番号が不正です。%s", ENTER); //送信データ作成
-            sendLen = strlen(sendBuf);  //送信データ長
-            send(__lsoc, sendBuf, sendLen, 0); //送信
-        }
-    }
-
-    //user_tテーブルからSELECTで同一の電話番号を検索
-    sprintf(sendBuf, "SELECT * FROM user_t WHERE phone_num = %d", phoneNum);
-    res = PQexec(__con, sendBuf);
-
-    //検索結果が1件の場合、パスワードを入力してもらう
-    if(PQntuples(res) == 1){
+        //電話番号チェック
         while(1){
-            sprintf(sendBuf, "パスワードを入力してください。%s", ENTER); //送信データ作成
-            sendLen = strlen(sendBuf);  //送信データ長
-            send(__lsoc, sendBuf, sendLen, 0); //送信
-            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-            recvLen = recv(__lsoc, recvBuf, BUFSIZE, 0); //受信
-            recvBuf[recvLen-1] = '\0';  //受信データを文字列にする
-            printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
-
-            //入力が英数字8桁の場合、パスワードとして扱う
-            if( strlen(recvBuf) == 8 && isalnum(recvBuf) ){
-                userPass = recvBuf;  //文字列を数値に変換
-                break;
+            if(init != 0){
+                sprintf(sendBuf, "登録した電話番号を入力してください%s未登録の方で登録する場合は\"UREG\"，ゲストとしてログインする場合は\"GUEST\"を入力してください．%s%s", ENTER, ENTER, DATA_END);
+                sendLen = strlen(sendBuf);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+            }
+            init++;
+            
+            recvLen = receive_message(soc, recvBuf, BUFSIZE);
+            if(recvLen > 0){
+                recvBuf[recvLen - 1] = '\0';
+                printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
+                cnt = sscanf(recvBuf, "%s", comm);
+		        printf("tel: %s\n", comm);
+                if(cnt == 1){
+                    if(strcmp(comm, UREG) == 0){
+                        userReg(selfId, con, soc, u_info, recvBuf, sendBuf);
+                    }else if(strcmp(comm, GUEST) == 0){
+                        sprintf(sendBuf, "%s %d%s", OK_STAT, 4, ENTER);
+                        sendLen = strlen(sendBuf);
+                        send(soc, sendBuf, sendLen, 0);
+                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                        sprintf(sendBuf, "ゲストとしてログインします%s", ENTER);
+                        sendLen = strlen(sendBuf);
+                        send(soc, sendBuf, sendLen, 0);
+                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+			            u_info[0] = 0;
+                        u_info[1] = 1;  //権限: お客様
+			            u_info[2] = 0;
+                        return;
+                    }else if(strlen(comm) != TELLEN){
+                        sprintf(sendBuf, "tel len error%s", ENTER);
+                        sendLen = strlen(sendBuf);
+                        send(soc, sendBuf, sendLen, 0);
+                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                    }else{
+                        strcpy(tel, comm);
+                        sprintf(sendBuf, "入力された携帯電話番号: %s%s", tel, ENTER);
+                        sendLen = strlen(sendBuf);
+                        send(soc, sendBuf, sendLen, 0);
+                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                        break;
+                    }
+                }else{
+                    sprintf(sendBuf, "IDまたはコマンドを再度入力してください%s", ENTER);
+                    sendLen = strlen(sendBuf);
+                    send(soc, sendBuf, sendLen, 0);
+                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                }
             }else{
-                sprintf(sendBuf, "パスワードが不正です。%s", ENTER); //送信データ作成
-                sendLen = strlen(sendBuf);  //送信データ長
-                send(__lsoc, sendBuf, sendLen, 0); //送信
+                sprintf(sendBuf, "IDまたはコマンドを再度入力してください%s", ENTER);
+                sendLen = strlen(sendBuf);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             }
         }
-    }else{
-        sprintf(sendBuf, "電話番号が不正です。%s", ENTER); //送信データ作成
-        sendLen = strlen(sendBuf);  //送信データ長
-        send(__lsoc, sendBuf, sendLen, 0); //送信
-        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+
+        //パスワードチェック(ゲストなら以下は行わない)
+            while(1){
+                sprintf(sendBuf, "パスワードを入力してください%s%s", ENTER, DATA_END);
+                sendLen = strlen(sendBuf);
+                send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+
+                recvLen = receive_message(soc, recvBuf, BUFSIZE);
+                if(recvLen > 0){
+                    recvBuf[recvLen - 1] = '\0';
+                    printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
+                    sscanf(recvBuf, "%s", comm);
+                    if(userCheckSQL(selfId, con, soc, recvBuf, sendBuf, tel + 1, comm, u_info) != -1){ //戻り値-1でなければ会員として正しい
+                        sprintf(sendBuf, "処理完了%s", ENTER);
+                        sendLen = strlen(sendBuf);
+                        send(soc, sendBuf, sendLen, 0);
+                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                        a_flag = 1;
+			            break;
+                    }else{
+                        if(p_count == CEKMAX){
+                            sprintf(sendBuf, "パスワード試行回数の上限に達しましたのでID入力画面に戻ります%s", ENTER);
+                            sendLen = strlen(sendBuf);
+                            send(soc, sendBuf, sendLen, 0);
+                            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                            p_count = 0;
+                            break;
+                        }else{
+			                sprintf(sendBuf, "IDの入力からやり直しますか？IDの入力からやり直す場合は\"YES\"，パスワードを再入力する場合は\"NO\"を入力してください．%s%s", ENTER, DATA_END);
+                            sendLen = strlen(sendBuf);
+                            send(soc, sendBuf, sendLen, 0);
+                            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                            recvLen = receive_message(soc, recvBuf, BUFSIZE); 
+                            if(recvLen > 0){
+                                printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
+                                sscanf(recvBuf, "%s", comm);
+                                if(strcmp(comm, YES) == 0){
+                                    flag = REWIND;
+                                }else if(strcmp(comm, NO) == 0){
+                                    sprintf(sendBuf, "パスワードを再入力してください%s", ENTER);
+                                    p_count++;
+                                }else{
+                                    sprintf(sendBuf, "不正なコマンドです%s", ENTER);
+                                }
+                            }else{
+                                sprintf(sendBuf, "不正なコマンドです%s", ENTER);
+                            }
+                        }
+                        if(flag == REWIND){
+                            break;
+                        }
+                    }
+                }
+            }
+        if(a_flag != 0){
+            break;
+        }
     }
-
-    //user_tテーブルからSELECTで同一の電話番号を検索
-    sprintf(sendBuf, "SELECT * FROM user_t WHERE phone_num = %d AND user_pass = %s", phoneNum, userPass);
-    res = PQexec(__con, sendBuf);
-
-    //検索結果が1件の場合、user_tから氏名(user_name)を取得
-    if(PQntuples(res) == 1){
-        userName = PQgetvalue(res, 0, 2);  //氏名を取得
-    }else{
-        sprintf(sendBuf, "パスワードが不正です。%s", ENTER); //送信データ作成
-        sendLen = strlen(sendBuf);  //送信データ長
-        send(__lsoc, sendBuf, sendLen, 0); //送信
-        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-    }
-
-    //ようこそ、氏名さん！
-    sprintf(sendBuf, "ようこそ、%sさん！%s", userName, ENTER); //送信データ作成
-    sendLen = strlen(sendBuf);  //送信データ長
-    send(__lsoc, sendBuf, sendLen, 0); //送信
-    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-
-    
-
-    //トランザクション終了
-    res = PQexec(__con, "COMMIT");
-    if(PQresultStatus(res) != PGRES_COMMAND_OK){
-        printf("COMMIT failed: %s", PQerrorMessage(__con));
-        PQclear(res);
-        PQfinish(__con);
-        sprintf(sendBuf, "error occured%s", ENTER);
-        send(__soc, sendBuf, sendLen, 0);
-    }
-
-    return 0;
-
 }

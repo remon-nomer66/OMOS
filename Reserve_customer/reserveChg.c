@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "reserve.h"
 
 int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen;   //送受信データ長
@@ -24,7 +25,7 @@ int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
         res = PQexec(con, sql);
         if(PQresultStatus(res) != PGRES_TUPLES_OK){
             printf("%s", PQresultErrorMessage(res));
-            sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -36,7 +37,7 @@ int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
         }
         tmp = resultRows = PQntuples(res);
         if(resultRows <= 0){
-            sprintf(sendBuf, "予約変更の対象がありません%sユーザ画面に戻ります%s%s", ENTER, ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1201, ENTER, DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -68,7 +69,7 @@ int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
             res = PQexec(con, sql);
             if(PQresultStatus(res) != PGRES_TUPLES_OK){
                 printf("%s", PQresultErrorMessage(res));
-                sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -78,7 +79,7 @@ int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
             }
             resultRows = PQntuples(res);
             if(resultRows != 1){
-                sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -124,6 +125,7 @@ int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
                         cnt = sscanf(recvBuf, "%s", comm);
                         if((cnt == 1) && (strcmp(comm, YES) == 0)){
                             reserveCheck(selfId, con, soc, recvBuf, sendBuf, u_info, reg_chg_flag, reserve_no[param - 1]);
+                            break;
                         }else if(strcmp(comm, END) == 0){
                             sprintf(sendBuf, "ユーザ画面に戻ります%s", ENTER);
                             sendLen = strlen(sendBuf);
@@ -136,21 +138,21 @@ int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
                             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
 			                return 0;
                         }else{
-                        sprintf(sendBuf, "変更する予約番号を入力してください%s", ENTER);
-                        sendLen = strlen(sendBuf);
-                        send(soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                    
-                        sprintf(sendBuf, "%s", DATA_END);
-                        sendLen = strlen(sendBuf);
-                        send(soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                            sprintf(sendBuf, "変更する予約番号を入力してください%s", ENTER);
+                            sendLen = strlen(sendBuf);
+                            send(soc, sendBuf, sendLen, 0);
+                            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                        
+                            sprintf(sendBuf, "%s", DATA_END);
+                            sendLen = strlen(sendBuf);
+                            send(soc, sendBuf, sendLen, 0);
+                            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                         }
                     }
                 }else{
                     cnt = sscanf(recvBuf, "%s", comm);
                     if(strcmp(comm, END) == 0){
-                        sprintf(sendBuf, "ユーザ画面に戻ります%s%s", ENTER, DATA_END);
+                        sprintf(sendBuf, "ユーザ画面に戻ります%s", ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);

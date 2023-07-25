@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "reserve.h"
 
 int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int reg_chg_flag, int reserve_no){
     int recvLen, sendLen;   //送受信データ長
@@ -23,7 +24,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
     res = PQexec(con, sql);
     if(PQresultStatus(res) != PGRES_TUPLES_OK){
         printf("%s", PQresultErrorMessage(res));
-        sprintf(sendBuf, "データベースエラー1%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -31,7 +32,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
     }
     resultRows = PQntuples(res);
     if(resultRows == 0){
-        sprintf(sendBuf, "データベースエラー2%s", ENTER);
+        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
         sendLen = strlen(sendBuf);
         send(soc, sendBuf, sendLen, 0);
         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -55,14 +56,14 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
         cnt = sscanf(recvBuf, "%d %s %s %d", &s_num, r_date, r_time, &p_num);
         if(cnt == 4){
 
-	    for(i = 0; i < resultRows; i++){
+	        for(i = 0; i < resultRows; i++){
                 if(s_num == atoi(PQgetvalue(res, i, 0))){
                     flag = 1;
                     break;
                 }
             }
             if(flag != 1){
-                sprintf(sendBuf, "店舗番号に問題があります%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1203, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -83,7 +84,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             r_day[sizeof(r_day) - 1] = '\0';
 
             if(r_year == NULL || r_month == NULL || r_day == NULL){
-                sprintf(sendBuf, "文字列に問題があります%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1204, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -91,7 +92,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 return -1;
             }else{
                 if(strlen(r_year) != 4){
-                    sprintf(sendBuf, "%sは不適切な年です%s", r_year, ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1205, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -105,7 +106,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         zero[0] = '0';
                         zero[1] = '\0';
                     }else{
-                        sprintf(sendBuf, "%sは不適切な月です%s", r_month, ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1206, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -120,7 +121,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         zero[0] = '0';
                         zero[1] = '\0';
                     }else{
-                        sprintf(sendBuf, "%sは不適切な日です%s", r_day, ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1207, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -130,12 +131,14 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 }
             }
 
+            printf("1\n");
+
             time_t t = time(NULL);
             struct tm *local = localtime(&t);
 
             //現在の年以前の予約でないか
             if(atoi(r_year) < (local->tm_year + 1900)){
-                sprintf(sendBuf, "%sは不適切な年です%s", r_year, ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1208, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -145,7 +148,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
 
 	        //現在の月以前の予約でないか
             if((atoi(r_year) == (local->tm_year + 1900)) && (atoi(r_month) < (local->tm_mon + 1))){
-                sprintf(sendBuf, "%sは不適切な月です%s", r_month, ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1209, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -155,7 +158,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
 
             //現在の日以前の予約でないか
             if((atoi(r_year) == (local->tm_year + 1900)) && (atoi(r_month) == (local->tm_mon + 1)) && (atoi(r_day) < local->tm_mday)){
-                sprintf(sendBuf, "%sは不適切な日です%s", r_day, ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1210, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -177,7 +180,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     zero[0] = '0';
                     zero[1] = '\0';
                 }else{
-                    sprintf(sendBuf, "%sは不適切な時間です%s", r_hour, ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1211, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -192,7 +195,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     zero[0] = '0';
                     zero[1] = '\0';
                 }else{
-                    sprintf(sendBuf, "%sは不適切な分です%s", r_min, ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1212, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -203,16 +206,17 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
 
             //現在の時間以前の予約でないか
             if((atoi(r_year) == (local->tm_year + 1900)) && (atoi(r_month) == (local->tm_mon + 1)) && (atoi(r_day) == local->tm_mday) && (atoi(r_hour) < local->tm_hour)){
-                sprintf(sendBuf, "%sは不適切な時間です%s", r_hour, ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1213, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
+                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                 PQclear(res);
                 return -1;
             }
 
             //現在の分以前の予約でないか
             if((atoi(r_year) == (local->tm_year + 1900)) && (atoi(r_month) == (local->tm_mon + 1)) && (atoi(r_day) == local->tm_mday) && (atoi(r_hour) == local->tm_hour) && atoi(r_min) < local->tm_min){
-                sprintf(sendBuf, "%sは不適切な分です%s", r_min, ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1214, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -222,7 +226,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             
             //予約可能時刻の以前でないか(30分前であるか)
             if((atoi(r_year) == (local->tm_year + 1900)) && (atoi(r_month) == (local->tm_mon + 1)) && (atoi(r_day) == local->tm_mday) && (atoi(r_hour) * 60 + atoi(r_min) <= local->tm_hour * 60 + local->tm_min + 30)){
-                sprintf(sendBuf, "30分前までしか予約が出来ません%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1215, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -231,7 +235,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             }
 
             if(!((strcmp(r_hour, "17") >= 0) && (strcmp(r_hour, "22") <= 0) && ((strcmp(r_min, "00") == 0) || (strcmp(r_min, "15") == 0) || (strcmp(r_min, "30") == 0) || (strcmp(r_min, "45") == 0)))){
-                sprintf(sendBuf, "17時から22時までの15分刻みで入力してください%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1216, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -249,7 +253,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             res = PQexec(con, sql);
             if(PQresultStatus(res) != PGRES_TUPLES_OK){
                 printf("%s", PQresultErrorMessage(res));
-                sprintf(sendBuf, "データベースエラー3%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -258,7 +262,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
             }
             tmp = resultRows = PQntuples(res);
             if(resultRows <= 0){
-                sprintf(sendBuf, "人数エラー%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1217, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -283,7 +287,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     res = PQexec(con, sql);
                     if(PQresultStatus(res) != PGRES_TUPLES_OK){
                         printf("%s", PQresultErrorMessage(res));
-                        sprintf(sendBuf, "データベースエラー4%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -303,7 +307,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         res = PQexec(con, sql);
                         if(PQresultStatus(res) != PGRES_COMMAND_OK){
                             printf("%s", PQresultErrorMessage(res));
-                            sprintf(sendBuf, "データベースエラー5%s", ENTER);
+                            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
                             sendLen = strlen(sendBuf);
                             send(soc, sendBuf, sendLen, 0);
                             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -336,7 +340,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     res = PQexec(con, sql);
                     if(PQresultStatus(res) != PGRES_TUPLES_OK){
                         printf("%s", PQresultErrorMessage(res));
-                        sprintf(sendBuf, "データベースエラー6%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -356,7 +360,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         res = PQexec(con, sql);
                         if(PQresultStatus(res) != PGRES_COMMAND_OK){
                             printf("%s", PQresultErrorMessage(res));
-                            sprintf(sendBuf, "データベースエラー7%s", ENTER);
+                            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
                             sendLen = strlen(sendBuf);
                             send(soc, sendBuf, sendLen, 0);
                             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -381,7 +385,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 }
             }
             if(flag != 1){                    
-                sprintf(sendBuf, "当該時間の予約は満杯です%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1218, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -390,7 +394,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー8%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -399,25 +403,33 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                 }
                 resultRows = PQntuples(res);
                 if(resultRows != 1){
-                    sprintf(sendBuf, "データベースエラー9%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                     PQclear(res);
                     return -1;
                 }
-                sprintf(sendBuf, "登録された内容は以下のとおりです%s店舗名：%s%s日時：%s:%s %s%s人数：%d%s", ENTER, PQgetvalue(res, 0, 0), ENTER, r_date, r_hour, r_min, ENTER, p_num, ENTER);
+                sprintf(sendBuf, "%s %d%s", OK_STAT, 1, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-		
-                sprintf(sendBuf, "%s", DATA_END);
+                
+                sprintf(sendBuf, "%s %s %s:%s %d%s", PQgetvalue(res, 0, 0), r_date, r_hour, r_min, p_num, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             }
+        }else{
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_200, ENTER);
+            sendLen = strlen(sendBuf);
+            send(soc, sendBuf, sendLen, 0);
+            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+            PQclear(res);
+            return -1;
         }
     }
+    printf("wow\n");
     PQclear(res);
     return 0;
 }

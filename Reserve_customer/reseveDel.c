@@ -1,5 +1,5 @@
 #include "omos.h"
-#include "test.h"
+#include "reserve.h"
 
 int reserveDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
 int recvLen, sendLen;   //送受信データ長
@@ -23,7 +23,7 @@ int recvLen, sendLen;   //送受信データ長
         res = PQexec(con, sql);
         if(PQresultStatus(res) != PGRES_TUPLES_OK){
             printf("%s", PQresultErrorMessage(res));
-            sprintf(sendBuf, "データベースエラー1%s%s", ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -35,7 +35,7 @@ int recvLen, sendLen;   //送受信データ長
         }
         tmp = resultRows = PQntuples(res);
         if(resultRows <= 0){
-	        sprintf(sendBuf, "予約削除の対象がありません%sユーザ画面に戻ります%s%s", ENTER, ENTER, DATA_END);
+	        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1219, ENTER, DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -67,7 +67,7 @@ int recvLen, sendLen;   //送受信データ長
             res = PQexec(con, sql);
             if(PQresultStatus(res) != PGRES_TUPLES_OK){
                 printf("%s", PQresultErrorMessage(res));
-                sprintf(sendBuf, "データベースエラー2%s%s", ENTER, DATA_END);
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -77,7 +77,7 @@ int recvLen, sendLen;   //送受信データ長
             }
             resultRows = PQntuples(res);
             if(resultRows != 1){
-                sprintf(sendBuf, "データベースエラー3%s%s", ENTER, DATA_END);
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -128,7 +128,7 @@ int recvLen, sendLen;   //送受信データ長
                             res = PQexec(con, sql);
                             if(PQresultStatus(res) != PGRES_COMMAND_OK){
                                 printf("%s", PQresultErrorMessage(res));
-                                sprintf(sendBuf, "データベースエラー4%s%s", ENTER, DATA_END);
+                                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                                 sendLen = strlen(sendBuf);
                                 send(soc, sendBuf, sendLen, 0);
                                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);

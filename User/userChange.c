@@ -1,5 +1,4 @@
-#include "OMOS.h"
-#include "user.h"
+#include "omos.h"
 
 int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf){
     int recvLen, sendLen;   //送受信データ長
@@ -12,7 +11,7 @@ int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
     if(PQresultStatus(res) != PGRES_COMMAND_OK){
     printf("BEGIN failed: %s", PQerrorMessage(con));
     PQclear(res);
-    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
+    sprintf(sendBuf, "error occured%s", ENTER);
     send(soc, sendBuf, sendLen, 0);
     }
 
@@ -34,7 +33,7 @@ int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
             changeNum = atoi(recvBuf);
             break;
         }else{
-            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1108, ENTER); //送信データ作成
+            sprintf(sendBuf, "入力が不正です。0,1,2のいずれかを入力してください。%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }
@@ -71,7 +70,7 @@ int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
                     //ロールバック
                     res = PQexec(con, "ROLLBACK");
                     PQclear(res);
-                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
+                    sprintf(sendBuf, "error occured%s", ENTER);
                     send(soc, sendBuf, sendLen, 0);
                 }
                 //同一の電話番号がない場合、break
@@ -79,7 +78,7 @@ int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
                     printf("good[2]");
                     break;
                 }else{
-                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1109 ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "既に登録されている電話番号です。%s", ENTER); //送信データ作成
                     sendLen = strlen(sendBuf);  //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -87,7 +86,7 @@ int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
                     return -1;
                 }
             }else{
-                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1101, ENTER); //送信データ作成
+                sprintf(sendBuf, "電話番号が不正です。%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf);  //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -104,7 +103,7 @@ int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
             //ロールバック
             res = PQexec(con, "ROLLBACK");
             PQclear(res);
-            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1110 ENTER, DATA_END);
+            sprintf(sendBuf, "error occured%s%s", ENTER, DATA_END);
             send(soc, sendBuf, sendLen, 0);
         }
         else{
@@ -135,7 +134,7 @@ int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
                 printf("newPass: %s\n", newPass);
                 break;
             }else{
-                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1102, ENTER); //送信データ作成
+                sprintf(sendBuf, "パスワードが不正です。%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf);  //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -150,9 +149,10 @@ int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
             //ロールバック
             res = PQexec(con, "ROLLBACK");
             PQclear(res);
-            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1110, ENTER, DATA_END);
+            sprintf(sendBuf, "error occured%s", ENTER);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+            return -1;
         }
         else{
             //変更がうまく行った場合、変更完了と送信する
@@ -180,7 +180,7 @@ int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
                 strcpy(newuserName, recvBuf);
             break;
             }else{
-                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1103, ENTER); //送信データ作成
+                sprintf(sendBuf, "氏名が不正です。30字未満で入力してください。%s", ENTER); //送信データ作成
                 sendLen = strlen(sendBuf);  //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -196,13 +196,14 @@ int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBu
             //ロールバック
             res = PQexec(con, "ROLLBACK");
             PQclear(res);
-            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1110, ENTER, DATA_END);
+            sprintf(sendBuf, "error occured%s", ENTER);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+            return -1;
         }
         else{
             //変更がうまく行った場合、変更完了と送信する
-            sprintf(sendBuf, "変更完了%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "変更完了%s", ENTER); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
