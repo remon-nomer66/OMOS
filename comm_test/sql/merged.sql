@@ -165,7 +165,7 @@ CREATE TABLE menu_storage_t(
        storage   	       integer       NOT NULL,    -- 在庫個数
        min_storage   	integer       NOT NULL,    -- 在庫下限
        storage_flag 	       integer       NOT NULL,    -- 発注フラグ
-       PRIMARY KEY (menu_id)
+       PRIMARY KEY (menu_id, store_id)
 );
 
 --
