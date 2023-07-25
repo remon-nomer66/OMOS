@@ -1,5 +1,4 @@
 #include "omos.h"
-#include "test.h"
 #include "correct.h"
 
 int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
