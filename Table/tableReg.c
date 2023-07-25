@@ -1,68 +1,70 @@
 #include "omos.h"
 
-int tableReg(PGconn *__con, int __soc, int *__u_info, int *__s_info){
-    char recvBuf[BUFSIZE], sendBuf[BUFSIZE];    //送受信用バッファ
+int tableReg(PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info){
     int recvLen, sendLen;   //送受信データ長
     pthread_t selfId = pthread_self();  //スレッドID
-    int cnt;
+    int cnt = 0;
     char sql[BUFSIZE];
     int num;
-    int store_id = __userinfo[2];
+    int store_id = u_info[2];
     int resultRows;
 
     while (1)
     {
         // ２桁のテーブル番号の登録
-        sprintf(sendBuf, "テーブル番号を入力してください%s", ENTER); // 送信データ作成
-        sendLen = strlen(sendBuf);                                   // 送信データ長
-        send(__soc, sendBuf, sendLen, 0);                            // 送信
-        recvLen = recv(__soc, recvBuf, BUFSIZE, 0);                  // 受信
-        recvBuf[recvLen] = '\0';                                     // 受信データにNULLを追加
-        cnt = sscanf(recvBuf, "%d", &cnt);                           // 受信データをint型に変換
-        // sqlに入力された卓番号が存在するかどうか確認する
-        sprintf(sql, "SELECT * FROM table_list WHERE table_id = %d;", cnt);
-        PGresult *res = PQexec(__con, sql);
+        sprintf(sendBuf, "テーブル番号を入力してください%s%s", ENTER, DATA_END); // 送信データ作成
+        sendLen = strlen(sendBuf);                                                // 送信データ長
+        send(soc, sendBuf, sendLen, 0);                                         // 送信
+        printf("[C_THREAD %ld] send=%s\n",selfId, sendBuf);                              // 送信データ表示
+        //cntに入力されたテーブル番号を代入
+        recvLen = recv(soc, recvBuf, BUFSIZE, 0);                              // 受信
+        recvBuf[recvLen-1] = '\0';                                                  // 文字列化
+        printf("[C_THREAD %ld] recv=%s\n", selfId, recvBuf);                             // 受信データ表示
+        cnt = atoi(recvBuf);
 
-        if (PQntuples(res) == 0)
-        {
-            if (cnt < 100 && cnt > 0)
-            { // 入力された値が２桁の数字だった場合
-                sprintf(sql, "SELECT * FROM table WHERE t_num = %d AND t_flag = 0", num);
-                PQexec(__con, sql);
-                resultRows = PQntuples(res);
 
-                sprintf(sql, "UPDATE table SET t_flag = 1 WHERE t_num = %d;", num);
-                PQexec(__con, sql);
-                resultRows = PQntuples(res);
-                sprintf(sendBuf, "テーブル番号%dを登録しました%s", cnt, ENTER); // 送信データ作成
-                sendLen = strlen(sendBuf);                                      // 送信データ長
-                send(__soc, sendBuf, sendLen, 0);                               // 送信
+       //入力された番号が0以上100以下であるかを調べる
+        if(0 < cnt && cnt < 100){
+            //sqlに入力された卓番号が存在するか確認する
+            sprintf(sql, "SELECT COUNT(*) FROM store_table_t WHERE desk_num = %d ", cnt);
+            PGresult *res = PQexec(con, sql);
+            resultRows = atoi(PQgetvalue(res, 0, 0));
+            if(resultRows == 0){
+                sprintf(sendBuf, "テーブル番号%dは存在しません%s%s", cnt, ENTER, DATA_END); // 送信データ作成
+                sendLen = strlen(sendBuf);                                                // 送信データ長
+                send(soc, sendBuf, sendLen, 0);                                         // 送信
+                printf("[C_THREAD %ld] send=%s\n",selfId, sendBuf);                              // 送信データ表示
+                break;
+            }else{
+                // sqlに入力された卓番号が存在するか確認し、存在した場合、desk_useの値をnumに代入する。
+                sprintf(sql, "SELECT desk_use FROM store_table_t WHERE desk_num = %d ", cnt);
+                PGresult *res = PQexec(con, sql);
+                num = atoi(PQgetvalue(res, 0, 0));
+                if(num == 0){
+                    sprintf(sql, "UPDATE store_table_t SET desk_use = 1 WHERE desk_num = %d;", cnt);
+                    PQexec(con, sql);
+                    sprintf(sendBuf, "テーブル番号%dを登録しました%s", cnt, ENTER); // 送信データ作成
+                    sendLen = strlen(sendBuf);                                                // 送信データ長
+                    send(soc, sendBuf, sendLen, 0);                                         // 送信
+                }else{
+                    sprintf(sendBuf, "そのテーブル番号は既に登録されています%s", ENTER); // 送信データ作成
+                    sendLen = strlen(sendBuf);                                                // 送信データ長
+                    send(soc, sendBuf, sendLen, 0);                                         // 送信
+                    printf("[C_THREAD %ld] send=%s\n",selfId, sendBuf);                              // 送信データ表示
+                }
             }
-            else if (cnt == 0)
-            {                                                   // 入力された値が0だった場合
-                sprintf(sendBuf, "0は入力できません%s", ENTER); // 送信データ作成
-                sendLen = strlen(sendBuf);                      // 送信データ長
-                send(__soc, sendBuf, sendLen, 0);               // 送信
-            }
-            else if (num > 99)
-            {                                                             // 入力された値が２桁の数字以外だった場合
-                sprintf(sendBuf, "2桁の数字を入力してください%s", ENTER); // 送信データ作成
-                sendLen = strlen(sendBuf);                                // 送信データ長
-                send(__soc, sendBuf, sendLen, 0);                         // 送信
-            }
+        }else{
+            sprintf(sendBuf, "1以上100未満の数字を入力してください%s%s", ENTER, DATA_END); // 送信データ作成
+            sendLen = strlen(sendBuf);                                                // 送信データ長
+            send(soc, sendBuf, sendLen, 0);                                         // 送信
+            printf("[C_THREAD %ld] send=%s\n",selfId, sendBuf);                              // 送信データ表示
+        break;
         }
-
-        else
-        {                                                                          // 入力された値がすでに存在する場合
-            sprintf(sendBuf, "そのテーブル番号はすでに登録されています%s", ENTER); // 送信データ作成
-            sendLen = strlen(sendBuf);                                             // 送信データ長
-            send(__soc, sendBuf, sendLen, 0);                                      // 送信
-        }
+                            
+        s_info[0] = u_info[2];
+        s_info[1] = cnt;
+        return 0;
+        
     }
-  
-    s_info[0] = u_info[2];
-    s_info[1] = num;
-
     return 0;
-
 }
