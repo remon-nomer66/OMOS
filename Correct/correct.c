@@ -501,7 +501,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
   send(soc, sendBuf, sendLen, 0);             // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
 
-  sprintf(sendBuf, "商品番号：%s%s%s", product_id, ENTER, DATA_END); // 送信データ作成
+  sprintf(sendBuf, "商品番号：%s%s", product_id, ENTER); // 送信データ作成
   sendLen = strlen(sendBuf);                    // 送信データ長
   send(soc, sendBuf, sendLen, 0);               // 送信
   printf("[C_THREAD %ld] SEND=> %s\n", selfId,sendBuf);                              // 送信
