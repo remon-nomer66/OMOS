@@ -219,6 +219,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //クライアントから受信した値をresponseに代入
             sscanf(recvBuf, "%s", response);
+            
             if(strcmp(response, "y") == 0){ //削除する場合
                 //テーブル名：menu_charge_tからmenu_idがdelidと一致するものを削除
                 sprintf(sendBuf, "DELETE FROM menu_charge_t WHERE menu_id = %d;", delid); //SQL文作成

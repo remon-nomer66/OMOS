@@ -94,14 +94,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         }else{
                             //4文字以外の場合はエラーを返す
                             if (strlen(recvBuf) != 4){
-                                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
                             }
                             //数字以外の場合はエラーを返す
                             if (strlen(recvBuf) == 4 && !isdigit(recvBuf[0]) || !isdigit(recvBuf[1]) || !isdigit(recvBuf[2]) || !isdigit(recvBuf[3])){
-                                sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_200, ENTER); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
@@ -112,7 +112,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             //見つかったならばドリンクであるとエラーを返す。
                             if (PQresultStatus(res) == PGRES_TUPLES_OK){
                                 if (PQntuples(res) != 0){
-                                    sprintf(sendBuf, "選択した商品IDはドリンクです。%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_300, ENTER); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
@@ -126,14 +126,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 res = PQexec(con, sendBuf); //実行
                                 // もしうまくいかなければエラーを表示する
                                 if (PQresultStatus(res) != PGRES_TUPLES_OK){
-                                    sprintf(sendBuf, "データベースの検索に失敗しました。%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_400, ENTER); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
                                 }
                                 //resに対してPQntuplesで行数を取得し、1行もなければエラーを表示する
                                 if (PQntuples(res) == 0){
-                                    sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_500, ENTER); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
@@ -147,14 +147,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                     recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
                                     //3文字以外の場合はエラーを返す
                                     if (strlen(recvBuf) != 3){
-                                        sprintf(sendBuf, "注文数は3桁：半角数字で入力してください。%s", ENTER); //送信データ作成
+                                        sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_100, ENTER); //送信データ作成
                                         sendLen = strlen(sendBuf); //送信データ長
                                         send(soc, sendBuf, sendLen, 0); //送信
                                         check = 1;
                                     }
                                     //数字以外の場合はエラーを返す
                                     if (strlen(recvBuf) == 3 && !isdigit(recvBuf[0]) || !isdigit(recvBuf[1]) || !isdigit(recvBuf[2])){
-                                        sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER); //送信データ作成
+                                        sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_200, ENTER); //送信データ作成
                                         sendLen = strlen(sendBuf); //送信データ長
                                         send(soc, sendBuf, sendLen, 0); //送信
                                         check = 1;
@@ -166,7 +166,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                     res = PQexec(con, sendBuf); //実行
                                     //失敗した場合はエラーを表示する
                                     if (PQresultStatus(res) != PGRES_COMMAND_OK){
-                                        sprintf(sendBuf, "注文に失敗しました。%s", ENTER); //送信データ作成
+                                        sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_600, ENTER); //送信データ作成
                                         sendLen = strlen(sendBuf); //送信データ長
                                         send(soc, sendBuf, sendLen, 0); //送信
                                         check = 1;
@@ -193,14 +193,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                         }else{
                             //4文字以外の場合はエラーを返す
                             if (strlen(recvBuf) != 4){
-                                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_100, ENTER); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
                             }
                             //数字以外の場合はエラーを返す
                             if (strlen(recvBuf) == 4 && !isdigit(recvBuf[0]) || !isdigit(recvBuf[1]) || !isdigit(recvBuf[2]) || !isdigit(recvBuf[3])){
-                                sprintf(sendBuf, "数字以外の文字が入力されています。%s", ENTER); //送信データ作成
+                                sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_200, ENTER); //送信データ作成
                                 sendLen = strlen(sendBuf); //送信データ長
                                 send(soc, sendBuf, sendLen, 0); //送信
                                 check = 1;
@@ -211,7 +211,7 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                             //見つかったならばドリンクであるとエラーを返す。
                             if (PQresultStatus(res) == PGRES_TUPLES_OK){
                                 if (PQntuples(res) != 0){
-                                    sprintf(sendBuf, "選択した商品IDはフードです。%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_300, ENTER); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
@@ -225,14 +225,14 @@ int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                                 res = PQexec(con, sendBuf); //実行
                                 // もしうまくいかなければエラーを表示する
                                 if (PQresultStatus(res) != PGRES_TUPLES_OK){
-                                    sprintf(sendBuf, "データベースの検索に失敗しました。%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_400, ENTER); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
                                 }
                                 //resに対してPQntuplesで行数を取得し、1行もなければエラーを表示する
                                 if (PQntuples(res) == 0){
-                                    sprintf(sendBuf, "選択した商品IDに商品が登録されていません。%s", ENTER); //送信データ作成
+                                    sprintf(sendBuf, "%s %d%s", ER_STAT, ER_CODE_500, ENTER); //送信データ作成
                                     sendLen = strlen(sendBuf); //送信データ長
                                     send(soc, sendBuf, sendLen, 0); //送信
                                     check = 1;
