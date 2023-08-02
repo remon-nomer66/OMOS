@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>order</title>
+</head>
+<body>
+    <h2>注文画面</h2>
+    <div id="whole">
+        <label for="tab">タブ</label>
+        <select
+            id="tab"
+            name="client-tab" >
+            <option value="6">推しメニュー</option>
+            <option value="1">コモンメニュー</option>
+            <option value="2">ブランドメニュー</option>
+            <option value="3">ショップメニュー</option>
+            <option value="4">リージョナルメニュー</option>
+            <option value="5">シーズンメニュー</option>
+            <option value="7">全種類</option>
+        </select>
+        <div id="prev"></div>
+        <form>
+            <br>
+            <p>選択中のメニュー</p>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>　</th>
+                        <th>商品名</th>
+                        <th>数量</th>
+                    </tr>
+                </thead>
+                <tbody id="tmp"></tbody>
+            </table>
+            <br>
+            <input id="btn" type="button" value="送信" onclick="btnEvent(event)" />
+        </form>
+        <div id="result"></div>
+    </div>
+    <script src="../javascript/order.js"></script>
+</body>
+</html>

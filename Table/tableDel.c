@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "table.h"
 
 int tableDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info){
     int recvLen, sendLen;   //送受信データ長
@@ -13,6 +14,7 @@ int tableDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
     int store_id = s_info[0];
     int desk_num = s_info[1];
 
+
     while(1){
         //削除したい卓番号を入力してください
         sprintf(sendBuf, "削除したい卓番号を入力してください%s%s", ENTER, DATA_END); //送信データ作成
@@ -26,6 +28,7 @@ int tableDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
         cnt = atoi(recvBuf);
 
         printf("cnt = %d\n", cnt);
+        printf("store_id = %d\n", store_id);
 
         //入力された番号が0以上100以下であるか調べる
         if(0 < cnt && cnt < 100){
@@ -35,7 +38,7 @@ int tableDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
             tmp = atoi(PQgetvalue(res, 0, 0));
             printf("tmp = %d\n", tmp);
             if(tmp == 0){
-                sprintf(sendBuf, "テーブル番号%dは存在しません%s%s", cnt, ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "%s %d テーブル番号%dは存在しません%s", ER_STAT, E_CODE_1606, cnt, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf);  //送信データ長
                 send(soc, sendBuf, sendLen, 0);   //送信
                 printf("[C_THREAD %ld]SEND=>%s\n",selfId,sendBuf);
@@ -46,7 +49,7 @@ int tableDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
                 PGresult *res2 = PQexec(con, sql);
                 num = atoi(PQgetvalue(res2, 0, 0));
                 if(num == 0){
-                    sprintf(sendBuf, "テーブル番号%dは使用されていません%s%s", cnt, ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "%s %d テーブル番号%dは使用されていません%s", ER_STAT, E_CODE_1607, cnt, ENTER); //送信データ作成
                     sendLen = strlen(sendBuf);  //送信データ長
                     send(soc, sendBuf, sendLen, 0);   //送信
                     printf("[C_THREAD %ld]SEND=>%s\n",selfId,sendBuf);
@@ -56,7 +59,7 @@ int tableDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
                 res = PQexec(con, sql);
                 if (PQresultStatus(res) != PGRES_TUPLES_OK){//クエリが失敗した場合エラーを表示する
                 printf("%s",PQresultErrorMessage(res));
-                sprintf(sendBuf, "エラー%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "%s %d エラー%s", ER_STAT, E_CODE_1610, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf);  //送信データ長
                 send(soc, sendBuf, sendLen, 0);   //送信
                 printf("[C_THREAD %ld]SEND=>%s",selfId,sendBuf);
@@ -66,7 +69,7 @@ int tableDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
                 PQclear(res);
 
                 if(resultRows >= 1){
-                    sprintf(sendBuf, "注文情報が残っています%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "%s %d 注文情報が残っています%s", ER_STAT, E_CODE_1608, ENTER); //送信データ作成
                     sendLen = strlen(sendBuf);  //送信データ長
                     send(soc, sendBuf, sendLen, 0);   //送信
                     printf("[C_THREAD %ld]SEND=>%s",selfId,sendBuf);
@@ -77,12 +80,12 @@ int tableDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
                     res = PQexec(con, sql);
                     if (PQresultStatus(res) != PGRES_COMMAND_OK){//アップデートできなかった場合エラーを表示する
                         printf("%s",PQresultErrorMessage(res));
-                        sprintf(sendBuf, "エラー%s%s", ENTER, DATA_END); //送信データ作成
+                        sprintf(sendBuf, "%s %d エラー%s%s", ER_STAT, E_CODE_1609, ENTER, DATA_END); //送信データ作成
                         sendLen = strlen(sendBuf);  //送信データ長
                         send(soc, sendBuf, sendLen, 0);   //送信
                         printf("[C_THREAD %ld]SEND=>%s",selfId,sendBuf);
                     }
-                    sendLen = sprintf(sendBuf,"%d店の%d番の卓情報を削除しました%s%s", store_id, cnt, ENTER,DATA_END);
+                    sendLen = sprintf(sendBuf,"%s 1 %d店の%d番の卓情報を削除しました%s", OK_STAT, store_id, cnt, ENTER);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld]SEND=>%s",selfId,sendBuf);
                     PQclear(res);
@@ -92,7 +95,7 @@ int tableDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBu
 
             }
         }else{
-            sprintf(sendBuf, "1以上100未満の数字を入力してください%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "%s %d1以上100未満の数字を入力してください%s%s", ER_STAT, E_CODE_1605, ENTER, DATA_END); //送信データ作成
             sendLen = strlen(sendBuf);  //送信データ長
             send(soc, sendBuf, sendLen, 0);   //送信
             printf("[C_THREAD %ld]SEND=>%s\n",selfId,sendBuf);

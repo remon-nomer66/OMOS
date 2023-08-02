@@ -1,5 +1,5 @@
 #include "omos.h"
-#include "history.h"
+//#include "history.h"
 
 int history(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info){
     int recvLen, sendLen;   //送受信データ長

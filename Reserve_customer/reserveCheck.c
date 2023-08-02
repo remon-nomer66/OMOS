@@ -17,7 +17,7 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
     char *buf;
     char r_year[5], r_month[3], r_day[3], r_hour[3], r_min[3];
 
-    sprintf(sendBuf, "登録する店舗番号，日時(時間は15分刻み)，人数を\"110 2023-06-18 12:15 5\"のように半角空白を挿入した形で入力してください%s店舗番号 店舗名%s", ENTER, ENTER);
+    sprintf(sendBuf, "登録する店舗番号，日時(時間は15分刻み)，人数を\"110 2023-08-25 19:15 5\"のように半角空白を挿入した形で入力してください%s店舗番号 店舗名%s", ENTER, ENTER);
 
     //店舗番号と店舗名の対応関係を表示
     sprintf(sql, "SELECT store_id, store_name FROM store_t");
@@ -410,12 +410,12 @@ int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *se
                     PQclear(res);
                     return -1;
                 }
-                sprintf(sendBuf, "%s %d%s", OK_STAT, 1, ENTER);
+                sprintf(sendBuf, "%s %d%s", OK_STAT, 3, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                 
-                sprintf(sendBuf, "%s %s %s:%s %d%s", PQgetvalue(res, 0, 0), r_date, r_hour, r_min, p_num, ENTER);
+                sprintf(sendBuf, "以下の時間でご予約を承りました%s店舗名: %s 日付: %s 時刻: %s:%s 人数: %d%s", ENTER, PQgetvalue(res, 0, 0), r_date, r_hour, r_min, p_num, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);

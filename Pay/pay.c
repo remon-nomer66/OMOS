@@ -217,7 +217,7 @@ int pay(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char
     }
 
     // order_tよりkitchen_flagが1の注文を取得した後、order_tのmenu_idをもとにmenu_price_tからpriceを結合する
-    sprintf(sendBuf, "SELECT order_t.menu_id, menu_price_t.price FROM order_t INNER JOIN menu_price_t ON order_t.menu_id = menu_price_t.menu_id WHERE desk_num = %d AND kitchen_flag = 1;", tableNum);
+    sprintf(sendBuf, "SELECT order_t.order_cnt, menu_price_t.price FROM order_t INNER JOIN menu_price_t ON order_t.menu_id = menu_price_t.menu_id WHERE desk_num = %d AND kitchen_flag = 1;", tableNum);
     res = PQexec(con, sendBuf);
     if (PQresultStatus(res) != PGRES_TUPLES_OK)
     { // SELECT失敗
@@ -407,8 +407,7 @@ int pay(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char
         else{
             // おつりを計算する
             change = money - sum;
-
-            // おつりを送信する
+        // おつりを送信する
             sprintf(sendBuf, "%s 1 おつりは%d円です。お会計終了です。%s", OK_STAT, change, ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
@@ -450,7 +449,7 @@ int pay(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char
             while (money < sum)
             {
                 // お客様から頂戴した金額が合計金額よりも少ないことを伝える
-                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2309, ENTER,DATA_END);
+                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_2307, ENTER,DATA_END);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf); // 送信データを表示
@@ -552,6 +551,7 @@ int pay(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char
     // order_tから該当するテーブルのデータを移行する
     sprintf(sendBuf, "INSERT INTO summary_t SELECT store_id, menu_id, order_cnt, order_date, order_time, user_id FROM order_t WHERE desk_num = %d AND store_id = %d; ", tableNum, store_num);
     res = PQexec(con, sendBuf);
+    printf("%s\n", sendBuf);
     if (PQresultStatus(res) != PGRES_COMMAND_OK){
         printf("%s",PQresultErrorMessage(res));
         printf("error\n");
@@ -559,24 +559,20 @@ int pay(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char
         res = PQexec(con, "ROLLBACK");
         sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_100, ENTER);
         PQclear(res);
-        return -1;
-
     }
-    PQclear(res);
 
     printf("order_tからsummary_tへの移行完了\n");
 
     //order_tから該当する店舗番号、テーブルのデータを削除する
-    //sprintf(sendBuf, "DELETE FROM order_t WHERE store_id = %d AND desk_num = %d;", store_num, tableNum);
-    //res = PQexec(con, sendBuf);
-    //if (PQresultStatus(res) != PGRES_COMMAND_OK){
-    //    PQclear(res);
-    //    res = PQexec(con, "ROLLBACK");
-    //    sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_100, ENTER);
-    //    PQclear(res);
-    //    return -1;
-    //}
-    //PQclear(res);
+    sprintf(sendBuf, "DELETE FROM order_t WHERE store_id = %d AND desk_num = %d;", store_num, tableNum);
+    res = PQexec(con, sendBuf);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK){
+        PQclear(res);
+        res = PQexec(con, "ROLLBACK");
+        sprintf(sendBuf, "%s %d %s", ER_STAT, E_CODE_100, ENTER);
+        PQclear(res);
+        return -1;
+    }
 
     printf("order_tからの削除完了\n");
 

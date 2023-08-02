@@ -60,11 +60,8 @@ int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
 
 	        sscanf(recvBuf, "%s", comm);
 	        if(strcmp(comm, END) == 0){
-                sprintf(sendBuf, "ユーザ画面に戻ります%s", ENTER);
-                sendLen = strlen(sendBuf);
-                send(soc, sendBuf, sendLen, 0);
-                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                break;
+                PQclear(res);
+                return 0;
             }
         }
     }

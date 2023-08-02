@@ -127,15 +127,7 @@ int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
                             reserveCheck(selfId, con, soc, recvBuf, sendBuf, u_info, reg_chg_flag, reserve_no[param - 1]);
                             break;
                         }else if(strcmp(comm, END) == 0){
-                            sprintf(sendBuf, "ユーザ画面に戻ります%s", ENTER);
-                            sendLen = strlen(sendBuf);
-                            send(soc, sendBuf, sendLen, 0);
-                            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                        
-                            sprintf(sendBuf, "%s", DATA_END);
-                            sendLen = strlen(sendBuf);
-                            send(soc, sendBuf, sendLen, 0);
-                            printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                            PQclear(res);
 			                return 0;
                         }else{
                             sprintf(sendBuf, "変更する予約番号を入力してください%s", ENTER);
@@ -152,10 +144,6 @@ int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
                 }else{
                     cnt = sscanf(recvBuf, "%s", comm);
                     if(strcmp(comm, END) == 0){
-                        sprintf(sendBuf, "ユーザ画面に戻ります%s", ENTER);
-                        sendLen = strlen(sendBuf);
-                        send(soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                         PQclear(res);
                         return 0;
                     }

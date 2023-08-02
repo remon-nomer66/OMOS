@@ -202,7 +202,7 @@ int correct(pthread_t selfId, PGconn *con, int soc, int *u_info)
         break;
       }
 
-      // recvBufに無効な範囲の数字以外が含まれていた場合
+       // recvBufに無効な範囲の数字以外が含まれていた場合
       else
       {
         sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_2107, ENTER); // 送信データ作成

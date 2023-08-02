@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "menu.h"
 
 int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
@@ -22,7 +23,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvBuf[recvLen-1] = '\0';
         //4文字以外の場合はエラーを返す。
         if(strlen(recvBuf) != 4){
-            sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s", ENTER);
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1702, ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             return -1;
@@ -30,7 +31,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力された文字が数字以外ならエラーを返す。
         for(i = 0; i < strlen(recvBuf); i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                sprintf(sendBuf, "商品IDは数字で入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -86,7 +87,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 res = PQexec(con, sendBuf);
                 //存在していない場合はエラーを返す。
                 if(PQntuples(res) == 0){
-                    sprintf(sendBuf, "あなたの店舗IDは存在しません。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1704, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -102,7 +103,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //入力された文字が数字以外ならエラーを返す。
                 for(i=0; i<recvLen-1; i++){
                     if(!isdigit(recvBuf[i])){
-                        sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         return -1;
@@ -120,7 +121,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //入力された文字が数字以外ならエラーを返す。
                 for(i=0; i<recvLen-1; i++){
                     if(!isdigit(recvBuf[i])){
-                        sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         return -1;
@@ -144,7 +145,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //数字以外が入力されていないかを確認
             for(i = 0; i < recvLen-1; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -154,7 +155,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sscanf(recvBuf, "%d", &fod);
             //fodが0か1であるかを確認。どちらでもない場合はエラーを返す。
             if(fod != 0 && fod != 1){
-                sprintf(sendBuf, "フードなら0を、ドリンクなら1を入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -173,7 +174,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             res = PQexec(con, sendBuf);
             //存在している場合は、存在していることを伝える。
             if(PQntuples(res) != 0){
-                sprintf(sendBuf, "既に登録されている商品名です。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1705, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -199,7 +200,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sscanf(recvBuf, "%d", &newmprice);
             //新商品の価格が0以上であるかを確認。
             if(newmprice < 0){
-                sprintf(sendBuf, "価格は0以上で入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1706, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -207,7 +208,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i = 0; i < recvLen-1; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sprintf(sendBuf, "価格は半角数字で入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -223,7 +224,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //数字以外が入力されていないかを確認
             for(i = 0; i < recvLen-1; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -233,7 +234,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sscanf(recvBuf, "%d", &newmstar);
             //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
             if(newmstar != 0 && newmstar != 1){
-                sprintf(sendBuf, "押しメニューにするかどうかは１か０で入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -248,7 +249,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i=0; i<recvLen-1; i++){
                 if(!isdigit(recvBuf[i])){
-                    sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -266,7 +267,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i=0; i<recvLen-1; i++){
                 if(!isdigit(recvBuf[i])){
-                    sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -309,7 +310,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvBuf[recvLen-1] = '\0';
         //4文字以外の場合はエラーを返す。
         if(strlen(recvBuf) != 4){
-            sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください。%s", ENTER);
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             return -1;
@@ -317,7 +318,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力された文字が数字以外ならエラーを返す。
         for(i = 0; i < strlen(recvBuf); i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                sprintf(sendBuf, "商品IDは数字で入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -347,7 +348,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //数字以外が入力されていないかを確認
             for(i = 0; i < recvLen-1; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -357,7 +358,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sscanf(recvBuf, "%d", &flag);
             //flagが0か1であるかを確認。どちらでもない場合はエラーを返す。
             if(flag != 0 && flag != 1){
-                sprintf(sendBuf, "店舗に登録するかどうかは１か０で入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -377,7 +378,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 recvBuf[recvLen-1] = '\0';
                 //4文字以外の場合はエラーを返す。
                 if(strlen(recvBuf) != 4){
-                    sprintf(sendBuf, "店舗IDは4桁：半角数字で入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1702, ENTER);
                     send(soc, sendBuf, sendLen, 0);
                     sendLen = strlen(sendBuf);
                     return -1;
@@ -385,7 +386,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //入力された文字が数字以外ならエラーを返す。
                 for(i = 0; i < recvLen-1; i++){
                     if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                        sprintf(sendBuf, "店舗IDは数字で入力してください。%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         return -1;
@@ -398,7 +399,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 res = PQexec(con, sendBuf);
                 //存在していない場合はエラーを返す。
                 if(PQntuples(res) == 0){
-                    sprintf(sendBuf, "その店舗IDは存在しません。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1704, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -414,7 +415,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //入力された文字が数字以外ならエラーを返す。
                 for(i=0; i<recvLen-1; i++){
                     if(!isdigit(recvBuf[i])){
-                        sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         return -1;
@@ -432,7 +433,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //入力された文字が数字以外ならエラーを返す。
                 for(i=0; i<recvLen-1; i++){
                     if(!isdigit(recvBuf[i])){
-                        sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         return -1;
@@ -455,7 +456,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //数字以外が入力されていないかを確認
             for(i = 0; i < recvLen-1; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -465,7 +466,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sscanf(recvBuf, "%d", &fod);
             //fodが0か1であるかを確認。どちらでもない場合はエラーを返す。
             if(fod != 0 && fod != 1){
-                sprintf(sendBuf, "フードなら0を、ドリンクなら1を入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -484,7 +485,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             res = PQexec(con, sendBuf);
             //存在している場合は、存在していることを伝える。
             if(PQntuples(res) != 0){
-                sprintf(sendBuf, "既に登録されている商品名です。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1705, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -510,7 +511,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sscanf(recvBuf, "%d", &newmprice);
             //新商品の価格が0以上であるかを確認。
             if(newmprice < 0){
-                sprintf(sendBuf, "価格は0以上で入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1706, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -518,7 +519,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i = 0; i < recvLen-1; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sprintf(sendBuf, "価格は半角数字で入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -534,7 +535,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //数字以外が入力されていないかを確認
             for(i = 0; i < recvLen-1; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -544,7 +545,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sscanf(recvBuf, "%d", &newmstar);
             //newstarが0か1であるかを確認。どちらでもない場合はエラーを返す。
             if(newmstar != 0 && newmstar != 1){
-                sprintf(sendBuf, "押しメニューにするかどうかは１か０で入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -559,7 +560,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //数字以外が入力されていないかを確認
             for(i = 0; i < recvLen-1; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -569,7 +570,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sscanf(recvBuf, "%d", &newmlevel);
             //newmlevelの値が1以上かつ5以下であるかを確認。
             if(newmlevel < 1 || newmlevel > 5){
-                sprintf(sendBuf, "メニューレベルは1以上5以下で入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;
@@ -583,7 +584,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 recvBuf[recvLen-1] = '\0';
                 //3文字以外の場合はエラーを返す
                 if(strlen(recvBuf) != 3){
-                    sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1702, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -591,7 +592,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //入力された文字が数字以外ならエラーを返す。
                 for(i = 0; i < 3; i++){
                     if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                        sprintf(sendBuf, "店舗IDは半角数字で入力してください。%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         return -1;
@@ -604,7 +605,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 res = PQexec(con, sendBuf);
                 //存在していない場合はエラーを返す。
                 if(PQntuples(res) == 0){
-                    sprintf(sendBuf, "存在しない店舗IDです。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1704, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -622,10 +623,17 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //地域IDを受信
                 recvLen = recv(soc, recvBuf, BUFSIZE, 0);
                 recvBuf[recvLen-1] = '\0';
+                //2文字以外の場合はエラーを返す
+                if(strlen(recvBuf) != 2){
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1702, ENTER);
+                    sendLen = strlen(sendBuf);
+                    send(soc, sendBuf, sendLen, 0);
+                    return -1;
+                }
                 //数字以外が入力されていないかを確認
                 for(i = 0; i < recvLen-1; i++){
                     if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                        sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         return -1;
@@ -635,7 +643,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sscanf(recvBuf, "%d", &newmregion);
                 //newmregionの値が1以上かつ49以下であるかを確認。
                 if(newmregion < 1 || newmregion > 49){
-                    sprintf(sendBuf, "地域IDは1以上49以下で入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -645,7 +653,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 res = PQexec(con, sendBuf);
                 //存在していない場合はエラーを返す。
                 if(PQntuples(res) == 0){
-                    sprintf(sendBuf, "存在しない地域IDです。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1704, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -662,7 +670,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 //数字以外が入力されていないかを確認
                 for(i = 0; i < recvLen-1; i++){
                     if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                        sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         return -1;
@@ -672,7 +680,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sscanf(recvBuf, "%d", &newmseason);
                 //newmseasonの値が1以上かつ4以下であるかを確認。
                 if(newmseason < 1 || newmseason > 4){
-                    sprintf(sendBuf, "シーズンは1以上4以下で入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -695,7 +703,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i=0; i<recvLen-1; i++){
                 if(!isdigit(recvBuf[i])){
-                    sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     return -1;
@@ -712,7 +720,7 @@ int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0';
             //入力された文字が数字以外ならエラーを返す。
             if(!isdigit(recvBuf[0])){
-                sprintf(sendBuf, "数字を入力してください。%s", ENTER);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 return -1;

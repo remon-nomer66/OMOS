@@ -13,4 +13,8 @@
 
 #define E_CODE_1504 1504 // フラグを１にできない
 
+#define E_CODE_1505 1505 //削除不可
+
+#define EXIST 111
+
 #endif

@@ -87,7 +87,7 @@ void userCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
                     printf("[C_THREAD %ld] RECV=> %s\n", selfId, recvBuf);
                     sscanf(recvBuf, "%s", comm);
                     if(userCheckSQL(selfId, con, soc, recvBuf, sendBuf, tel + 1, comm, u_info) != -1){ //戻り値-1でなければ会員として正しい
-                        sprintf(sendBuf, "処理完了%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", OK_STAT, 3, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -123,6 +123,7 @@ void userCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *send
                             }
                         }
                         if(flag == REWIND){
+                            flag = 0;
                             break;
                         }
                     }

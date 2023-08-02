@@ -15,6 +15,7 @@ CREATE TABLE user_t(
        user_pass       varchar(16)        NOT NULL,        -- パスワード
        PRIMARY KEY (user_id)
 );
+CREATE SEQUENCE user_seq MAXVALUE 99999 START 1001;
 
 --
 -- 02 user_point_t
@@ -56,7 +57,7 @@ CREATE TABLE region_t(
 );
 
 --
--- チェーン対応関係!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-- チェーン対応関係
 --
 CREATE TABLE chain_t(
        chain_id             integer              NOT NULL,
@@ -72,7 +73,7 @@ CREATE TABLE store_table_t(
        desk_num		integer              NOT NULL,      -- 卓番号
        desk_max		integer              NOT NULL,      -- 卓上限人数
        desk_use             integer              DEFAULT 0,     -- 卓使用フラグ
-       PRIMARY KEY (store_id, desk_num)
+       PRIMARY KEY (store_id)
 );
 
 --
@@ -102,6 +103,7 @@ CREATE TABLE summary_t(
        order_date	       date	              NOT NULL,    -- 注文日
        order_time	       time	              NOT NULL,    -- 注文時間
        user_id	       integer	       NOT NULL,    -- アカウントID
+       subtotal             integer,
        PRIMARY KEY (menu_id, order_time)
 );
 
@@ -112,6 +114,7 @@ CREATE TABLE recipe_t(
        menu_id              integer       NOT NULL,        -- 商品ID
        menu_name            varchar(50)   NOT NULL,	   -- 商品名
        recipe 	       text          NOT NULL,	   -- レシピ
+       fod                  integer       NOT NULL,        -- 食べ物か飲み物か
        PRIMARY KEY (menu_id)
 );
 
@@ -134,7 +137,7 @@ CREATE TABLE menu_charge_t(
 );
 
 --
--- メニューチェーン，メニュー季節!!!!!!!!!!!!!!!!!!
+-- メニューチェーン，メニュー季節
 --
 CREATE TABLE menu_detail_t(
        menu_id              integer       NOT NULL,
@@ -164,7 +167,7 @@ CREATE TABLE menu_storage_t(
        storage   	       integer       NOT NULL,    -- 在庫個数
        min_storage   	integer       NOT NULL,    -- 在庫下限
        storage_flag         integer       NOT NULL,    -- 発注フラグ
-       PRIMARY KEY (menu_id)
+       PRIMARY KEY (menu_id, store_id)
 );
 
 --
@@ -191,11 +194,11 @@ SET search_path to public;
 -- 14 store_order_t(発注)
 --
 CREATE TABLE store_order_t(
-       store_id           integer,                    -- 店舗ID
-       menu_id            integer,                     -- 商品ID
-       store_order_cnt    integer         NOT NULL,     -- 発注個数
-       store_order_date   date            NOT NULL,     -- 発注日
-       store_order_time   time            NOT NULL,     -- 発注時間
+       store_id           integer,
+       menu_id            integer,
+       store_order_cnt    integer         NOT NULL,
+       store_order_date   date            NOT NULL,
+       store_order_time   time            NOT NULL,
        PRIMARY KEY (store_id, store_order_time)
 );
 
