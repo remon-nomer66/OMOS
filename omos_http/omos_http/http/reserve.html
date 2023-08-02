@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>reserve</title>
+</head>
+<body>
+    <h2>予約</h2>
+    <div id="result">
+        <h4>予約したい日時と時間を入力してください</h4>
+        <form id="reservation-form">
+            <div id="res"></div>
+            <label for="reservation-date">日付</label>
+            <input 
+                type="date" 
+                id="reservation-date" 
+                name="client-date" 
+                value="" 
+                min="" 
+                max="" />
+            <br>
+            <label for="reservation-time">時間</label>
+            <select 
+                id="reservation-time" 
+                name="client-time" >
+            </select>
+            <br>
+            <label for="reservation-person">人数</label>
+            <select
+                id="reservation-person" 
+                name="client-number" >
+            </select>
+            <br>
+            <h5>団体客(11人以上)のお客様はお手数ですが，電話にてご予約ください．</h5>
+            <div id="check"></div>
+        </form>
+    </div>
+    <br>
+    <a href="./branch.html">選択画面に戻る</a>
+    <script src="../javascript/reserve.js"></script>
+</body>
+</html>

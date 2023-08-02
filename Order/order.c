@@ -1,19 +1,13 @@
 #include "omos.h"
 #include "order.h"
 
-#define MENU_OK         10
-#define ORDER_END       20
-#define ORDER_OK        30
-#define QUANTITY_ERR    40
-#define ALREADY         50
-
 int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info){
     int recvLen, sendLen;   //送受信データ長
     int layer = 6;     //メニューレベル(1は初期値)
     char sql[BUFSIZE], check_buf[BUFSIZE], buf[BUFSIZE];
     PGresult *res;
-    int menu_info[100][3];  //[0]: menu_id，[1]: 押し，[2]在庫個数
-    int tmp_menu_info[100][3];
+    int menu_info[BUFSIZE][3];  //[0]: menu_id，[1]: 押し，[2]在庫個数
+    int tmp_menu_info[BUFSIZE][3];
     int i, j, k, resultRows, menu_len, cnt;
     int param1, param2;
     int order_con[5][3] = {0};    //[0]: 商品番号，[1]: 個数，[2]在庫個数
@@ -44,7 +38,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -52,7 +46,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "このレイヤーにメニューは存在しません%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1401, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -68,7 +62,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                     res = PQexec(con, sql);
                     if(PQresultStatus(res) != PGRES_TUPLES_OK){
                         printf("%s", PQresultErrorMessage(res));
-                        sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -87,7 +81,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -95,7 +89,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "この店舗は独立しているため，メニューを表示できません%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1402, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -108,7 +102,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -116,7 +110,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "このレイヤーにメニューは存在しません%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1401, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -132,7 +126,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                     res = PQexec(con, sql);
                     if(PQresultStatus(res) != PGRES_TUPLES_OK){
                         printf("%s", PQresultErrorMessage(res));
-                        sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -151,7 +145,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -159,7 +153,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "このレイヤーにメニューは存在しません%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1401, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -175,7 +169,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                     res = PQexec(con, sql);
                     if(PQresultStatus(res) != PGRES_TUPLES_OK){
                         printf("%s", PQresultErrorMessage(res));
-                        sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -194,7 +188,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -202,7 +196,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "この店舗は独立しているため，メニューを表示できません%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1403, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -215,7 +209,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -223,7 +217,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "このレイヤーにメニューは存在しません%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1403, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -239,7 +233,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                     res = PQexec(con, sql);
                     if(PQresultStatus(res) != PGRES_TUPLES_OK){
                         printf("%s", PQresultErrorMessage(res));
-                        sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -258,7 +252,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -266,7 +260,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "この店舗は独立しているため，メニューを表示できません%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1402, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -290,7 +284,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -298,7 +292,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "このレイヤーにメニューは存在しません%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1401, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -314,7 +308,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                     res = PQexec(con, sql);
                     if(PQresultStatus(res) != PGRES_TUPLES_OK){
                         printf("%s", PQresultErrorMessage(res));
-                        sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -333,7 +327,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -341,7 +335,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows != 1){
-                    sprintf(sendBuf, "店舗情報に不整合があります%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -365,7 +359,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー1%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -373,7 +367,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 menu_len = resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "データベースエラー2%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -388,7 +382,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                     res = PQexec(con, sql);
                     if(PQresultStatus(res) != PGRES_TUPLES_OK){
                         printf("%s", PQresultErrorMessage(res));
-                        sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -407,7 +401,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -415,7 +409,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows != 1){
-                    sprintf(sendBuf, "店舗情報に不整合があります%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -439,7 +433,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー1%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -447,7 +441,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 menu_len = resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "データベースエラー2%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -462,7 +456,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                     res = PQexec(con, sql);
                     if(PQresultStatus(res) != PGRES_TUPLES_OK){
                         printf("%s", PQresultErrorMessage(res));
-                        sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -483,7 +477,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -491,7 +485,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows == 0){
-                    sprintf(sendBuf, "押し情報に不整合があります%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -580,7 +574,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_TUPLES_OK){
                     printf("%s", PQresultErrorMessage(res));
-                    sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -588,7 +582,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                 }
                 resultRows = PQntuples(res);
                 if(resultRows != 1){
-                    sprintf(sendBuf, "データエラー%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -617,7 +611,6 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                     }
                 }
             }
-            
             sprintf(sendBuf, "%s", DATA_END);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
@@ -637,7 +630,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                             layer = param1;
                             break;
                         }else{
-                            sprintf(sendBuf, "正しいタブ番号を入力してください%s%s", ENTER, DATA_END);
+                            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1404, ENTER, DATA_END);
                             sendLen = strlen(sendBuf);
                             send(soc, sendBuf, sendLen, 0);
                             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -677,17 +670,18 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                             }
                             order_cnt++;
                         }else if(flag == QUANTITY_ERR){
-                            sprintf(sendBuf, "数量が超過しています%s%s", ENTER, DATA_END);
+                            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1405, ENTER, DATA_END);
                             sendLen = strlen(sendBuf);
                             send(soc, sendBuf, sendLen, 0);
                             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                         }else if(flag == ALREADY){
-                            sprintf(sendBuf, "同一の注文ですでに注文されています%s%s", ENTER, DATA_END);
+                            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1406, ENTER, DATA_END);
                             sendLen = strlen(sendBuf);
                             send(soc, sendBuf, sendLen, 0);
                             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                         }else{
-                            sprintf(sendBuf, "%s内の商品番号を入力してください%s%s", layer_name[layer - 1], ENTER, DATA_END);
+                            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_1407, ENTER, DATA_END);
+                            //sprintf(sendBuf, "%s内の商品番号を入力してください%s%s", layer_name[layer - 1], ENTER, DATA_END);
                             sendLen = strlen(sendBuf);
                             send(soc, sendBuf, sendLen, 0);
                             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -697,12 +691,13 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                             sendLen = strlen(sendBuf);
                             send(soc, sendBuf, sendLen, 0);
                             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                        }else if(flag == MENU_OK){
+                        }
+                        /* else if(flag == MENU_OK){
                             sprintf(sendBuf, "注文可能な種類の最大数に到達しました%s", ENTER);
                             sendLen = strlen(sendBuf);
                             send(soc, sendBuf, sendLen, 0);
                             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
-                        }
+                        } */
                     }
                     //else if(cnt == 2 && param2 > 5){
                         //sprintf(sendBuf, "商品の個数は5個以下で入力してください%s%s", ENTER, DATA_END);
@@ -714,41 +709,33 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                         cnt = sscanf(recvBuf, "%s", comm);
                         if(cnt == 1){
                             if(strcmp(comm, HIST) == 0){
-                                /* if(history() != -1){
-                                    return 0;
-                                }else{
-                                    return -1;
-                                } */
-                                printf("HISTに入りました\n");
-                                i++;
-                                break;
-                            }else if(strcmp(comm, PAY) == 0){
-                                /* if(pay() != -1){
-                                    return 0;
-                                }else{
-                                    return -1;
-                                } */
-                                printf("PAYに入りました\n");
-                                i++;
+                                history(selfId, con, soc, recvBuf, sendBuf, s_info);
                                 break;
                             }else if(strcmp(comm, OK) == 0){
                                 flag = ORDER_END;
                                 break;
+                            }else if(strcmp(comm, END) == 0){
+                                printf("flag: END\n");
+                                sprintf(sendBuf, "認証画面に戻ります%s%s", ENTER, DATA_END);
+                                sendLen = strlen(sendBuf);
+                                send(soc, sendBuf, sendLen, 0);
+                                printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+                                return 0;
                             }else{
-                                sprintf(sendBuf, "正しい文字列を入力してください%s%s", ENTER, DATA_END);
+                                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_300, ENTER, DATA_END);
                                 sendLen = strlen(sendBuf);
                                 send(soc, sendBuf, sendLen, 0);
                                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                             }
                         }
                     }else{
-                        sprintf(sendBuf, "正しい文字列を入力してください%s%s", ENTER, DATA_END);
+                        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_300, ENTER, DATA_END);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                     }
                 }else{
-                    sprintf(sendBuf, "正しい文字列を入力してください%s%s", ENTER, DATA_END);
+                    sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_300, ENTER, DATA_END);
                     sendLen = strlen(sendBuf);
                     send(soc, sendBuf, sendLen, 0);
                     printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -757,13 +744,14 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
 
             //入力内容確認
             if(order_cnt == 5 || flag == ORDER_END){
+
                 sprintf(check_buf, "入力された内容は以下のとおりです%s 商品番号 　　　　　商品名　　　　　 　数量%s", ENTER, ENTER);
                 for(j = 0; j < order_cnt; j++){
                     sprintf(sql, "SELECT menu_name FROM recipe_t WHERE menu_id = %d", order_con[j][0]);
                     res = PQexec(con, sql);
                     if(PQresultStatus(res) != PGRES_TUPLES_OK){
                         printf("%s", PQresultErrorMessage(res));
-                        sprintf(sendBuf, "データベースエラー%s%s", ENTER, DATA_END);
+                        sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -782,6 +770,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                     strcat(check_buf, buf);
                 }
                 if(flag != -1){
+
                     sprintf(buf, "入力された内容に問題が無ければ\"OK\"を入力してください%s%s", ENTER, DATA_END);
                     strcat(check_buf, buf);
                     sendLen = strlen(check_buf);
@@ -809,7 +798,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                             res = PQexec(con, sql);
                             if(PQresultStatus(res) != PGRES_COMMAND_OK){
                                 printf("%s", PQresultErrorMessage(res));
-                                sprintf(sendBuf, "データベースエラー1%s%s", ENTER, DATA_END);
+                                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                                 sendLen = strlen(sendBuf);
                                 send(soc, sendBuf, sendLen, 0);
                                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -821,7 +810,7 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
                             res = PQexec(con, sql);
                             if(PQresultStatus(res) != PGRES_COMMAND_OK){
                                 printf("%s", PQresultErrorMessage(res));
-                                sprintf(sendBuf, "データベースエラー2%s%s", ENTER, DATA_END);
+                                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_100, ENTER, DATA_END);
                                 sendLen = strlen(sendBuf);
                                 send(soc, sendBuf, sendLen, 0);
                                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
@@ -832,13 +821,18 @@ int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, 
 
                         PQexec(con, "COMMIT");
 
+                        sprintf(sendBuf, "%s %d%s", OK_STAT, 1, ENTER);
+                        sendLen = strlen(sendBuf);
+                        send(soc, sendBuf, sendLen, 0);
+                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
+
                         sprintf(sendBuf, "注文が正常に完了しました%s", ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                         order_cnt = 0;
                     }else{
-                        sprintf(sendBuf, "現在の注文内容を取り消します%s", ENTER);
+                        sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1408, ENTER);
                         sendLen = strlen(sendBuf);
                         send(soc, sendBuf, sendLen, 0);
                         printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);

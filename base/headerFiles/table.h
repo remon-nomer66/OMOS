@@ -1,11 +1,9 @@
 /**
- * test.h
+ * table.h
  **/
 
-#ifndef _INCLUDE_TEST_FUNC_
-#define _INCLUDE_TEST_FUNC_
-
-#define TEST    "TEST"
+#ifndef _INCLUDE_TABLE_FUNC_
+#define _INCLUDE_TABLE_FUNC_
 
 #define E_CODE_1001 1001    //test_func.cにおいて引数不正
 

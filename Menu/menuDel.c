@@ -1,4 +1,5 @@
 #include "omos.h"
+#include "menu.h"
 
 int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
     int recvLen, sendLen; //送受信データ長
@@ -19,7 +20,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 3) AND recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE id = %d);", u_store); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         if(PQntuples(res) == 0){
-            sprintf(sendBuf, "変更できるメニューは存在しません．%s", ENTER); //送信データ作成
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1704, ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -39,7 +40,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         recvBuf[recvLen-1] = '\0';
         //4文字以外の場合はエラーを返す
         if(strlen(recvBuf) !=4){
-            sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s", ENTER); //送信データ作成
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1702, ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -47,7 +48,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         //入力された文字が数字以外ならエラーを返す。
         for(int i = 0; i < 4; i++){
             if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                sprintf(sendBuf, "商品IDは数字で入力してください．%s", ENTER); //送信データ作成
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -59,7 +60,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
         sprintf(sendBuf, "SELECT menu_id FROM menu_storage_t WHERE menu_id = %d AND store_id = %d;", delid, u_store); //SQL文作成
         res = PQexec(con, sendBuf); //SQL文実行
         if(PQntuples(res) == 0){ //menu_idが存在しない場合
-            sprintf(sendBuf, "そのメニューは存在しません．%s", ENTER); //送信データ作成
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1704, ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -110,7 +111,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
         }else{
-            sprintf(sendBuf, "入力が不正です．%s%s", ENTER, DATA_END); //送信データ作成
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;
@@ -133,7 +134,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0';
             //2文字以外の場合はエラーを返す
             if(strlen(recvBuf) !=3){
-                sprintf(sendBuf, "店舗IDは3桁：半角数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1702, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -141,7 +142,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i = 0; i < 3; i++){
                 if(isdigit(recvBuf[i]) == 0){
-                    sprintf(sendBuf, "店舗IDは数字で入力してください．%s%s", ENTER, DATA_END); //送信データ作成
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -154,7 +155,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             res = PQexec(con, sendBuf); //SQL文実行
             //テーブル名store_tから取得した値が0の場合、店舗IDが存在しないことを表示
             if(strcmp(PQgetvalue(res, 0, 0), "0") == 0){
-                sprintf(sendBuf, "その店舗IDは存在しません．%s", ENTER); //送信データ作成
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1704, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -180,7 +181,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0';
             //4文字以外の場合はエラーを返す
             if(strlen(recvBuf) !=4){
-                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s", ENTER); //送信データ作成
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1702, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -188,7 +189,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(i = 0; i < 4; i++){
                 if(isdigit(recvBuf[i]) == 0){
-                    sprintf(sendBuf, "商品IDは数字で入力してください．%s", ENTER); //送信データ作成
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
@@ -200,7 +201,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sprintf(sendBuf, "SELECT menu_id FROM menu_storage_t WHERE menu_id = %d AND store_id = %d;", delid, changestore); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             if(PQntuples(res) == 0){ //menu_idが存在しない場合
-                sprintf(sendBuf, "そのメニューは存在しません．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1704, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -219,7 +220,6 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //クライアントから受信した値をresponseに代入
             sscanf(recvBuf, "%s", response);
-            
             if(strcmp(response, "y") == 0){ //削除する場合
                 //テーブル名：menu_charge_tからmenu_idがdelidと一致するものを削除
                 sprintf(sendBuf, "DELETE FROM menu_charge_t WHERE menu_id = %d;", delid); //SQL文作成
@@ -252,7 +252,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
             }else{
-                sprintf(sendBuf, "入力が不正です．%s%s", ENTER, DATA_END); //送信データ作成
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -266,7 +266,7 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sprintf(sendBuf, "SELECT recipe_t.menu_id, recipe_t.menu_name FROM recipe_t WHERE recipe_t.menu_id IN (SELECT menu_id FROM menu_detail_t WHERE layer = 1 OR layer = 2 OR layer = 4 OR layer = 5);"); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             if(PQntuples(res) == 0){
-                sprintf(sendBuf, "変更できるメニューは存在しません．%s", ENTER); //送信データ作成
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1704, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -285,11 +285,9 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvLen = recv(soc, recvBuf, BUFSIZE, 0); //受信
             recvBuf[recvLen-1] = '\0';
 
-            printf("flag01\n");
-
             //4文字以外の場合はエラーを返す
             if(strlen(recvBuf) !=4){
-                sprintf(sendBuf, "商品IDは4桁：半角数字で入力してください．%s", ENTER); //送信データ作成
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1702, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
@@ -297,14 +295,12 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             //入力された文字が数字以外ならエラーを返す。
             for(int i = 0; i < 4; i++){
                 if(recvBuf[i] < '0' || recvBuf[i] > '9'){
-                    sprintf(sendBuf, "商品IDは数字で入力してください．%s", ENTER); //送信データ作成
+                    sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1703, ENTER); //送信データ作成
                     sendLen = strlen(sendBuf); //送信データ長
                     send(soc, sendBuf, sendLen, 0); //送信
                     return -1;
                 }
             }
-
-            printf("flag02\n");
 
             //受信した値をdelidに代入
             sscanf(recvBuf, "%d", &delid);
@@ -312,13 +308,11 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             sprintf(sendBuf, "SELECT menu_id FROM menu_detail_t WHERE menu_id = %d AND layer IN (1, 2, 4, 5);", delid); //SQL文作成
             res = PQexec(con, sendBuf); //SQL文実行
             if(PQntuples(res) == 0){ //menu_idが存在しない場合
-                sprintf(sendBuf, "そのメニューは存在しません．%s", ENTER); //送信データ作成
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1704, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
-
-            printf("flag03\n");
 
             PQclear(res); //resのメモリを解放
             //テーブル名：recipe_tからmenu_idがdelidと一致するもののmenu_nameを取得して表示
@@ -334,9 +328,6 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
             recvBuf[recvLen-1] = '\0'; //受信データにNULLを追加
             //受信した内容をresponseに入れる
             sscanf(recvBuf, "%s", response);
-
-            printf("flag04\n");
-
             if(strcmp(response, "y") == 0){ //削除する場合
                 //テーブル名：menu_charge_tからmenu_idがdelidと一致するものを削除
                 sprintf(sendBuf, "DELETE FROM menu_charge_t WHERE menu_id = %d;", delid); //SQL文作成
@@ -369,13 +360,13 @@ int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
             }else{
-                sprintf(sendBuf, "入力が不正です．%s", ENTER); //送信データ作成
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER); //送信データ作成
                 sendLen = strlen(sendBuf); //送信データ長
                 send(soc, sendBuf, sendLen, 0); //送信
                 return -1;
             }
         }else{
-            sprintf(sendBuf, "入力が不正です．%s", ENTER); //送信データ作成
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_1701, ENTER); //送信データ作成
             sendLen = strlen(sendBuf); //送信データ長
             send(soc, sendBuf, sendLen, 0); //送信
             return -1;

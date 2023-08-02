@@ -38,41 +38,53 @@
 //*** プロトコルコマンド ***//
 #define UCHECK  "UCHECK"  //会員照会        不要
 #define UREG    "UREG"    //会員登録        OK
-#define UCHG    "UCHG"    //会員情報変更    OK
-#define RESERVE "RESERVE" //予約            OK
-#define REREG   "REREG"   //予約登録        OK
-#define REDEL   "REDEL"   //予約削除        OK
-#define ORDER   "ORDER"   //注文            OK
-#define LV      "LV"      //注文レベル選択  関数内部
-#define KITCHEN "KITCHEN" //キッチン        OK
-#define KFLAG   "KFLAG"   //キッチン登録    OK
-#define TREG    "TREG"    //卓登録          OK
-#define TDEL    "TDEL"    //卓削除          不要
-#define MENU    "MENU"    //メニュー        OK
-#define MREG    "MREG"    //メニュー登録    OK
-#define MDEL    "MDEL"    //メニュー削除    OK
-#define MCHG    "MCHG"    //メニュー変更    OK
-#define DEMAND  "DEMAND"  //発注            OK
-#define DREG    "DREG"    //発注登録        OK
-#define RECHECK "RECHECK" //予約確認        OK
-#define RDEL    "RDEL"    //予約削除        重複
-#define STCHECK "STCHECK" //在庫確認        OK
-#define CORRECT "CORRECT" //集計            OK
-#define CCHECK  "CCHECK"  //集計確認        OK
-#define SACHECK "SACHECK" //売上確認        OK
-#define HISTORY "HISTORY" //履歴            OK
-#define PAY     "PAY"     //会計            OK
-#define PCHECK  "PCHECK"  //ポイントチェック 関数内部
-#define PUSE    "PUSE"    //ポイント使用    関数内部
-#define PUNUSE  "PUNUSE"  //ポイント不使用  関数内部
-#define EVALUE  "EVALUE"  //評価            関数内部
+#define UCHG    "UCHG"    //会員情報変更
+#define RESERVE "RESERVE" //予約
+#define REREG   "REREG"   //予約登録
+#define RECHG   "RECHG"
+#define REDEL   "REDEL"   //予約削除
+#define ORDER   "ORDER"   //注文
+#define KITCHEN "KITCHEN" //キッチン
+#define KFLAG   "KFLAG"   //キッチン登録
+#define TREG    "TREG"    //卓登録
+#define TDEL    "TDEL"    //卓削除
+#define MENU    "MENU"    //メニュー
+#define MREG    "MREG"    //メニュー登録
+#define MDEL    "MDEL"    //メニュー削除
+#define MCHG    "MCHG"    //メニュー変更
+#define DEMAND  "DEMAND"  //発注
+#define DREG    "DREG"    //発注登録
+#define RECHECK "RECHECK" //予約確認
+#define REREG   "REREG"   //予約登録
+#define RECHG   "RECHG"   //予約変更
+#define RDEL    "RDEL"    //予約削除
+#define STCHECK "STCHECK" //在庫確認
+#define CORRECT "CORRECT" //集計
+#define CCHECK  "CCHECK"  //集計確認
+#define SACHECK "SACHECK" //売上確認
+#define HISTORY "HISTORY" //履歴
+#define PAY     "PAY"     //会計
+#define PCHECK  "PCHECK"  //ポイントチェック
+#define PUSE    "PUSE"    //ポイント使用
+#define PUNUSE  "PUNUSE"  //ポイント不使用
+#define EVALUE  "EVALUE"  //評価
 #define HIST    "HIST"
-
 #define KDEL    "KDEL"
+
+#define ACHG    "ACHG"    //AuthChange
+#define SCHG    "SCHG"    //StoreChange
+#define TSREG   "TSREG"   //tableStoreReg
+
+#define KINFO   "KINFO"
+#define RINFO   "RINFO"
+
+#define KREG    "KREG"
+#define KDEL    "KDEL"
+
 
 //その他の定数
 #define GUEST    "GUEST"    //ゲスト
-#define TELLEN  10        //電話番号の長さ(最初の0は含まない)
+#define TELLEN  11        //電話番号の長さ(最初の0は含まない)
 #define CEKMAX  5         //パスワード試行回数の最大値
 #define YES     "YES"
 #define NO      "NO"
@@ -103,51 +115,56 @@ extern int setup_listen(unsigned short __port);
 extern void *omos_controller(void *__arg);
 extern void service_user(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
 extern int service_table(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info);
-extern int service_kitchen(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info);
 extern void service_guest(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
-extern int service_employee(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info);
+extern int service_employee(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info, int *reg);
 
-//extern int userCheck(void);
-//extern int userReg(void);
-//extern int userChg(void);
-//extern int userCheck(void);
+extern void service_menu(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
 
-//extern int janken(int soc, char *recvBuf, char *sendBuf);
+extern void userCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
+extern int userCheckSQL(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, char *tel, char *pass, int *u_info);
+extern int userReg(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf);
+extern int userChange(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf);
 
-//extern void reserve(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
-//extern int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
-//extern int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
-//extern int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
-//extern int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int reg_chg_flag, int reserve_no);
+extern int janken(pthread_t selfId,int soc,char *recvBuf,char *sendBuf);
 
-//extern int kitchen(PGconn *__con, int __soc, int __tableNum);
-//extern int kitchenView(void);
-//extern int kitchenFlag(void);
+extern void reserve(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
+extern int reserveShow(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
+extern int reserveReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
+extern int reserveChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
+extern int reserveCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int reg_chg_flag, int reserve_no);
+extern int reserveDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
 
-//extern int tableAlt(PGconn *__con, int __soc);
-//extern int tableReg(PGconn *__con, int __soc, int *__u_info, int *__s_info);
-//extern int tableDel(PGconn*__con,int__soc,int__desk_num,int __store_id);
+extern void reserve_s(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info);
+extern int reserveShow_s(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info);
+extern int reserveCheck_s(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info, int reg_chg_flag, int reserve_no);
+extern int reserveReg_s(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info);
+extern int reserveChg_s(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info);
+extern int reserveDel_s(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
 
-//extern int kitchenDel(void);
+extern int kitchen(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info, int *uinfo, char *reg);
+extern int kitchenReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, char *reg);
+extern int kitchenDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, char *reg);
+extern int kitchenView(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
+extern int kitchenFlag(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
 
-//extern void menu(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
-//extern int menuReg(PGconn *__con, int __soc, int *__u_info);
-//extern int menuDel(PGconn *__con, int __soc, int *__u_info);
-//extern int menuChg(PGconn *__con, int __soc, int *__u_info);
+extern int tableReg(PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info);
+extern int tableAlt(PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info);
+extern int tableDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info);
+extern int tableStoreReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
 
-//extern int demandReg(void);
+extern void service_menu(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
+extern int menuReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
+extern int menuDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
+extern int menuChg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
 
-//extern int reserveCheck_s(void);
-//extern int reserveDel_s(void);
+extern int demand(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf);
 
-//extern int storageCheck(PGconn *__con, int __soc, int __auth);
+extern int storageCheck(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info);
 
-//extern int correct(PGconn *__con, int __soc, int __auth);
+extern int correct(pthread_t selfId, PGconn *con, int soc, int *u_info);
 
-//extern int saleCheck(void);
-
-//extern int order(pthread_t selfId, PGconn *con, char *recvBuf, char *sendBuf, int soc, int *u_info, int *s_info);
-//extern int history(void);
-//extern int pay(void);
+extern int order(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info, int *s_info);
+extern int history(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *s_info);
+extern int pay(pthread_t selfId, PGconn *con, int soc, int *u_info, char *recvBuf, char *sendBuf);
 
 #endif

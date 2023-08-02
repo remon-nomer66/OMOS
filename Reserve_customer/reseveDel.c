@@ -2,7 +2,7 @@
 #include "reserve.h"
 
 int reserveDel(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *sendBuf, int *u_info){
-int recvLen, sendLen;   //送受信データ長
+    int recvLen, sendLen;   //送受信データ長
     char sql[BUFSIZE];
     PGresult *res;
     int resultRows, i, cnt, param;
@@ -147,10 +147,6 @@ int recvLen, sendLen;   //送受信データ長
                 }else{
                     cnt = sscanf(recvBuf, "%s", comm);
                     if(strcmp(comm, END) == 0){
-		                sprintf(sendBuf, "ユーザ画面に戻ります%s%s", ENTER, DATA_END);
-                        sendLen = strlen(sendBuf);
-                        send(soc, sendBuf, sendLen, 0);
-                        printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                         PQclear(res);
                         return 0;
                     }

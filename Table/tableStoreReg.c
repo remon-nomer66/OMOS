@@ -40,14 +40,13 @@ int tableStoreReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *s
     
             cnt = sscanf(recvBuf, "%d %d", &tableNum, &capacity);
 
-            if(cnt != 2){
+            if(cnt == 2){
                 sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_100, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             }else if(cnt == 2){
-                sprintf(sql, "INSERT INTO store_table_t (store_id, desk_num, desk_max, desk_use) VALUES (%d, %d, %d, 0)", u_info[2], tableNum, capacity);
-                printf("%s\n", sql);
+                sprintf(sql, "INSERT INTO store_table_t (store_id, desk_num, desk_max, desk_use)VALUES (%d, %d, %d, 0)", u_info[2], tableNum, capacity);
                 res = PQexec(con, sql);
                 if(PQresultStatus(res) != PGRES_COMMAND_OK){
                     printf("%s", PQresultErrorMessage(res));
@@ -70,24 +69,22 @@ int tableStoreReg(pthread_t selfId, PGconn *con, int soc, char *recvBuf, char *s
             }else if(cnt == 0){
                 cnt = sscanf(recvBuf, "%s", comm);
                 if(strcmp(comm, END) == 0){
-                    sprintf(sendBuf, "ユーザ画面に戻ります%s%s", ENTER, DATA_END);
-                    sendLen = strlen(sendBuf);
-                    send(soc, sendBuf, sendLen, 0);
-                    printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
                     PQclear(res);
                     return 0;
                 }
             }else{
-                sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_200, ENTER, DATA_END);
+                sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_200, ENTER);
                 sendLen = strlen(sendBuf);
                 send(soc, sendBuf, sendLen, 0);
                 printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
             }
         }else{
-            sprintf(sendBuf, "%s %d%s%s", ER_STAT, E_CODE_200, ENTER, DATA_END);
+            sprintf(sendBuf, "%s %d%s", ER_STAT, E_CODE_200, ENTER);
             sendLen = strlen(sendBuf);
             send(soc, sendBuf, sendLen, 0);
             printf("[C_THREAD %ld] SEND=> %s\n", selfId, sendBuf);
         }
     }
+
+    
 }
